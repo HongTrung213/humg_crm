@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="breadcrumb-bar">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 col-12">
+                <div class="breadcrumb-list">
+                    <nav aria-label="breadcrumb" class="page-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Tra cứu kết quả tổng hợp</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="page-content course-sec">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                
+                {% if sinh_vien %}
+                <div class="card instructor-sec border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="instructor-wrap border-bottom-0 m-0">
+                            <div class="about-instructor align-items-center">
+                                <div class="abt-instructor-img">
+                                    <img src="{% static 'img/user/user11.jpg' %}" alt="img" class="img-fluid">
+                                </div>
+                                <div class="instructor-detail">
+                                    <h5>{{ sinh_vien.ho_ten }} ({{ sinh_vien.mssv }})</h5>
+                                    <p>Khoa: {{ sinh_vien.khoa }} | Lớp: {{ sinh_vien.lop }}</p>
+                                    <p>Ngày sinh: {{ sinh_vien.ngay_sinh|date:"d/m/Y" }} | Giới tính: {{ sinh_vien.get_gioi_tinh_display }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card content-sec border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="subs-title">Tình trạng hoàn thành Chuẩn đầu ra</h5>
+                        <div class="table-responsive">
+                            <table class="table table-nowrap mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Hạng mục mục tiêu</th>
+                                        <th>Điểm số/Minh chứng</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ghi chú</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Tiếng Anh đầu vào</strong></td>
+                                        <td>{{ sinh_vien.diem_anh_van_dau_vao }}</td>
+                                        <td>
+                                            {% if sinh_vien.check_dat_dau_vao %}
+                                                <span class="badge bg-success text-white">ĐÃ ĐẠT</span>
+                                            {% else %}
+                                                <span class="badge bg-danger text-white">CHƯA ĐẠT</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{% if sinh_vien.is_mien_thi_dau_vao %}Được miễn thi{% else %}-{% endif %}</td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td><strong>Chuẩn đầu ra Ngoại ngữ</strong></td>
+                                        <td>{{ sinh_vien.diem_cdr_ngoai_ngu }}</td>
+                                        <td>
+                                            {% if sinh_vien.check_dat_ngoai_ngu %}
+                                                <span class="badge bg-success text-white">ĐÃ ĐẠT</span>
+                                            {% else %}
+                                                <span class="badge bg-danger text-white">CHƯA ĐẠT</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{% if sinh_vien.has_chung_chi_ngoai_ngu %}Sử dụng chứng chỉ ngoài{% else %}-{% endif %}</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td><strong>Chuẩn đầu ra Tin học</strong></td>
+                                        <td>{{ sinh_vien.diem_cdr_tin_hoc }}</td>
+                                        <td>
+                                            {% if sinh_vien.check_dat_tin_hoc %}
+                                                <span class="badge bg-success text-white">ĐÃ ĐẠT</span>
+                                            {% else %}
+                                                <span class="badge bg-danger text-white">CHƯA ĐẠT</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{% if sinh_vien.has_chung_chi_tin_hoc %}Sử dụng chứng chỉ ngoài{% else %}-{% endif %}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-4 p-3 rounded" style="background-color: #fff9e6; border-left: 5px solid #ffc107;">
+                            <h6><i class="feather-info"></i> Tình trạng tốt nghiệp:</h6>
+                            {% if sinh_vien.check_dat_ngoai_ngu and sinh_vien.check_dat_tin_hoc %}
+                                <p class="text-success mb-0">Chúc mừng! Bạn đã hoàn thành các chuẩn đầu ra cần thiết để xét tốt nghiệp.</p>
+                            {% else %}
+                                <p class="text-danger mb-0">Lưu ý: Bạn vẫn còn hạng mục chưa đạt chuẩn. Vui lòng liên hệ văn phòng khoa để được tư vấn các lớp bồi dưỡng.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

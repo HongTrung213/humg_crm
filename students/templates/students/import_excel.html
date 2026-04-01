@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="breadcrumb-bar">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 col-12">
+                <div class="breadcrumb-list">
+                    <nav aria-label="breadcrumb" class="page-breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                            <li class="breadcrumb-item">Quản lý Sinh viên</li>
+                            <li class="breadcrumb-item active" aria-current="page">Nhập dữ liệu Excel</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="page-content course-sec">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Tải lên danh sách Sinh viên (.xlsx)</h4>
+                        
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <form method="POST" enctype="multipart/form-data" class="mt-4">
+                            {% csrf_token %}
+                            <div class="form-group mb-3">
+                                <label>Chọn file Excel từ phòng Đào tạo:</label>
+                                <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Xử lý dữ liệu</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
