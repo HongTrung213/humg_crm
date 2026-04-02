@@ -20,4 +20,6 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('students/', include('students.urls')),
+    # ... các đường dẫn admin, students cũ ...
+    path('tin-tuc/', include('cms.urls')),
 ]

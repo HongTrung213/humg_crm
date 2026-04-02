@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="breadcrumb-bar">
+    <div class="container">
+        <h4 class="text-white">{% if category %}{{ category.name }}{% else %}Tin tức & Thông báo{% endif %}</h4>
+    </div>
+</div>
+
+<section class="course-content">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-9 col-md-12">
+                <div class="row">
+                    {% for post in posts %}
+                    <div class="col-lg-6 col-md-6 d-flex">
+                        <div class="blog-grid shadow-sm w-100">
+                            <div class="blog-image">
+                                <a href="{% url 'cms:post_detail' post.slug %}">
+                                    {% if post.image %}
+                                        <img class="img-fluid" src="{{ post.image.url }}" alt="{{ post.title }}" style="height: 200px; object-fit: cover; width: 100%;">
+                                    {% else %}
+                                        <img class="img-fluid" src="{% static 'img/blog/blog-01.jpg' %}" alt="Placeholder">
+                                    {% endif %}
+                                </a>
+                            </div>
+                            <div class="blog-grid-content">
+                                <div class="blog-category">
+                                    <a href="{% url 'cms:post_list_by_category' post.category.slug %}"><span>{{ post.category.name }}</span></a>
+                                </div>
+                                <h3 class="title"><a href="{% url 'cms:post_detail' post.slug %}">{{ post.title }}</a></h3>
+                                <p class="mb-3">{{ post.summary|truncatechars:100 }}</p>
+                                <div class="blog-info d-flex align-items-center">
+                                    <div class="post-date"><i class="feather-calendar"></i> {{ post.created_at|date:"d/m/Y" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12"><div class="alert alert-info">Chưa có bài viết nào trong mục này.</div></div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-lg-3 col-md-12 sidebar-right theiaStickySidebar">
+                <div class="card category-widget blog-widget shadow-sm">
+                    <div class="card-header border-bottom">
+                        <h4 class="card-title">Danh mục</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="categories">
+                            <li><a href="{% url 'cms:post_list' %}"><i class="feather-chevron-right"></i> Tất cả</a></li>
+                            {% for cat in categories %}
+                            <li><a href="{% url 'cms:post_list_by_category' cat.slug %}"><i class="feather-chevron-right"></i> {{ cat.name }} </a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

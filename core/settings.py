@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -40,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     #------------------------------
     'students',
+    'cms',
+    'ckeditor',
 ]
 
 MIDDLEWARE = [
@@ -134,3 +137,21 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
+
+# --- CẤU HÌNH TRÌNH SOẠN THẢO CKEDITOR ---
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Bold', 'Italic', 'Underline', 'Strike', '-', 'Subscript', 'Superscript'],
+            ['Font', 'FontSize', 'TextColor', 'BGColor'], # Thanh chỉnh Font, Size, Màu sắc
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink'],
+            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
+            ['Format', 'Styles'],
+            ['Maximize', 'Source']
+        ],
+        'height': 400, # Chiều cao khung soạn thảo
+        'width': '100%',
+    },
+}

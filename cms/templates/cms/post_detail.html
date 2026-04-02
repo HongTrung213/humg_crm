@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="course-content mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-9 col-md-12">
+                <div class="blog-details shadow-sm p-4 bg-white rounded">
+                    <div class="blog-info d-flex align-items-center mb-3">
+                        <div class="blog-category"><a href="{% url 'cms:post_list_by_category' post.category.slug %}"><span class="badge bg-primary">{{ post.category.name }}</span></a></div>
+                        <div class="post-date ms-3"><i class="feather-calendar"></i> {{ post.created_at|date:"d/m/Y - H:i" }}</div>
+                    </div>
+                    <h3 class="blog-title mb-4">{{ post.title }}</h3>
+                    
+                    <div class="blog-content">
+                        {{ post.content|safe }}
+                    </div>
+
+                    {% if post.attachment %}
+                    <div class="mt-5 p-3 bg-light rounded border">
+                        <h5 class="mb-2"><i class="feather-paperclip"></i> Tài liệu đính kèm</h5>
+                        <a href="{{ post.attachment.url }}" class="btn btn-outline-primary btn-sm" download>Tải xuống tài liệu</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-12 sidebar-right theiaStickySidebar">
+                <div class="card category-widget blog-widget shadow-sm">
+                    <div class="card-header border-bottom">
+                        <h4 class="card-title">Tin cùng chuyên mục</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="latest-posts">
+                            {% for rel_post in related_posts %}
+                            <li class="mb-3">
+                                <a href="{% url 'cms:post_detail' rel_post.slug %}" class="text-dark fw-bold" style="font-size: 14px;">{{ rel_post.title }}</a>
+                                <div class="text-muted" style="font-size: 12px;">{{ rel_post.created_at|date:"d/m/Y" }}</div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
