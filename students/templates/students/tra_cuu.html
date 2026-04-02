@@ -24,7 +24,26 @@
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 
+                <div class="card search-widget blog-search blog-widget mb-4 border-0 shadow-sm">
+                    <div class="card-body">
+                        <h4 class="text-center mb-4">Tra cứu kết quả Ngoại ngữ / Tin học</h4>
+                        <form class="search-form" method="GET" action="{% url 'tra_cuu' %}">
+                            <div class="input-group">
+                                <input type="text" name="mssv" value="{{ query_mssv }}" placeholder="Nhập Mã sinh viên (MSSV)..." class="form-control" required>
+                                <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i> Tra cứu</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {% if thong_bao %}
+                <div class="alert alert-danger text-center shadow-sm" role="alert">
+                    <i class="feather-alert-circle"></i> {{ thong_bao }}
+                </div>
+                {% endif %}
+
                 {% if sinh_vien %}
+                
                 <div class="card instructor-sec border-0 shadow-sm mb-4">
                     <div class="card-body">
                         <div class="instructor-wrap border-bottom-0 m-0">
@@ -34,80 +53,193 @@
                                 </div>
                                 <div class="instructor-detail">
                                     <h5>{{ sinh_vien.ho_ten }} ({{ sinh_vien.mssv }})</h5>
-                                    <p>Khoa: {{ sinh_vien.khoa }} | Lớp: {{ sinh_vien.lop }}</p>
-                                    <p>Ngày sinh: {{ sinh_vien.ngay_sinh|date:"d/m/Y" }} | Giới tính: {{ sinh_vien.get_gioi_tinh_display }}</p>
+                                    <p>Khoa: {{ sinh_vien.khoa }} | Lớp: {{ sinh_vien.lop|default:"Chưa cập nhật" }}</p>
+                                    <p class="mb-0">Email trường: <strong>{{ sinh_vien.email_truong }}</strong></p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card content-sec border-0 shadow-sm">
+                <div class="card content-sec border-0 shadow-sm mb-4">
                     <div class="card-body">
-                        <h5 class="subs-title">Tình trạng hoàn thành Chuẩn đầu ra</h5>
+                        <h5 class="subs-title">Tình trạng Chuẩn đầu ra </h5>
+                        <p class="text-muted" style="font-size: 13px;"><i>* Lưu ý: Theo QĐ 2523, kết quả CĐR Ngoại ngữ và Tin học tự động vô hiệu lực sau 60 tháng.</i></p>
                         <div class="table-responsive">
-                            <table class="table table-nowrap mb-0">
+                            <table class="table table-nowrap mb-0 align-middle">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Hạng mục mục tiêu</th>
-                                        <th>Điểm số/Minh chứng</th>
+                                        <th>Điểm số / Minh chứng</th>
                                         <th>Trạng thái</th>
-                                        <th>Ghi chú</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
                                         <td><strong>Tiếng Anh đầu vào</strong></td>
-                                        <td>{{ sinh_vien.diem_anh_van_dau_vao }}</td>
                                         <td>
-                                            {% if sinh_vien.check_dat_dau_vao %}
-                                                <span class="badge bg-success text-white">ĐÃ ĐẠT</span>
+                                            {% if sinh_vien.max_diem_dau_vao > 0 %}
+                                                <strong>{{ sinh_vien.max_diem_dau_vao }}</strong>
+                                            {% else %}
+                                                <span class="text-muted"><i>Chưa tham gia thi</i></span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if sinh_vien.max_diem_dau_vao >= 5.0 %}
+                                                <span class="badge bg-success text-white">ĐẠT CHUẨN</span>
                                             {% else %}
                                                 <span class="badge bg-danger text-white">CHƯA ĐẠT</span>
                                             {% endif %}
                                         </td>
-                                        <td>{% if sinh_vien.is_mien_thi_dau_vao %}Được miễn thi{% else %}-{% endif %}</td>
                                     </tr>
                                     
                                     <tr>
                                         <td><strong>Chuẩn đầu ra Ngoại ngữ</strong></td>
-                                        <td>{{ sinh_vien.diem_cdr_ngoai_ngu }}</td>
+                                        <td>
+                                            {% if sinh_vien.has_valid_cert_ngoai_ngu %}
+                                                <span class="badge bg-primary"><i class="feather-award"></i> Sử dụng chứng chỉ</span>
+                                            {% elif sinh_vien.max_diem_ngoai_ngu > 0 %}
+                                                <strong>{{ sinh_vien.max_diem_ngoai_ngu }}</strong>
+                                            {% else %}
+                                                <span class="text-muted"><i>Chưa tham gia thi</i></span>
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             {% if sinh_vien.check_dat_ngoai_ngu %}
-                                                <span class="badge bg-success text-white">ĐÃ ĐẠT</span>
+                                                <span class="badge bg-success text-white">ĐẠT CHUẨN</span>
                                             {% else %}
                                                 <span class="badge bg-danger text-white">CHƯA ĐẠT</span>
                                             {% endif %}
                                         </td>
-                                        <td>{% if sinh_vien.has_chung_chi_ngoai_ngu %}Sử dụng chứng chỉ ngoài{% else %}-{% endif %}</td>
                                     </tr>
 
                                     <tr>
                                         <td><strong>Chuẩn đầu ra Tin học</strong></td>
-                                        <td>{{ sinh_vien.diem_cdr_tin_hoc }}</td>
+                                        <td>
+                                            {% if sinh_vien.has_valid_cert_tin_hoc %}
+                                                <span class="badge bg-primary"><i class="feather-award"></i> Sử dụng chứng chỉ</span>
+                                            {% elif sinh_vien.max_diem_tin_hoc > 0 %}
+                                                <strong>{{ sinh_vien.max_diem_tin_hoc }}</strong>
+                                            {% else %}
+                                                <span class="text-muted"><i>Chưa tham gia thi</i></span>
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             {% if sinh_vien.check_dat_tin_hoc %}
-                                                <span class="badge bg-success text-white">ĐÃ ĐẠT</span>
+                                                <span class="badge bg-success text-white">ĐẠT CHUẨN</span>
                                             {% else %}
                                                 <span class="badge bg-danger text-white">CHƯA ĐẠT</span>
                                             {% endif %}
                                         </td>
-                                        <td>{% if sinh_vien.has_chung_chi_tin_hoc %}Sử dụng chứng chỉ ngoài{% else %}-{% endif %}</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-
-                        <div class="mt-4 p-3 rounded" style="background-color: #fff9e6; border-left: 5px solid #ffc107;">
-                            <h6><i class="feather-info"></i> Tình trạng tốt nghiệp:</h6>
-                            {% if sinh_vien.check_dat_ngoai_ngu and sinh_vien.check_dat_tin_hoc %}
-                                <p class="text-success mb-0">Chúc mừng! Bạn đã hoàn thành các chuẩn đầu ra cần thiết để xét tốt nghiệp.</p>
-                            {% else %}
-                                <p class="text-danger mb-0">Lưu ý: Bạn vẫn còn hạng mục chưa đạt chuẩn. Vui lòng liên hệ văn phòng khoa để được tư vấn các lớp bồi dưỡng.</p>
-                            {% endif %}
-                        </div>
                     </div>
                 </div>
+
+                <div class="card content-sec border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="subs-title"><i class="feather-award"></i> Chứng chỉ đã nộp</h5>
+                        {% if sinh_vien.ds_chung_chi.all %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Loại</th>
+                                        <th>Tên chứng chỉ</th>
+                                        <th>Ngày cấp</th>
+                                        <th>Trạng thái xác minh</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cc in sinh_vien.ds_chung_chi.all %}
+                                    <tr>
+                                        <td>{{ cc.get_loai_display }}</td>
+                                        <td><strong>{{ cc.ten_chung_chi }}</strong></td>
+                                        <td>{{ cc.ngay_cap|date:"d/m/Y" }}</td>
+                                        <td>
+                                            {% if cc.trang_thai == 'CHO' %}
+                                                <span class="badge bg-warning text-dark"><i class="feather-clock"></i> Đang chờ xác minh</span>
+                                            {% elif cc.trang_thai == 'DAT' %}
+                                                <span class="badge bg-success"><i class="feather-check-circle"></i> Đã duyệt</span>
+                                            {% else %}
+                                                <span class="badge bg-danger"><i class="feather-x-circle"></i> Không hợp lệ</span>
+                                                <br><small class="text-danger">{{ cc.ghi_chu_xac_minh }}</small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-secondary text-center mb-0">
+                            <i>Sinh viên chưa nộp chứng chỉ quốc tế thay thế.</i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card content-sec border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="subs-title"><i class="feather-clock"></i> Lịch sử thi (Tổ chức tại trường)</h5>
+                        {% if lich_su_thi %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 text-center align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>STT</th>
+                                        <th class="text-start">Môn thi</th>
+                                        <th class="text-start">Đợt thi</th>
+                                        <th>Điểm TP 1<br><small class="text-muted">(Lý thuyết/Nghe-Đọc)</small></th>
+                                        <th>Điểm TP 2<br><small class="text-muted">(Thực hành/Nói)</small></th>
+                                        <th>Tổng điểm</th>
+                                        <th>Kết quả xét</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ls in lich_su_thi %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td class="text-start"><strong>{{ ls.get_mon_thi_display }}</strong></td>
+                                        <td class="text-start">{{ ls.dot_thi.ten_dot }}</td>
+                                        
+                                        <td>{{ ls.diem_thanh_phan_1|default:"-" }}</td>
+                                        
+                                        <td>{{ ls.diem_thanh_phan_2|default:"-" }}</td>
+                                        
+                                        <td><strong>{{ ls.diem_thi }}</strong></td>
+                                        
+                                        <td>
+                                            {% if ls.ket_qua_dat %}
+                                                <span class="badge bg-success text-white">ĐẠT CHUẨN</span>
+                                            {% else %}
+                                                <span class="badge bg-danger text-white">KHÔNG ĐẠT</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-2 text-muted" style="font-size: 12px;">
+                            <i>* Lưu ý: Kết quả "ĐẠT CHUẨN" được tính khi Tổng điểm vượt mức điểm chuẩn của đợt thi và không có Điểm thành phần nào bị dính điểm liệt.</i>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-secondary text-center mb-0">
+                            <i>Hệ thống chưa ghi nhận lịch sử dự thi nào của sinh viên này.</i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="text-end mb-4">
+                    <button onclick="window.print()" class="btn btn-outline-primary">
+                        <i class="feather-printer"></i> In phiếu kết quả
+                    </button>
+                </div>
+                
                 {% endif %}
                 
             </div>

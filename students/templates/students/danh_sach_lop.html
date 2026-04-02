@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="breadcrumb-bar">
+    <div class="container">
+        <h4 class="text-white">Danh sách Lớp Bồi dưỡng & Ôn thi CĐR</h4>
+    </div>
+</div>
+
+<section class="course-content">
+    <div class="container">
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row">
+            {% for lop in lops %}
+            <div class="col-lg-4 col-md-6 d-flex">
+                <div class="course-box course-design d-flex flex-column w-100 shadow-sm">
+                    <div class="course-image">
+                        <img class="img-fluid" src="{% static 'img/course/course-01.jpg' %}" alt="Course">
+                    </div>
+                    <div class="product-content flex-grow-1">
+                        <div class="course-group d-flex mb-0">
+                            <div class="course-group-img d-flex">
+                                <a href="#"><img src="{% static 'img/user/user1.jpg' %}" alt="" class="img-fluid"></a>
+                                <div class="course-name">
+                                    <h4><a href="#">{% if lop.can_bo %}{{ lop.can_bo.get_full_name|default:lop.can_bo.username }}{% else %}Đang cập nhật GV{% endif %}</a></h4>
+                                    <p>Giảng viên phụ trách</p>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="title instructor-text"><a href="#">{{ lop.ten_lop }}</a></h3>
+                        <div class="course-info d-flex align-items-center border-bottom-0 pb-0">
+                            <div class="rating-img d-flex align-items-center">
+                                <i class="feather-users me-2"></i>
+                                <p>{{ lop.sinh_vien.count }} / {{ lop.si_so_toi_da }} Học viên</p>
+                            </div>
+                            <div class="course-view d-flex align-items-center">
+                                <span class="badge bg-info text-white">{{ lop.get_loai_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-3 text-center border-top">
+                        <a href="{% url 'dang_ky_lop' lop.id %}" class="btn btn-primary w-100">Đăng ký tham gia</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <div class="alert alert-warning">Hiện tại không có lớp bồi dưỡng nào đang mở đăng ký.</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

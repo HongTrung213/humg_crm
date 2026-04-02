@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="page-content course-sec">
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-lg-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h4 class="mb-0 text-white">Nộp hồ sơ Đăng ký lớp</h4>
+                    </div>
+                    <form method="POST" enctype="multipart/form-data" class="card-body p-4">
+                        {% csrf_token %}
+                        
+                        <h5 class="text-center mb-4 text-primary">{{ lop_hoc.ten_lop }}</h5>
+                        
+                        <div class="alert alert-info mb-4">
+                            <i class="feather-user"></i> Xin chào <strong>{{ sinh_vien.ho_ten }} ({{ sinh_vien.mssv }})</strong>.<br>
+                            Hệ thống đã nhận diện được tài khoản của bạn. Vui lòng tải lên minh chứng để hoàn tất.
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label class="form-label font-weight-bold">Tải lên ảnh minh chứng (Biên lai đóng học phí / Chuyển khoản):</label>
+                            <input type="file" name="file_minh_chung" class="form-control form-control-lg" accept="image/*,.pdf" required>
+                            <small class="text-muted">Chấp nhận định dạng: JPG, PNG, PDF.</small>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'danh_sach_lop' %}" class="btn btn-secondary">Quay lại</a>
+                            <button type="submit" class="btn btn-success"><i class="feather-upload"></i> Nộp phiếu đăng ký</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
