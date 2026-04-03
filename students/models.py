@@ -14,6 +14,10 @@ class SinhVien(models.Model):
     lop = models.CharField('Lớp', max_length=50, null=True, blank=True)
     email_truong = models.EmailField('Email trường', unique=True, null=True, blank=True)
 
+    anh_dai_dien = models.ImageField('Ảnh đại diện', upload_to='profile_pics/', null=True, blank=True)
+    so_dien_thoai = models.CharField('Số điện thoại', max_length=15, null=True, blank=True)
+    email_ca_nhan = models.EmailField('Email cá nhân', null=True, blank=True)
+
     class Meta:
         verbose_name = 'Sinh Viên'
         verbose_name_plural = 'Danh Sách Sinh Viên'

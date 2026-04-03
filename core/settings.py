@@ -69,6 +69,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'cms.context_processors.navbar_categories',
+
+                'students.context_processors.sinh_vien_global',
             ],
         },
     },
@@ -155,3 +158,11 @@ CKEDITOR_CONFIGS = {
         'width': '100%',
     },
 }
+
+STATIC_URL = '/static/'
+# Cấu hình file tĩnh (nếu bạn có)
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
+
+# CẤU HÌNH MEDIA (Chép y nguyên 2 dòng này)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

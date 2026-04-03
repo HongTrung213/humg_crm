@@ -2,63 +2,87 @@
 {% load static %}
 
 {% block content %}
-<div class="breadcrumb-bar">
+<div class="breadcrumb-bar bg-primary py-3">
     <div class="container">
-        <h4 class="text-white">{% if category %}{{ category.name }}{% else %}Tin tức & Thông báo{% endif %}</h4>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/" class="text-white text-decoration-none"><i class="feather-home"></i> Trang chủ</a></li>
+                <li class="breadcrumb-item active text-white-50" aria-current="page">{% if category %}{{ category.name }}{% else %}Tin tức & Thông báo{% endif %}</li>
+            </ol>
+        </nav>
     </div>
 </div>
 
-<section class="course-content">
+<section class="course-content mt-4 mb-5">
     <div class="container">
         <div class="row">
+            
             <div class="col-lg-9 col-md-12">
+                <h4 class="fw-bold mb-4 border-bottom pb-2 text-dark">{% if category %}{{ category.name }}{% else %}Tin tức & Thông báo{% endif %}</h4>
                 <div class="row">
                     {% for post in posts %}
-                    <div class="col-lg-6 col-md-6 d-flex">
-                        <div class="blog-grid shadow-sm w-100">
+                    <div class="col-lg-6 col-md-6 d-flex mb-4">
+                        <div class="blog-grid shadow-sm w-100 rounded overflow-hidden border-0">
                             <div class="blog-image">
                                 <a href="{% url 'cms:post_detail' post.slug %}">
                                     {% if post.image %}
-                                        <img class="img-fluid" src="{{ post.image.url }}" alt="{{ post.title }}" style="height: 200px; object-fit: cover; width: 100%;">
+                                        <img class="img-fluid w-100" src="{{ post.image.url }}" alt="{{ post.title }}" style="height: 220px; object-fit: cover;">
                                     {% else %}
-                                        <img class="img-fluid" src="{% static 'img/blog/blog-01.jpg' %}" alt="Placeholder">
+                                        <div class="bg-secondary text-white d-flex align-items-center justify-content-center w-100" style="height: 220px;"><i class="feather-image" style="font-size: 3rem;"></i></div>
                                     {% endif %}
                                 </a>
                             </div>
-                            <div class="blog-grid-content">
-                                <div class="blog-category">
-                                    <a href="{% url 'cms:post_list_by_category' post.category.slug %}"><span>{{ post.category.name }}</span></a>
+                            <div class="blog-grid-content p-3 bg-white">
+                                <div class="blog-category mb-2">
+                                    <a href="{% url 'cms:post_list_by_category' post.category.slug %}"><span class="badge bg-primary">{{ post.category.name }}</span></a>
                                 </div>
-                                <h3 class="title"><a href="{% url 'cms:post_detail' post.slug %}">{{ post.title }}</a></h3>
-                                <p class="mb-3">{{ post.summary|truncatechars:100 }}</p>
-                                <div class="blog-info d-flex align-items-center">
-                                    <div class="post-date"><i class="feather-calendar"></i> {{ post.created_at|date:"d/m/Y" }}</div>
+                                <h5 class="title fw-bold mb-2">
+                                    <a href="{% url 'cms:post_detail' post.slug %}" class="text-dark">{{ post.title }}</a>
+                                </h5>
+                                <p class="text-muted small mb-3">{{ post.summary|truncatechars:100 }}</p>
+                                <div class="blog-info text-muted small mt-auto border-top pt-2">
+                                    <i class="feather-calendar me-1"></i> {{ post.created_at|date:"d/m/Y" }}
                                 </div>
                             </div>
                         </div>
                     </div>
                     {% empty %}
-                    <div class="col-12"><div class="alert alert-info">Chưa có bài viết nào trong mục này.</div></div>
+                    <div class="col-12"><div class="alert alert-info text-center py-4 shadow-sm">Chưa có bài viết nào trong mục này.</div></div>
                     {% endfor %}
                 </div>
             </div>
-
-            <div class="col-lg-3 col-md-12 sidebar-right theiaStickySidebar">
-                <div class="card category-widget blog-widget shadow-sm">
-                    <div class="card-header border-bottom">
-                        <h4 class="card-title">Danh mục</h4>
+            
+            <div class="col-lg-3 col-md-12 sidebar-right sticky-top" style="top: 100px; z-index: 1;">
+                <div class="card category-widget border-0 shadow-sm rounded-3">
+                    <div class="card-header bg-primary text-white border-0 rounded-top-3">
+                        <h5 class="card-title mb-0 fw-bold"><i class="feather-link me-2"></i>Liên kết nhanh</h5>
                     </div>
-                    <div class="card-body">
-                        <ul class="categories">
-                            <li><a href="{% url 'cms:post_list' %}"><i class="feather-chevron-right"></i> Tất cả</a></li>
-                            {% for cat in categories %}
-                            <li><a href="{% url 'cms:post_list_by_category' cat.slug %}"><i class="feather-chevron-right"></i> {{ cat.name }} </a></li>
+                    <div class="card-body p-3 bg-light rounded-bottom-3">
+                        <div class="d-flex flex-column gap-3">
+                            {% for link in quick_links %}
+                            <a href="{{ link.url }}" target="_blank" class="quick-link-banner d-block shadow-sm rounded border overflow-hidden bg-white text-decoration-none">
+                                {% if link.image %}
+                                    <img src="{{ link.image.url }}" alt="{{ link.title }}" class="img-fluid w-100" style="object-fit: cover;">
+                                {% else %}
+                                    <div class="p-3 text-center d-flex align-items-center justify-content-center" style="min-height: 70px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                        <span class="fw-bold text-primary small text-uppercase">{{ link.title }}</span>
+                                    </div>
+                                {% endif %}
+                            </a>
+                            {% empty %}
+                                <p class="text-muted small text-center mb-0">Đang cập nhật...</p>
                             {% endfor %}
-                        </ul>
+                        </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </section>
+
+<style>
+    .quick-link-banner { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease; }
+    .quick-link-banner:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important; border-color: #0d6efd !important; }
+</style>
 {% endblock %}

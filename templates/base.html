@@ -1,11 +1,10 @@
 {% load static %}
 <!DOCTYPE html> 
-<html lang="en">
+<html lang="vi">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-        <title>Hệ thống quản lý và chăm sóc sinh viên trường Đại học Mỏ- Địa chất về chuẩn ngoại ngữ và công nghệ thông tin</title>
-        
+        <title>Hệ thống quản lý và chăm sóc sinh viên - HUMG</title>
         <link rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon.svg' %}">
         <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
         <link rel="stylesheet" href="{% static 'plugins/fontawesome/css/fontawesome.min.css' %}">
@@ -16,7 +15,6 @@
         <link rel="stylesheet" href="{% static 'css/style.css' %}">
     </head>
     <body>
-
         <div class="main-wrapper">
         
             <header class="header header-page">
@@ -26,18 +24,16 @@
                             
                             <div class="navbar-header">
                                 <a id="mobile_btn" href="javascript:void(0);">
-                                    <span class="bar-icon">
-                                        <span></span><span></span><span></span>
-                                    </span>
+                                    <span class="bar-icon"><span></span><span></span><span></span></span>
                                 </a>
-                                <a href="/" class="navbar-brand logo">
+                                <a href="{% url 'home' %}" class="navbar-brand logo">
                                     <img src="{% static 'img/logo.svg' %}" class="img-fluid" alt="Logo">
                                 </a>
                             </div>
                             
                             <div class="main-menu-wrapper">
                                 <div class="menu-header">
-                                    <a href="/" class="menu-logo">
+                                    <a href="{% url 'home' %}" class="menu-logo">
                                         <img src="{% static 'img/logo.svg' %}" class="img-fluid" alt="Logo">
                                     </a>
                                     <a id="menu_close" class="menu-close" href="javascript:void(0);">
@@ -45,10 +41,13 @@
                                     </a>
                                 </div>
                                 <ul class="main-nav">
-                                    <li><a href="/">Trang chủ</a></li>
-                                    <li><a href="{% url 'tra_cuu' %}">Tra cứu Kết quả</a></li>
+                                    <li><a href="{% url 'home' %}">Trang chủ</a></li>
+                                    {% for cat in nav_categories %}
+                                        <li><a href="{% url 'cms:post_list_by_category' cat.slug %}">{{ cat.name }}</a></li>
+                                    {% endfor %}
                                     <li><a href="{% url 'danh_sach_lop' %}">Đăng ký Lớp bồi dưỡng</a></li>
-                                </ul>        
+                                    <li><a href="{% url 'tra_cuu' %}">Tra cứu Kết quả</a></li>
+                                </ul>      
                             </div>       
                             
                             <ul class="nav header-navbar-rht">
@@ -56,23 +55,30 @@
                                     <li class="nav-item user-nav">
                                         <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
                                             <span class="user-img">
-                                                <img src="{% static 'img/user/user11.jpg' %}" alt="">
+                                                {% if sinh_vien_global.anh_dai_dien %}
+                                                    <img src="{{ sinh_vien_global.anh_dai_dien.url }}" alt="Avatar" style="object-fit: cover;">
+                                                {% else %}
+                                                    <img src="{% static 'img/user/user11.jpg' %}" alt="Avatar">
+                                                {% endif %}
                                                 <span class="status online"></span>
                                             </span>
                                         </a>
                                         <div class="users dropdown-menu dropdown-menu-right" data-popper-placement="bottom-end">
                                             <div class="user-header">
                                                 <div class="avatar avatar-sm">
-                                                    <img src="{% static 'img/user/user11.jpg' %}" alt="User Image" class="avatar-img rounded-circle">
+                                                    {% if sinh_vien_global.anh_dai_dien %}
+                                                        <img src="{{ sinh_vien_global.anh_dai_dien.url }}" alt="Avatar" class="avatar-img rounded-circle" style="object-fit: cover;">
+                                                    {% else %}
+                                                        <img src="{% static 'img/user/user11.jpg' %}" alt="Avatar" class="avatar-img rounded-circle">
+                                                    {% endif %}
                                                 </div>
                                                 <div class="user-text">
-                                                    <h6>{{ request.user.first_name|default:request.user.username }}</h6>
+                                                    <h6>{{ sinh_vien_global.ho_ten|default:request.user.username }}</h6>
                                                     <p class="text-muted mb-0">Sinh viên</p>
                                                 </div>
                                             </div>
-                                            <a class="dropdown-item" href="{% url 'dang_xuat' %}">
-                                                <i class="feather-log-out me-1"></i> Đăng xuất
-                                            </a>
+                                            <a class="dropdown-item" href="{% url 'dashboard' %}"><i class="feather-user me-1"></i> Trang cá nhân</a>
+                                            <a class="dropdown-item" href="{% url 'dang_xuat' %}"><i class="feather-log-out me-1"></i> Đăng xuất</a>
                                         </div>
                                     </li>
                                 {% else %}
@@ -83,13 +89,23 @@
                                     </li>
                                 {% endif %}
                             </ul>
-                            
                         </div>
                     </nav>
                 </div>
             </header>
-            {% block content %}
-            {% endblock %}
+
+            {% if messages %}
+            <div class="container mt-4">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+                        <i class="feather-info me-2"></i> {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
 
             <footer class="footer">
                 <div class="footer-top">
@@ -97,15 +113,10 @@
                         <div class="row">
                             <div class="col-lg-6 col-md-6">
                                 <div class="footer-widget footer-about">
-                                    <div class="footer-logo">
-                                        <img src="{% static 'img/logo.svg' %}" alt="logo">
-                                    </div>
-                                    <div class="footer-about-content">
-                                        <p>Hệ thống quản lý và chăm sóc sinh viên trường Đại học Mỏ- Địa chất về chuẩn ngoại ngữ và công nghệ thông tin.</p>
-                                    </div>
+                                    <div class="footer-logo"><img src="{% static 'img/logo.svg' %}" alt="logo"></div>
+                                    <div class="footer-about-content"><p>Hệ thống quản lý và chăm sóc sinh viên trường Đại học Mỏ - Địa chất về chuẩn ngoại ngữ và công nghệ thông tin.</p></div>
                                 </div>
                             </div>
-                            
                             <div class="col-lg-6 col-md-6">
                                 <div class="footer-widget footer-contact">
                                     <h2 class="footer-title">Thông tin liên hệ</h2>
@@ -114,44 +125,30 @@
                                             <img src="{% static 'img/icon/icon-20.svg' %}" alt="" class="img-fluid">
                                             <p>Số 18 Phố Viên, phường Đức Thắng<br> quận Bắc Từ Liêm, Hà Nội</p>
                                         </div>
-                                        <p>
-                                            <img src="{% static 'img/icon/icon-19.svg' %}" alt="" class="img-fluid">
-                                            daotao@humg.edu.vn
-                                        </p>
-                                        <p class="mb-0">
-                                            <img src="{% static 'img/icon/icon-21.svg' %}" alt="" class="img-fluid">
-                                            (+84) 24 3838 9633
-                                        </p>
+                                        <p><img src="{% static 'img/icon/icon-19.svg' %}" alt="" class="img-fluid"> daotao@humg.edu.vn</p>
+                                        <p class="mb-0"><img src="{% static 'img/icon/icon-21.svg' %}" alt="" class="img-fluid"> (+84) 24 3838 9633</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
                 <div class="footer-bottom">
                     <div class="container">
                         <div class="copyright">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="privacy-policy">
-                                        <ul>
-                                            <li><a href="#">Quy chế Đào tạo</a></li>
-                                            <li><a href="#">Bảo mật thông tin</a></li>
-                                        </ul>
-                                    </div>
+                                    <div class="privacy-policy"><ul><li><a href="#">Quy chế Đào tạo</a></li><li><a href="#">Bảo mật thông tin</a></li></ul></div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="copyright-text">
-                                        <p class="mb-0">&copy; 2026 HUMG. All rights reserved.</p>
-                                    </div>
+                                    <div class="copyright-text"><p class="mb-0">&copy; 2026 HUMG. All rights reserved.</p></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </footer>
-            </div>
+        </div>
 
         <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
         <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
@@ -159,6 +156,5 @@
         <script src="{% static 'js/ckeditor.js' %}"></script>
         <script src="{% static 'plugins/bootstrap-tagsinput/js/bootstrap-tagsinput.js' %}"></script>
         <script src="{% static 'js/script.js' %}"></script>
-        
     </body>
 </html>

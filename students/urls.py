@@ -2,13 +2,15 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Các đường dẫn cũ
-    path('import-excel/', views.import_sinh_vien, name='import_excel'), # (Nếu có)
+    path('', views.home, name='home'),
     path('tra-cuu/', views.tra_cuu, name='tra_cuu'),
-    path('lop-boi-duong/', views.danh_sach_lop, name='danh_sach_lop'),
-    path('dang-ky-lop/<int:class_id>/', views.dang_ky_lop, name='dang_ky_lop'),
-    
-    # 2 ĐƯỜNG DẪN MỚI CẦN BỔ SUNG ĐỂ SỬA LỖI
     path('dang-nhap/', views.dang_nhap, name='dang_nhap'),
     path('dang-xuat/', views.dang_xuat, name='dang_xuat'),
+    
+    # ĐÂY LÀ DÒNG QUAN TRỌNG ĐỂ CÁC NÚT BẤM HOẠT ĐỘNG:
+    path('dang-ky-lop/', views.danh_sach_lop, name='danh_sach_lop'), 
+    
+    path('import-sinh-vien/', views.import_sinh_vien, name='import_sinh_vien'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('cap-nhat-ho-so/', views.cap_nhat_ho_so, name='cap_nhat_ho_so'),
 ]
