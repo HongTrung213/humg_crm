@@ -11,20 +11,29 @@
                         <div class="mb-2">
                             <i class="feather-user-check text-white" style="font-size: 3rem;"></i>
                         </div>
-                        <h4 class="text-white mb-0 fw-bold">Đăng Nhập Sinh Viên</h4>
-                        <p class="text-white-50 mb-0 small">Cổng thông tin Chuẩn đầu ra HUMG</p>
+                        <h4 class="text-white mb-0 fw-bold">CỔNG TRA CỨU HUMG</h4>
+                        <p class="text-white-50 mb-0 small">Hệ thống chuẩn đầu ra & Chứng chỉ</p>
                     </div>
                     
                     <div class="card-body p-4 p-md-5">
                         
+                        <a href="{% url 'social:begin' 'microsoft-graph' %}" class="btn btn-primary w-100 py-3 fw-bold text-uppercase mb-4 shadow-sm" style="letter-spacing: 1px; border-radius: 8px;">
+                            <i class="fab fa-microsoft me-2"></i> Đăng nhập bằng Email Trường
+                        </a>
+
+                        <div class="d-flex align-items-center mb-4">
+                            <hr class="flex-grow-1">
+                            <span class="mx-3 text-muted small fw-bold">HOẶC DÀNH CHO THÍ SINH TỰ DO</span>
+                            <hr class="flex-grow-1">
+                        </div>
+
                         <form method="POST" action="{% url 'dang_nhap' %}">
                             {% csrf_token %}
-                            
-                            <div class="mb-4">
-                                <label class="form-label fw-bold text-dark">Mã số Sinh viên (MSSV)</label>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-dark">Tài khoản (MSSV / CCCD)</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-white border-end-0 text-muted"><i class="feather-user"></i></span>
-                                    <input type="text" class="form-control border-start-0 ps-0" name="mssv" placeholder="Nhập MSSV của bạn" required autofocus>
+                                    <input type="text" class="form-control border-start-0 ps-0" name="mssv" placeholder="Nhập tài khoản" required>
                                 </div>
                             </div>
                             
@@ -34,19 +43,13 @@
                                     <span class="input-group-text bg-white border-end-0 text-muted"><i class="feather-lock"></i></span>
                                     <input type="password" class="form-control border-start-0 ps-0" name="password" placeholder="Nhập mật khẩu" required>
                                 </div>
-                                <div class="form-text mt-2 small text-muted">
-                                    <i class="feather-info text-info"></i> Mật khẩu mặc định là <strong>cfihumg</strong>
-                                </div>
                             </div>
 
-                            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold text-uppercase" style="letter-spacing: 1px;">
-                                Đăng Nhập
+                            <button type="submit" class="btn btn-outline-primary w-100 py-2 fw-bold text-uppercase" style="letter-spacing: 1px; border-radius: 8px;">
+                                Đăng Nhập Hệ Thống
                             </button>
                         </form>
                         
-                        <div class="text-center mt-4">
-                            <p class="small text-muted mb-0">Chưa có tài khoản? Vui lòng liên hệ Admin.</p>
-                        </div>
                     </div>
                 </div>
             </div>

@@ -1,0 +1,38 @@
+- var theme_customizer      = true;
+- var sidebar               = true;
+- var slick                 = true;
+- var header_slider         = true;
+- var animate               = true;
+- var scrollbar             = true;
+include ../../components/mixin
+
+doctype html
+html(lang='en')
+  include ../../components/header-files
+  body
+    include ../../components/loader
+    include ../../components/taptop
+    // page-wrapper Start
+    #pageWrapper.page-wrapper.compact-wrapper
+      .page-header.row
+        +breadcrumb(['Pages','Sample Page'],'Sample Page')
+        include ../../components/header
+      // Page Body Start
+      .page-body-wrapper
+        include ../../components/sidebar
+        .page-body
+          // Container-fluid starts
+          .container-fluid
+            .row
+              .col-sm-12
+                .card
+                  .card-header
+                    h4 Sample Card
+                    span lorem ipsum dolor sit amet, consectetur adipisicing elit
+                  .card-body
+                    p
+                      | "Sample-page" is a generic term used to refer to a basic, placeholder, or example page that developers or designers use as a starting point for building or testing a website or application. It is not an official or standard term but rather a descriptive name commonly used in web development and design contexts A sample page typically contains basic elements like headings, paragraphs, images, buttons, and links. It may also include placeholder text or images to represent content that will be replaced with actual content in the final version.
+
+          // Container-fluid Ends
+        include ../../components/footer
+    include ../../components/footer-files

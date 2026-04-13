@@ -1,0 +1,29 @@
+﻿.img-fluid {
+/*max-height: 75px;*/
+height: 65px;
+}
+
+.page-wrapper .page-header {
+padding-top: 0px;
+padding-bottom: 0px;
+}
+
+.page-wrapper.horizontal-wrapper .page-body-wrapper .sidebar-wrapper {
+/*top: 115px;*/
+}
+
+.page-wrapper .page-header .header-wrapper {
+padding-top: 15px;
+padding-bottom: 15px;
+}
+
+.page-wrapper.horizontal-wrapper .header-logo-wrapper {
+width: 88px;
+}
+
+.page-wrapper.horizontal-wrapper .page-body-wrapper .sidebar-wrapper .sidebar-main .sidebar-links .simplebar-wrapper .simplebar-mask .simplebar-content-wrapper .simplebar-content > li > a {
+font-size: 14px;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0px;
+}

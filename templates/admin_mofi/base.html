@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Hệ thống Quản lý và Chăm sóc Sinh viên HUMG CRM.">
+    <link rel="icon" href="{% static 'mofi/images/favicon.png' %}" type="image/x-icon">
+    <link rel="shortcut icon" href="{% static 'mofi/images/favicon.png' %}" type="image/x-icon">
+    <title>{% block title %}HUMG CRM - Bảng điều khiển Quản trị{% endblock %}</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" type="text/css" href="{% static 'mofi/css/font-awesome.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'mofi/css/vendors/icofont.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'mofi/css/vendors/themify.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'mofi/css/vendors/flag-icon.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'mofi/css/vendors/feather-icon.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'mofi/css/vendors/scrollbar.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'mofi/css/vendors/animate.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'mofi/css/vendors/bootstrap.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'mofi/css/style.css' %}">
+    <link id="color" rel="stylesheet" href="{% static 'mofi/css/color-1.css' %}" media="screen">
+    <link rel="stylesheet" type="text/css" href="{% static 'mofi/css/responsive.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body> 
+    <div class="loader-wrapper"> 
+      <div class="loader loader-1">
+        <div class="loader-outter"></div>
+        <div class="loader-inner"></div>
+        <div class="loader-inner-1"></div>
+      </div>
+    </div>
+    
+    <div class="tap-top"><i data-feather="chevrons-up"></i></div>
+    
+    <div class="page-wrapper compact-wrapper" id="pageWrapper">
+      
+      {% include 'admin_mofi/partials/_navbar.html' %}
+      
+      <div class="page-body-wrapper">
+        
+        {% include 'admin_mofi/partials/_sidebar.html' %}
+        
+        <div class="page-body">
+          {% block content %}
+          {% endblock %}
+        </div>
+        
+        {% include 'admin_mofi/partials/_footer.html' %}
+        
+      </div>
+    </div>
+
+    <script src="{% static 'mofi/js/jquery.min.js' %}"></script>
+    <script src="{% static 'mofi/js/bootstrap/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'mofi/js/icons/feather-icon/feather.min.js' %}"></script>
+    <script src="{% static 'mofi/js/icons/feather-icon/feather-icon.js' %}"></script>
+    <script src="{% static 'mofi/js/scrollbar/simplebar.js' %}"></script>
+    <script src="{% static 'mofi/js/scrollbar/custom.js' %}"></script>
+    <script src="{% static 'mofi/js/config.js' %}"></script>
+    <script src="{% static 'mofi/js/sidebar-menu.js' %}"></script>
+    <script src="{% static 'mofi/js/sidebar-pin.js' %}"></script>
+    <script src="{% static 'mofi/js/script.js' %}"></script>
+
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

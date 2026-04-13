@@ -1,0 +1,154 @@
+{% extends 'admin_mofi/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Quản trị | HUMG CRM{% endblock %}
+{% block page_title %}Tổng Quan Hệ Thống{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xl-3 col-sm-6">
+      <div class="card widget-1">
+        <div class="card-body">
+          <div class="widget-content">
+            <div class="widget-round secondary">
+              <div class="bg-round">
+                <svg class="svg-fill"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-user"></use></svg>
+              </div>
+            </div>
+            <div> 
+              <h4>{{ total_students|default:"0" }}</h4><span class="f-light">Tổng Sinh Viên</span>
+            </div>
+          </div>
+          <div class="font-secondary f-w-500"><i class="icon-arrow-up icon-rotate me-1"></i><span>Live</span></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-sm-6">
+      <div class="card widget-1">
+        <div class="card-body">
+          <div class="widget-content">
+            <div class="widget-round primary">
+              <div class="bg-round">
+                <svg class="svg-fill"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-learning"></use></svg>
+              </div>
+            </div>
+            <div> 
+              <h4>{{ active_classes|default:"0" }}</h4><span class="f-light">Lớp Đang Mở</span>
+            </div>
+          </div>
+          <div class="font-primary f-w-500"><i class="icon-arrow-up icon-rotate me-1"></i><span>Live</span></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-sm-6">
+      <div class="card widget-1">
+        <div class="card-body">
+          <div class="widget-content">
+            <div class="widget-round success">
+              <div class="bg-round">
+                <svg class="svg-fill"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-task"></use></svg>
+              </div>
+            </div>
+            <div> 
+              <h4>{{ pending_registrations|default:"0" }}</h4><span class="f-light">Lượt Đăng Ký</span>
+            </div>
+          </div>
+          <div class="font-success f-w-500"><i class="icon-arrow-down icon-rotate me-1"></i><span>Live</span></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-sm-6">
+      <div class="card widget-1">
+        <div class="card-body">
+          <div class="widget-content">
+            <div class="widget-round info">
+              <div class="bg-round">
+                <svg class="svg-fill"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-file"></use></svg>
+              </div>
+            </div>
+            <div> 
+              <h4>{{ certificates_issued|default:"0" }}</h4><span class="f-light">Bản Ghi Điểm</span>
+            </div>
+          </div>
+          <div class="font-info f-w-500"><i class="icon-arrow-up icon-rotate me-1"></i><span>Live</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xl-8 col-md-12">
+      <div class="card">
+        <div class="card-header pb-0">
+          <h4>Hoạt Động Đăng Ký Gần Đây</h4>
+        </div>
+        <div class="card-body pb-0">
+          <div class="table-responsive">
+            <table class="table table-bordernone">
+              <thead>
+                <tr>
+                  <th>Sinh Viên</th>
+                  <th>Ngày Đăng Ký</th>
+                  <th>Lớp Học</th>
+                  <th>Trạng Thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for dk in recent_activities %}
+                <tr>
+                  <td class="fw-bold">{{ dk.sinh_vien.ho_ten }}</td>
+                  <td class="f-light">{{ dk.thoi_gian_dk|date:"d/m/Y H:i" }}</td>
+                  <td class="f-light">{{ dk.lop_hoc.ten_lop }}</td>
+                  <td> 
+                    <span class="badge badge-light-primary">Mới đăng ký</span>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-4">
+                    <i class="fa fa-folder-open-o fs-3 mb-2 d-block"></i>
+                    Chưa có hoạt động đăng ký nào trên hệ thống.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-4 col-md-12">
+      <div class="card">
+        <div class="card-header pb-0">
+          <h4>Thông Báo Quản Trị</h4>
+        </div>
+        <div class="card-body">
+          <div class="notification-box">
+            <ul>
+              <li class="d-flex align-items-center">
+                <div class="activity-dot-primary"></div>
+                <div class="ms-3">
+                  <p class="mb-0">Dữ liệu Dashboard đang được đồng bộ trực tiếp từ Database.</p>
+                  <span class="f-light f-12">Vừa xong</span>
+                </div>
+              </li>
+              <li class="d-flex align-items-center mt-3">
+                <div class="activity-dot-secondary"></div>
+                <div class="ms-3">
+                  <p class="mb-0">Hệ thống sẵn sàng import file Excel sinh viên.</p>
+                  <span class="f-light f-12">Hệ thống</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
