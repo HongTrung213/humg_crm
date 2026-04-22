@@ -1,0 +1,106 @@
+{% extends 'admin_mofi/base.html' %}
+{% load static %}
+
+{% block title %}Danh sách Sinh viên | HUMG CRM{% endblock %}
+{% block page_title %}Quản lý Hồ sơ Sinh Viên{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="card shadow-sm border-0">
+    <div class="card-header pb-0 d-flex justify-content-between align-items-center bg-white border-bottom-0">
+      <div>
+        <h4 class="mb-0"><i class="fa fa-users text-primary me-2"></i> Danh sách Sinh viên</h4>
+        <p class="text-muted f-12 mt-1">Quản lý hồ sơ và theo dõi tiến độ chuẩn đầu ra</p>
+      </div>
+      <div class="btn-group">
+        <a href="{% url 'students:import_sinh_vien' %}" class="btn btn-outline-success"><i class="fa fa-file-excel-o"></i> Nhập từ Excel</a>
+        <a href="{% url 'students:student_add' %}" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm thủ công</a>
+      </div>
+    </div>
+    
+    <div class="card-body">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <div class="table-responsive">
+        <table class="display table table-striped table-hover align-middle" id="basic-1">
+          <thead class="table-primary">
+            <tr>
+              <th>Sinh viên</th>
+              <th>Lớp</th>
+              <th>Liên hệ</th>
+              <th class="text-center">CĐR Ngoại Ngữ</th>
+              <th class="text-center">CĐR Tin Học</th>
+              <th class="text-center">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sv in sinhviens %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <img class="img-40 rounded-circle me-3 shadow-sm" src="{% if sv.anh_dai_dien %}{{ sv.anh_dai_dien.url }}{% else %}{% static 'mofi/images/user/7.jpg' %}{% endif %}" alt="Avatar" style="object-fit: cover;">
+                  <div>
+                    <h6 class="mb-0 fw-bold">{{ sv.ho_ten }}</h6>
+                    <span class="text-primary f-12 fw-bold">{{ sv.mssv }}</span>
+                  </div>
+                </div>
+              </td>
+              
+              <td><span class="badge badge-light-secondary text-dark">{{ sv.lop|default:"Chưa cập nhật" }}</span></td>
+              
+              <td class="f-12 text-muted">
+                {{ sv.email_truong|default:"-" }}
+              </td>
+              
+              <td class="text-center">
+                {% if sv.check_dat_ngoai_ngu %}
+                  <i class="fa fa-check-circle text-success fs-5" title="Đã đạt chuẩn Ngoại Ngữ"></i>
+                {% else %}
+                  <i class="fa fa-times-circle text-danger fs-5 opacity-50" title="Chưa đạt"></i>
+                {% endif %}
+              </td>
+
+              <td class="text-center">
+                {% if sv.check_dat_tin_hoc %}
+                  <i class="fa fa-check-circle text-success fs-5" title="Đã đạt chuẩn Tin Học"></i>
+                {% else %}
+                  <i class="fa fa-times-circle text-danger fs-5 opacity-50" title="Chưa đạt"></i>
+                {% endif %}
+              </td>
+              
+              <td class="text-center">
+                <div class="btn-group">
+                  <a href="{% url 'students:student_detail' sv.id %}" class="btn btn-outline-info btn-sm" title="Xem hồ sơ chi tiết"><i class="fa fa-eye"></i></a>
+                  <a href="{% url 'students:student_edit' sv.id %}" class="btn btn-outline-warning btn-sm" title="Cập nhật"><i class="fa fa-pencil"></i></a>
+                  <a href="{% url 'students:student_delete' sv.id %}" class="btn btn-outline-danger btn-sm" title="Xóa" onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ này? Toàn bộ chứng chỉ và điểm thi liên quan sẽ bị xóa theo.');"><i class="fa fa-trash"></i></a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Tối ưu hiển thị nút bấm trong bảng */
+  table.dataTable tbody td { vertical-align: middle; }
+  .btn-group .btn { padding: 0.25rem 0.5rem; }
+  .opacity-50 { opacity: 0.5; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'mofi/js/datatable/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'mofi/js/datatable/datatables/datatable.custom.js' %}"></script>
+{% endblock %}

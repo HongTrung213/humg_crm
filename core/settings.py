@@ -150,5 +150,5 @@ SOCIAL_AUTH_MICROSOFT_GRAPH_KEY = 'ĐIỀN_CLIENT_ID_CỦA_BẠN_VÀO_ĐÂY'
 SOCIAL_AUTH_MICROSOFT_GRAPH_SECRET = 'ĐIỀN_SECRET_KEY_CỦA_BẠN_VÀO_ĐÂY'
 SOCIAL_AUTH_MICROSOFT_GRAPH_WHITELISTED_DOMAINS = ['student.humg.edu.vn', 'humg.edu.vn']
 
-LOGIN_URL = 'dang_nhap'
-LOGIN_REDIRECT_URL = 'dashboard'
+LOGIN_URL = 'students:dang_nhap'
+LOGIN_REDIRECT_URL = 'students:dashboard'

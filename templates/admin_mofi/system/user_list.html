@@ -1,0 +1,52 @@
+{% extends 'admin_mofi/base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="page-title">
+    <div class="row">
+      <div class="col-6"><h4>Tài khoản Cán bộ</h4></div>
+      <div class="col-6 text-end">
+        <a href="{% url 'students:mofi_user_add' %}" class="btn btn-primary"><i class="fa fa-user-plus"></i> Cấp tài khoản mới</a>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-responsive p-3">
+      <table class="table table-hover">
+        <thead class="bg-light">
+          <tr>
+            <th>Tên đăng nhập</th>
+            <th>Họ Tên</th>
+            <th>Email</th>
+            <th>Vai trò (Nhóm)</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td class="fw-bold text-primary">{{ u.username }}</td>
+            <td>{{ u.last_name }} {{ u.first_name }}</td>
+            <td>{{ u.email }}</td>
+            <td>
+              {% for group in u.groups.all %}
+                <span class="badge badge-light-secondary text-dark">{{ group.name }}</span>
+              {% empty %}
+                <span class="text-muted f-12">Chưa phân quyền</span>
+              {% endfor %}
+            </td>
+            <td>
+              {% if u.is_active %}<span class="badge badge-success">Hoạt động</span>
+              {% else %}<span class="badge badge-danger">Đã khóa</span>{% endif %}
+            </td>
+            <td>
+              <a href="{% url 'students:mofi_user_edit' u.pk %}" class="btn btn-warning btn-xs"><i class="fa fa-edit"></i></a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

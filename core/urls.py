@@ -3,25 +3,23 @@ URL configuration for core project.
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
-    # Đường dẫn quản trị của Cán bộ
+    # Đường dẫn quản trị mặc định của Django
     path('admin/', admin.site.urls),
     
-    # Đường dẫn ứng dụng Tin tức (CMS)
+    # CMS (Tin tức)
     path('tin-tuc/', include('cms.urls')),
     
-    # Đẩy toàn bộ các đường dẫn của ứng dụng Sinh viên (bao gồm cả Trang chủ) ra thư mục gốc
-    path('', include('students.urls')),
-    path('oauth/', include('social_django.urls', namespace='social')), # Bổ sung dòng này
-    path('admin/', admin.site.urls),           # Đây là admin mặc định của Django
+    # SSO Microsoft (Đăng nhập bằng Email trường)
+    path('oauth/', include('social_django.urls', namespace='social')),
+    
+    # Students (Bao gồm Trang chủ và Admin Mofi) - Đặt dưới cùng
     path('', include('students.urls')),
 ]
 
-from django.conf import settings             # THÊM DÒNG NÀY
-from django.conf.urls.static import static   # THÊM DÒNG NÀY
-
-# THÊM ĐOẠN NÀY VÀO DƯỚI CÙNG ĐỂ HIỂN THỊ ẢNH
+# Cấu hình phục vụ file Media (Ảnh, tài liệu) trong môi trường Development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

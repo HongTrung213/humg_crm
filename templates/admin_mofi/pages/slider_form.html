@@ -1,0 +1,42 @@
+{% extends 'admin_mofi/base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="page-title">
+        <h4>{% if instance %}Sửa Slider{% else %}Thêm Slider mới{% endif %}</h4>
+    </div>
+    <div class="card">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tiêu đề (Để quản lý)</label>
+                    {{ form.title }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Hình ảnh (Banner ngang)</label>
+                    {{ form.image }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Đường dẫn khi click (URL)</label>
+                    {{ form.link_url }}
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Thứ tự hiện</label>
+                        {{ form.order }}
+                    </div>
+                    <div class="col-6">
+                        <div class="form-check form-switch mt-4">
+                            {{ form.is_active }}
+                            <label class="form-check-label ms-2">Kích hoạt</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-end">
+                <button class="btn btn-primary" type="submit">Lưu lại</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

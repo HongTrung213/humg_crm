@@ -81,6 +81,61 @@
   </div>
 
   <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header pb-0">
+          <h4 class="mb-0"><i class="fa fa-bar-chart text-primary me-2"></i>Biểu Đồ Tiến Độ Đạt Chuẩn Theo Khoa</h4>
+        </div>
+        <div class="card-body">
+          <div style="height: 400px; width: 100%;">
+            <canvas id="khoaChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+          <h4 class="mb-0"><i class="fa fa-table text-success me-2"></i>Bảng Số Liệu Chi Tiết</h4>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+              <thead class="table-light">
+                <tr class="text-center">
+                  <th class="text-start">Đơn vị (Khoa)</th>
+                  <th width="15%">Tổng số SV</th>
+                  <th width="15%">Đạt CĐR Tin học</th>
+                  <th width="15%">Đạt CĐR Tiếng Anh</th>
+                  <th width="15%">Đạt TA Đầu vào</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for khoa in thong_ke_khoa %}
+                <tr class="text-center">
+                  <td class="text-start fw-bold">{{ khoa.ten_khoa }}</td>
+                  <td class="font-primary fw-bold">{{ khoa.tong_sv }}</td>
+                  <td class="font-success">{{ khoa.dat_cntt }}</td>
+                  <td class="font-info">{{ khoa.dat_nn_ra }}</td>
+                  <td class="font-secondary">{{ khoa.dat_nn_vao }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-4">Chưa có dữ liệu thống kê.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
     <div class="col-xl-8 col-md-12">
       <div class="card">
         <div class="card-header pb-0">
@@ -124,8 +179,9 @@
     
     <div class="col-xl-4 col-md-12">
       <div class="card">
-        <div class="card-header pb-0">
-          <h4>Thông Báo Quản Trị</h4>
+        <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+          <h4 class="mb-0">Thông Báo Quản Trị</h4>
+          <a href="/admin/cms/post/add/" class="btn btn-primary btn-sm"><i class="fa fa-pencil-square-o me-1"></i>Viết bài mới</a>
         </div>
         <div class="card-body">
           <div class="notification-box">
@@ -140,7 +196,7 @@
               <li class="d-flex align-items-center mt-3">
                 <div class="activity-dot-secondary"></div>
                 <div class="ms-3">
-                  <p class="mb-0">Hệ thống sẵn sàng import file Excel sinh viên.</p>
+                  <p class="mb-0">Phân hệ CMS đã tích hợp thành công.</p>
                   <span class="f-light f-12">Hệ thống</span>
                 </div>
               </li>
@@ -151,4 +207,80 @@
     </div>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+      const ctx = document.getElementById('khoaChart').getContext('2d');
+      
+      const labels = [
+          {% for khoa in thong_ke_khoa %}
+              // ĐÃ THÊM escapejs ĐỂ CHỐNG LỖI HIỂN THỊ JS
+              "{{ khoa.ten_khoa|escapejs|truncatechars:25 }}", 
+          {% endfor %}
+      ];
+      
+      const tong_sv = [{% for khoa in thong_ke_khoa %}{{ khoa.tong_sv }},{% endfor %}];
+      const dat_cntt = [{% for khoa in thong_ke_khoa %}{{ khoa.dat_cntt }},{% endfor %}];
+      const dat_nn_ra = [{% for khoa in thong_ke_khoa %}{{ khoa.dat_nn_ra }},{% endfor %}];
+      const dat_nn_vao = [{% for khoa in thong_ke_khoa %}{{ khoa.dat_nn_vao }},{% endfor %}];
+
+      new Chart(ctx, {
+          type: 'bar',
+          data: {
+              labels: labels,
+              datasets: [
+                  {
+                      label: 'Tổng SV',
+                      data: tong_sv,
+                      backgroundColor: 'rgba(200, 200, 200, 0.4)',
+                      borderColor: 'rgba(200, 200, 200, 1)',
+                      borderWidth: 1,
+                      borderRadius: 4
+                  },
+                  {
+                      label: 'Đạt CĐR Tin học',
+                      data: dat_cntt,
+                      backgroundColor: 'rgba(84, 186, 74, 0.7)',
+                      borderColor: 'rgba(84, 186, 74, 1)',
+                      borderWidth: 1,
+                      borderRadius: 4
+                  },
+                  {
+                      label: 'Đạt CĐR Tiếng Anh',
+                      data: dat_nn_ra,
+                      backgroundColor: 'rgba(16, 160, 253, 0.7)',
+                      borderColor: 'rgba(16, 160, 253, 1)',
+                      borderWidth: 1,
+                      borderRadius: 4
+                  },
+                  {
+                      label: 'Đạt TA Đầu vào',
+                      data: dat_nn_vao,
+                      backgroundColor: 'rgba(255, 170, 5, 0.7)',
+                      borderColor: 'rgba(255, 170, 5, 1)',
+                      borderWidth: 1,
+                      borderRadius: 4
+                  }
+              ]
+          },
+          options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                  legend: { position: 'top' },
+                  tooltip: { mode: 'index', intersect: false }
+              },
+              scales: {
+                  x: {
+                      stacked: false,
+                      ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 }
+                  },
+                  y: { stacked: false, beginAtZero: true }
+              },
+              interaction: { mode: 'nearest', axis: 'x', intersect: false }
+          }
+      });
+  });
+</script>
 {% endblock %}

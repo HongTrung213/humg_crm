@@ -1,0 +1,37 @@
+{% extends 'admin_mofi/base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="page-title">
+    <h4>{% if instance %}Cập nhật nhóm: {{ instance.name }}{% else %}Tạo Nhóm quyền mới{% endif %}</h4>
+  </div>
+  <div class="row">
+    <div class="col-xl-8 offset-xl-2">
+      <div class="card">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="card-body">
+            <div class="mb-4">
+              <label class="form-label fw-bold">Tên Nhóm (Role Name) <span class="text-danger">*</span></label>
+              {{ form.name }}
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">Chọn các quyền hạn chi tiết cho nhóm này</label>
+              <div class="border p-3 rounded bg-light" style="max-height: 400px; overflow-y: auto;">
+                <ul class="list-unstyled mb-0">
+                  {{ form.permissions }}
+                </ul>
+              </div>
+              <small class="text-muted mt-2 d-block"><i class="fa fa-info-circle"></i> Tích chọn các quyền mà thành viên thuộc nhóm này được phép thao tác.</small>
+            </div>
+          </div>
+          <div class="card-footer text-end bg-light">
+            <a href="{% url 'students:mofi_group_list' %}" class="btn btn-light me-2">Hủy bỏ</a>
+            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Lưu Nhóm Quyền</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

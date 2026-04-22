@@ -1,0 +1,44 @@
+{% extends 'admin_mofi/base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="page-title">
+    <div class="row">
+      <div class="col-6"><h4>Danh sách Slider</h4></div>
+      <div class="col-6 text-end">
+        <a href="{% url 'cms:mofi_slider_add' %}" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm Slider</a>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="table-responsive p-3">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Ảnh</th>
+            <th>Tiêu đề</th>
+            <th>Thứ tự</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sliders %}
+          <tr>
+            <td><img src="{{ s.image.url }}" style="height: 50px; border-radius: 5px;"></td>
+            <td>{{ s.title }}</td>
+            <td>{{ s.order }}</td>
+            <td>
+              {% if s.is_active %}<span class="badge badge-success">Hiện</span>
+              {% else %}<span class="badge badge-danger">Ẩn</span>{% endif %}
+            </td>
+            <td>
+              <a href="{% url 'cms:mofi_slider_edit' s.pk %}" class="btn btn-warning btn-xs"><i class="fa fa-edit"></i></a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

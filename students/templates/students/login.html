@@ -27,7 +27,7 @@
                             <hr class="flex-grow-1">
                         </div>
 
-                        <form method="POST" action="{% url 'dang_nhap' %}">
+                        <form method="POST" action="{% url 'students:dang_nhap' %}">
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label class="form-label fw-bold text-dark">Tài khoản (MSSV / CCCD)</label>

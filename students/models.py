@@ -1,45 +1,74 @@
 from django.db import models
-from django.db.models import Max
+from django.db.models import Max, Count
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 import pandas as pd
+import os
 
-# --- 1. QUẢN LÝ HỒ SƠ & CHUẨN ĐẦU RA ---
+# ==============================================================================
+# DANH MỤC HỆ THỐNG (MASTER DATA)
+# ==============================================================================
+class Khoa(models.Model):
+    ten_khoa = models.CharField('Tên Khoa/Viện', max_length=200, unique=True)
+    
+    class Meta:
+        verbose_name = 'Danh mục Khoa'
+        verbose_name_plural = '1. Danh mục Khoa/Viện'
 
+    def __str__(self):
+        return self.ten_khoa
+
+class DanhMucChungChi(models.Model):
+    LOAI_CC = [('NGOAI_NGU', 'Ngoại ngữ'), ('TIN_HOC', 'Tin học')]
+    loai = models.CharField('Phân loại', max_length=20, choices=LOAI_CC)
+    ten_chung_chi = models.CharField('Tên chứng chỉ', max_length=150, help_text='VD: TOEIC, IELTS, MOS, IC3...')
+
+    class Meta:
+        verbose_name = 'Loại chứng chỉ'
+        verbose_name_plural = '2. Danh mục Chứng chỉ'
+
+    def __str__(self):
+        return f"[{self.get_loai_display()}] {self.ten_chung_chi}"
+
+
+# ==============================================================================
+# PHÂN HỆ 1: QUẢN LÝ HỒ SƠ SINH VIÊN & CHỨNG CHỈ (CHUẨN ĐẦU RA)
+# ==============================================================================
 class SinhVien(models.Model):
     mssv = models.CharField('Mã Sinh Viên', max_length=15, unique=True)
     ho_ten = models.CharField('Họ và Tên', max_length=100)
-    khoa = models.CharField('Khoa', max_length=100, null=True, blank=True)
-    lop = models.CharField('Lớp', max_length=50, null=True, blank=True)
-    email_truong = models.EmailField('Email trường', unique=True, null=True, blank=True)
-
-    anh_dai_dien = models.ImageField('Ảnh đại diện', upload_to='profile_pics/', null=True, blank=True)
+    
+    # KHÓA NGOẠI: Liên kết với Danh mục Khoa
+    khoa = models.ForeignKey(Khoa, on_delete=models.SET_NULL, null=True, blank=True, related_name='sinh_vien_list', verbose_name='Khoa/Viện')
+    lop = models.CharField('Lớp sinh hoạt', max_length=50, null=True, blank=True)
+    
+    # Thông tin liên lạc
     so_dien_thoai = models.CharField('Số điện thoại', max_length=15, null=True, blank=True)
+    email_truong = models.EmailField('Email trường', unique=True, null=True, blank=True)
     email_ca_nhan = models.EmailField('Email cá nhân', null=True, blank=True)
+    anh_dai_dien = models.ImageField('Ảnh đại diện', upload_to='profile_pics/', null=True, blank=True)
 
     class Meta:
         verbose_name = 'Sinh Viên'
-        verbose_name_plural = 'Danh Sách Sinh Viên'
+        verbose_name_plural = '3. Quản lý Hồ sơ Sinh Viên'
 
     def __str__(self):
         return f"{self.mssv} - {self.ho_ten}"
 
-    # TỰ ĐỘNG TẠO TÀI KHOẢN VÀ EMAIL
     def save(self, *args, **kwargs):
         if not self.email_truong:
             self.email_truong = f"{self.mssv}@student.humg.edu.vn"
         super().save(*args, **kwargs)
         
-        # Tự động tạo tài khoản với username là MSSV và mật khẩu mặc định
         if not User.objects.filter(username=self.mssv).exists():
             user = User.objects.create_user(username=self.mssv, password='cfihumg')
-            user.first_name = self.ho_ten # Đồng bộ tên
+            user.first_name = self.ho_ten
             user.save()
 
-    # ======================================================================
-    # LOGIC LẤY ĐIỂM CAO NHẤT ĐỂ HIỂN THỊ (ĐÃ KHÔI PHỤC)
-    # ======================================================================
+    # --- LOGIC LẤY ĐIỂM THI CAO NHẤT ---
     def _get_max_score(self, loai_mon):
         five_years_ago = timezone.now() - relativedelta(months=60)
         max_val = self.lich_su_thi.filter(
@@ -50,137 +79,133 @@ class SinhVien(models.Model):
 
     @property
     def max_diem_dau_vao(self): return self._get_max_score('TA_DAU_VAO')
-    
     @property
     def max_diem_ngoai_ngu(self): return self._get_max_score('CDR_NGOAI_NGU')
-    
     @property
     def max_diem_tin_hoc(self): return self._get_max_score('CDR_TIN_HOC')
 
-    # ======================================================================
-    # LOGIC KIỂM TRA CHỨNG CHỈ 
-    # ======================================================================
+    # --- LOGIC KIỂM TRA CHỨNG CHỈ HỢP LỆ THEO DANH MỤC ---
     def _has_valid_cert(self, loai_cc):
         five_years_ago = timezone.now().date() - relativedelta(months=60)
         return self.ds_chung_chi.filter(
-            loai=loai_cc, 
-            trang_thai='DAT', 
-            ngay_cap__gte=five_years_ago
+            danh_muc__loai=loai_cc, trang_thai='DAT', ngay_cap__gte=five_years_ago
         ).exists()
 
     @property
-    def has_valid_cert_ngoai_ngu(self):
-        return self._has_valid_cert('NGOAI_NGU')
-
+    def has_valid_cert_ngoai_ngu(self): return self._has_valid_cert('NGOAI_NGU')
     @property
-    def has_valid_cert_tin_hoc(self):
-        return self._has_valid_cert('TIN_HOC')
+    def has_valid_cert_tin_hoc(self): return self._has_valid_cert('TIN_HOC')
 
-    # ======================================================================
-    # LOGIC KIỂM TRA ĐẠT/CHƯA ĐẠT (TỔNG HỢP CẢ CHỨNG CHỈ VÀ LỊCH SỬ THI)
-    # ======================================================================
+    # --- LOGIC TỔNG HỢP KẾT QUẢ ĐẠT ---
     def _has_passed_exam(self, loai_mon):
         five_years_ago = timezone.now() - relativedelta(months=60)
         return self.lich_su_thi.filter(
-            mon_thi=loai_mon,
-            ngay_cap_nhat__gte=five_years_ago,
-            ket_qua_dat=True
+            mon_thi=loai_mon, ngay_cap_nhat__gte=five_years_ago, ket_qua_dat=True
         ).exists()
 
     @property
-    def check_dat_dau_vao(self):
-        return self._has_passed_exam('TA_DAU_VAO')
-
+    def check_dat_dau_vao(self): return self._has_passed_exam('TA_DAU_VAO')
     @property
-    def check_dat_ngoai_ngu(self):
-        return self.has_valid_cert_ngoai_ngu or self._has_passed_exam('CDR_NGOAI_NGU')
-
+    def check_dat_ngoai_ngu(self): return self.has_valid_cert_ngoai_ngu or self._has_passed_exam('CDR_NGOAI_NGU')
     @property
-    def check_dat_tin_hoc(self):
-        return self.has_valid_cert_tin_hoc or self._has_passed_exam('CDR_TIN_HOC')
+    def check_dat_tin_hoc(self): return self.has_valid_cert_tin_hoc or self._has_passed_exam('CDR_TIN_HOC')
 
 
 class ChungChi(models.Model):
-    LOAI_CC = [('NGOAI_NGU', 'Ngoại ngữ'), ('TIN_HOC', 'Tin học')]
-    TRANG_THAI = [('CHO', 'Chờ xác minh'), ('DAT', 'Đã xác minh (Đạt)'), ('KHONG_DAT', 'Không hợp lệ')]
+    TRANG_THAI = [
+        ('CHO', 'Chờ xác minh (Staging)'), 
+        ('DAT', 'Đã xác minh (Đạt)'), 
+        ('KHONG_DAT', 'Không hợp lệ / Báo lỗi')
+    ]
 
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE, related_name='ds_chung_chi')
-    loai = models.CharField('Loại chứng chỉ', max_length=20, choices=LOAI_CC)
-    ten_chung_chi = models.CharField('Tên chứng chỉ', max_length=200)
+    
+    # KHÓA NGOẠI: Lấy tên và loại chứng chỉ từ Master Data. Có null=True để không lỗi Migration.
+    danh_muc = models.ForeignKey(DanhMucChungChi, on_delete=models.PROTECT, verbose_name='Loại chứng chỉ', null=True, blank=True)
+    
     so_hieu = models.CharField('Số hiệu/Mã vạch', max_length=50)
     ngay_cap = models.DateField('Ngày cấp')
     file_minh_chung = models.FileField('Ảnh/PDF chứng chỉ', upload_to='certificates/%Y/')
     trang_thai = models.CharField('Trạng thái', max_length=20, choices=TRANG_THAI, default='CHO')
-    ghi_chu_xac_minh = models.TextField('Ghi chú', blank=True)
+    ghi_chu_xac_minh = models.TextField('Ghi chú xác minh', blank=True)
 
     class Meta:
-        verbose_name = 'Chứng chỉ sinh viên'
-        verbose_name_plural = 'Quản lý Chứng chỉ'
+        verbose_name = 'Chứng chỉ nộp'
+        verbose_name_plural = '4. Quản lý Chứng chỉ nộp'
+
+    def __str__(self):
+        ten = self.danh_muc.ten_chung_chi if self.danh_muc else "Chưa phân loại"
+        return f"{self.sinh_vien.mssv} - {ten}"
+
+    def save(self, *args, **kwargs):
+        # Logic Staging
+        if self.pk:
+            old_instance = ChungChi.objects.get(pk=self.pk)
+            if old_instance.trang_thai == 'DAT':
+                self.danh_muc = old_instance.danh_muc
+                self.so_hieu = old_instance.so_hieu
+                self.ngay_cap = old_instance.ngay_cap
+                self.file_minh_chung = old_instance.file_minh_chung
+        super().save(*args, **kwargs)
 
 
-# --- 2. QUẢN LÝ THI CỬ TẠI TRƯỜNG ---
-
+# ==============================================================================
+# PHÂN HỆ 2: QUẢN LÝ THI CỬ NỘI BỘ
+# ==============================================================================
 class DotThi(models.Model):
-    ma_dot = models.CharField('Mã đợt', max_length=20, unique=True)
+    ma_dot = models.CharField('Mã đợt thi', max_length=20, unique=True)
     ten_dot = models.CharField('Tên đợt thi', max_length=200)
     thoi_gian_bat_dau = models.DateTimeField('Thời gian bắt đầu', default=timezone.now)
     thoi_gian_ket_thuc = models.DateTimeField('Thời gian kết thúc', default=timezone.now)
     file_thong_bao = models.FileField('File thông báo (PDF)', upload_to='announcements/', blank=True, null=True)
     trang_thai = models.BooleanField('Đang mở đăng ký', default=True)
     
-    diem_chuan_ngoai_ngu = models.FloatField('Điểm chuẩn đạt Ngoại ngữ (Tổng)', default=5.0)
-    diem_liet_ngoai_ngu = models.FloatField('Điểm liệt Ngoại ngữ (Mỗi phần)', default=0.0, help_text='Dưới mức này sẽ bị đánh rớt')
-    
-    diem_chuan_tin_hoc = models.FloatField('Điểm chuẩn đạt Tin học (Tổng)', default=5.0)
-    diem_liet_tin_hoc = models.FloatField('Điểm liệt Tin học (Mỗi phần)', default=0.0)
+    # Cấu hình điểm
+    diem_chuan_ngoai_ngu = models.FloatField('Điểm chuẩn Ngoại ngữ', default=5.0)
+    diem_liet_ngoai_ngu = models.FloatField('Điểm liệt Ngoại ngữ', default=0.0)
+    diem_chuan_tin_hoc = models.FloatField('Điểm chuẩn Tin học', default=5.0)
+    diem_liet_tin_hoc = models.FloatField('Điểm liệt Tin học', default=0.0)
 
     class Meta:
         verbose_name = 'Đợt thi'
-        verbose_name_plural = 'Danh mục Đợt thi'
+        verbose_name_plural = '5. Cấu hình Đợt thi'
 
-    def __str__(self):
-        return self.ten_dot
+    def __str__(self): return self.ten_dot
 
 
 class LichSuThi(models.Model):
     MON_THI = [('TA_DAU_VAO', 'Tiếng Anh đầu vào'), ('CDR_NGOAI_NGU', 'CĐR Ngoại ngữ'), ('CDR_TIN_HOC', 'CĐR Tin học')]
+    
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE, related_name='lich_su_thi')
     mon_thi = models.CharField('Môn thi', max_length=20, choices=MON_THI)
     dot_thi = models.ForeignKey(DotThi, on_delete=models.CASCADE, related_name='ket_qua')
     
-    # ĐÃ KHÔI PHỤC: Bổ sung null=True, blank=True để ô Tổng điểm có thể tự động tính toán
-    diem_thi = models.FloatField('Điểm tổng', null=True, blank=True, help_text='Bỏ trống để máy tự tính nếu có Điểm TP')
-    diem_thanh_phan_1 = models.FloatField('Điểm thành phần 1 (Lý thuyết/Máy tính)', null=True, blank=True)
-    diem_thanh_phan_2 = models.FloatField('Điểm thành phần 2 (Thực hành/Phỏng vấn)', null=True, blank=True)
+    diem_thanh_phan_1 = models.FloatField('Điểm TP 1', null=True, blank=True)
+    diem_thanh_phan_2 = models.FloatField('Điểm TP 2', null=True, blank=True)
+    diem_thi = models.FloatField('Điểm tổng', null=True, blank=True)
     
     ket_qua_dat = models.BooleanField('Đạt chuẩn', default=False)
+    ghi_chu_xac_minh = models.TextField('Ghi chú giám thị', blank=True)
     ngay_cap_nhat = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'Kết quả thi'
-        verbose_name_plural = 'Kết quả các kỳ thi'
+        verbose_name = 'Điểm thi'
+        verbose_name_plural = '6. Quản lý Điểm thi'
 
     def save(self, *args, **kwargs):
-        # ĐÃ KHÔI PHỤC BƯỚC 1: Logic tự động tính điểm trung bình
         if self.diem_thanh_phan_1 is not None and self.diem_thanh_phan_2 is not None:
             self.diem_thi = round((self.diem_thanh_phan_1 + self.diem_thanh_phan_2) / 2, 2)
         
-        if self.diem_thi is None:
-            self.diem_thi = 0.0
+        if self.diem_thi is None: self.diem_thi = 0.0
 
-        # BƯỚC 2: Logic kiểm tra điểm liệt và đạt chuẩn
         is_pass = False
-        
         if self.mon_thi in ['TA_DAU_VAO', 'CDR_NGOAI_NGU']:
-            if (self.diem_thanh_phan_1 is not None and self.diem_thanh_phan_1 <= self.dot_thi.diem_liet_ngoai_ngu) or \
-               (self.diem_thanh_phan_2 is not None and self.diem_thanh_phan_2 <= self.dot_thi.diem_liet_ngoai_ngu):
+            if (self.diem_thanh_phan_1 is not None and self.diem_thanh_phan_1 <= self.dot_thi.diem_liet_ngoai_ngu):
                 is_pass = False
             else:
                 is_pass = self.diem_thi >= self.dot_thi.diem_chuan_ngoai_ngu
-                
         elif self.mon_thi == 'CDR_TIN_HOC':
-            if (self.diem_thanh_phan_1 is not None and self.diem_thanh_phan_1 <= self.dot_thi.diem_liet_tin_hoc) or \
-               (self.diem_thanh_phan_2 is not None and self.diem_thanh_phan_2 <= self.dot_thi.diem_liet_tin_hoc):
+            if (self.diem_thanh_phan_1 is not None and self.diem_thanh_phan_1 <= self.dot_thi.diem_liet_tin_hoc):
                 is_pass = False
             else:
                 is_pass = self.diem_thi >= self.dot_thi.diem_chuan_tin_hoc
@@ -189,41 +214,28 @@ class LichSuThi(models.Model):
         super().save(*args, **kwargs)
 
 
-# --- 3. QUẢN LÝ LỚP BỒI DƯỠNG & ĐĂNG KÝ HỌC ---
-
+# ==============================================================================
+# PHÂN HỆ 3: QUẢN LÝ LỚP HỌC
+# ==============================================================================
 class LopBoiDuong(models.Model):
-    LOAI_LOP = [
-        ('TA_TC', 'Tiếng Anh tăng cường'),
-        ('TA_CDR', 'Ôn thi CĐR Ngoại ngữ'),
-        ('TH_CDR', 'Ôn thi CĐR Tin học')
-    ]
-
+    LOAI_LOP = [('TA_TC', 'Tiếng Anh tăng cường'), ('TA_CDR', 'Ôn thi CĐR Ngoại ngữ'), ('TH_CDR', 'Ôn thi CĐR Tin học')]
     ma_lop = models.CharField('Mã lớp', max_length=20, unique=True)
     ten_lop = models.CharField('Tên lớp', max_length=200)
     loai = models.CharField('Loại lớp', max_length=50, choices=LOAI_LOP)
-    can_bo = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Cán bộ phụ trách')
+    can_bo = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     si_so_toi_da = models.IntegerField('Sĩ số tối đa', default=40)
     trang_thai = models.BooleanField('Đang mở đăng ký', default=True)
-    
     sinh_vien = models.ManyToManyField(SinhVien, related_name='lop_hoc', blank=True)
-
-    file_import_excel = models.FileField(
-        'Upload File Excel nạp SV', 
-        upload_to='temp_imports/', 
-        blank=True, null=True, 
-        help_text='Tải file Excel có cột "MSSV". Hệ thống tự động nạp sinh viên vào lớp khi lưu.'
-    )
+    file_import_excel = models.FileField('Excel nạp SV', upload_to='temp_imports/', blank=True, null=True)
 
     class Meta:
         verbose_name = 'Lớp bồi dưỡng'
-        verbose_name_plural = '1. Quản lý Lớp bồi dưỡng'
+        verbose_name_plural = '7. Quản lý Lớp bồi dưỡng'
 
-    def __str__(self):
-        return f"{self.ten_lop} ({self.sinh_vien.count()}/{self.si_so_toi_da})"
+    def __str__(self): return f"{self.ten_lop} ({self.sinh_vien.count()}/{self.si_so_toi_da})"
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-
         if self.file_import_excel:
             try:
                 df = pd.read_excel(self.file_import_excel)
@@ -231,39 +243,38 @@ class LopBoiDuong(models.Model):
                     mssv_list = df['MSSV'].astype(str).str.strip().tolist()
                     sinh_viens_hop_le = SinhVien.objects.filter(mssv__in=mssv_list)
                     self.sinh_vien.add(*sinh_viens_hop_le)
-            except Exception as e:
-                print(f"Lỗi khi đọc file Excel: {e}")
-
+            except: pass
             self.file_import_excel.delete(save=False)
             super().save(update_fields=['file_import_excel'])
 
 
 class DangKyLop(models.Model):
-    TRANG_THAI_DK = [
-        ('CHO_DUYET', 'Chờ duyệt'),
-        ('THANH_CONG', 'Đăng ký thành công'),
-        ('DA_HUY', 'Đã hủy'),
-    ]
-
-    sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE, related_name='ds_dang_ky_lop', verbose_name='Sinh viên')
-    lop_hoc = models.ForeignKey(LopBoiDuong, on_delete=models.CASCADE, related_name='ds_dang_ky', verbose_name='Lớp học')
-    
-    file_minh_chung = models.FileField('Ảnh minh chứng (Biên lai)', upload_to='minh_chung_dk/%Y/%m/', blank=True, null=True)
-    
+    TRANG_THAI_DK = [('CHO_DUYET', 'Chờ duyệt'), ('THANH_CONG', 'Đã duyệt'), ('DA_HUY', 'Đã hủy')]
+    sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE, related_name='ds_dang_ky_lop')
+    lop_hoc = models.ForeignKey(LopBoiDuong, on_delete=models.CASCADE, related_name='ds_dang_ky')
+    file_minh_chung = models.FileField('Biên lai', upload_to='minh_chung_dk/%Y/%m/', blank=True, null=True)
     thoi_gian_dk = models.DateTimeField('Thời gian đăng ký', auto_now_add=True)
     trang_thai = models.CharField('Trạng thái', max_length=20, choices=TRANG_THAI_DK, default='CHO_DUYET')
 
     class Meta:
-        verbose_name = 'Phiếu đăng ký học'
-        verbose_name_plural = '2. Quản lý Đăng ký học'
-        unique_together = ('sinh_vien', 'lop_hoc') 
-
-    def __str__(self):
-        return f"{self.sinh_vien.mssv} đăng ký {self.lop_hoc.ma_lop}"
+        verbose_name = 'Phiếu đăng ký'
+        verbose_name_plural = '8. Duyệt Đăng ký học'
+        unique_together = ('sinh_vien', 'lop_hoc')
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        if self.trang_thai == 'THANH_CONG':
-            self.lop_hoc.sinh_vien.add(self.sinh_vien)
-        elif self.trang_thai in ['CHO_DUYET', 'DA_HUY']:
-            self.lop_hoc.sinh_vien.remove(self.sinh_vien)
+        if self.trang_thai == 'THANH_CONG': self.lop_hoc.sinh_vien.add(self.sinh_vien)
+        elif self.trang_thai in ['CHO_DUYET', 'DA_HUY']: self.lop_hoc.sinh_vien.remove(self.sinh_vien)
+
+# ==============================================================================
+# HÀM TỰ ĐỘNG DỌN DẸP FILE RÁC TRÊN SERVER KHI XÓA BẢN GHI
+# ==============================================================================
+@receiver(post_delete, sender=ChungChi)
+@receiver(post_delete, sender=DangKyLop)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """Xóa file minh chứng khỏi ổ cứng khi bản ghi bị xóa"""
+    field_name = 'file_minh_chung'
+    if hasattr(instance, field_name):
+        file = getattr(instance, field_name)
+        if file and os.path.isfile(file.path):
+            os.remove(file.path)

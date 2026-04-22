@@ -1,0 +1,64 @@
+{% extends 'admin_mofi/base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="page-title">
+    <h4>{% if instance %}Cập nhật tài khoản: {{ instance.username }}{% else %}Cấp tài khoản mới{% endif %}</h4>
+  </div>
+  <div class="row">
+    <div class="col-xl-8 offset-xl-2">
+      <div class="card">
+        <form method="POST">
+          {% csrf_token %}
+          <div class="card-body row g-3">
+            {% if not instance %}
+            <div class="col-12 mb-2">
+              <div class="alert alert-info">
+                <i class="fa fa-info-circle"></i> Mật khẩu mặc định cho tài khoản mới là: <b>Humg@123456</b>
+              </div>
+            </div>
+            {% endif %}
+            
+            <div class="col-md-12">
+              <label class="form-label fw-bold">Tên đăng nhập (Username) <span class="text-danger">*</span></label>
+              {{ form.username }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Họ và đệm</label>
+              {{ form.last_name }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Tên</label>
+              {{ form.first_name }}
+            </div>
+            <div class="col-md-12">
+              <label class="form-label fw-bold">Email</label>
+              {{ form.email }}
+            </div>
+            
+            <div class="col-md-12 mt-4">
+              <h6 class="border-bottom pb-2">Phân quyền Hệ thống</h6>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Chọn nhóm quyền</label>
+              <div class="border p-3 rounded bg-light">
+                {{ form.groups }}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Trạng thái tài khoản</label>
+              <div class="form-check form-switch mt-2">
+                {{ form.is_active }}
+                <label class="form-check-label ms-2">Cho phép đăng nhập</label>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer text-end bg-light">
+            <a href="{% url 'students:mofi_user_list' %}" class="btn btn-light me-2">Hủy bỏ</a>
+            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Lưu tài khoản</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

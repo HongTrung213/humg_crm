@@ -1,0 +1,99 @@
+{% extends 'admin_mofi/base.html' %}
+{% load static %}
+
+{% block title %}Danh sách Bài viết | HUMG CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-title">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="mb-0">Quản lý Bài viết</h4>
+            </div>
+            <div class="col-6">
+                <ol class="breadcrumb justify-content-end mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'students:admin_mofi_dashboard' %}"><i data-feather="home"></i></a></li>
+                    <li class="breadcrumb-item">Nội dung</li>
+                    <li class="breadcrumb-item active">Bài viết</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                    <h6>Tất cả bài viết & thông báo</h6>
+                    <div class="d-flex align-items-center gap-3">
+                        <form method="GET" style="width: 250px;">
+                            <div class="input-group input-group-sm">
+                                <input class="form-control" type="text" name="q" value="{{ query }}" placeholder="Tìm tiêu đề...">
+                                <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i></button>
+                            </div>
+                        </form>
+                        <a href="{% url 'cms:mofi_post_add' %}" class="btn btn-primary btn-sm"><i class="fa fa-plus me-2"></i>Viết bài mới</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive custom-scrollbar">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="50">ID</th>
+                                    <th width="100">Hình ảnh</th>
+                                    <th>Tiêu đề bài viết</th>
+                                    <th>Danh mục</th>
+                                    <th class="text-center">Trạng thái</th>
+                                    <th>Ngày đăng</th>
+                                    <th class="text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for post in posts %}
+                                <tr>
+                                    <td>{{ post.id }}</td>
+                                    <td>
+                                        <img src="{% if post.image %}{{ post.image.url }}{% else %}{% static 'mofi/images/blog/blog-5.jpg' %}{% endif %}" 
+                                             class="rounded shadow-sm" style="width: 70px; height: 50px; object-fit: cover;">
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ post.title|truncatechars:60 }}</div>
+                                        <small class="text-muted">Slug: {{ post.slug }}</small>
+                                    </td>
+                                    <td><span class="badge badge-light-primary">{{ post.category.name }}</span></td>
+                                    <td class="text-center">
+                                        {% if post.is_published %}
+                                            <span class="badge badge-success">Công khai</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Bản nháp</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="f-light text-muted">{{ post.created_at|date:"d/m/Y" }}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group">
+                                            <a href="{{ post.get_absolute_url }}" target="_blank" class="btn btn-xs btn-outline-info me-1" title="Xem trên web">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'cms:mofi_post_edit' post.id %}" class="btn btn-xs btn-warning" title="Chỉnh sửa">
+                                                <i class="fa fa-pencil"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <p class="text-muted mb-0">Chưa có bài viết nào phù hợp.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

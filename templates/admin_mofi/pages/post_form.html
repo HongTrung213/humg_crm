@@ -1,0 +1,118 @@
+{% extends 'admin_mofi/base.html' %}
+{% load static %}
+
+{% block title %}{% if instance %}Chỉnh sửa{% else %}Viết bài mới{% endif %} | Quản trị CMS{% endblock %}
+
+{% block extra_css %}
+{{ form.media.css }}
+<style>
+    .django-ckeditor-widget { width: 100% !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-title">
+        <div class="row align-items-center"> 
+            <div class="col-6">
+                <h4 class="mb-0">{% if instance %}Chỉnh sửa{% else %}Viết bài mới{% endif %} (CMS)</h4>
+            </div>
+            <div class="col-6">
+                <ol class="breadcrumb justify-content-end mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'students:admin_mofi_dashboard' %}"><i data-feather="home"></i></a></li>
+                    <li class="breadcrumb-item">CMS</li>
+                    <li class="breadcrumb-item active">{% if instance %}Cập nhật{% else %}Thêm mới{% endif %}</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h4><i class="fa fa-pencil-square-o text-primary me-2"></i>Soạn thảo nội dung</h4>
+                    <span>Vui lòng điền đầy đủ thông tin bên dưới. Bài viết sẽ được hiển thị trực tiếp ra trang chủ nếu chọn "Xuất bản".</span>
+                </div>
+                
+                <form class="form theme-form" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="card-body">
+                        {% if form.errors %}
+                        <div class="alert alert-danger dark alert-dismissible fade show" role="alert">
+                            <strong>Lỗi!</strong> Vui lòng kiểm tra lại các trường dữ liệu bên dưới.
+                            <button class="btn-close" type="button" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Tiêu đề bài viết <span class="text-danger">*</span></label>
+                                    {{ form.title }}
+                                    {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors }}</div>{% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Nội dung chi tiết <span class="text-danger">*</span></label>
+                                    {{ form.content }}
+                                    {% if form.content.errors %}<div class="text-danger small">{{ form.content.errors }}</div>{% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card shadow-none border mb-3">
+                                    <div class="card-header bg-light py-2">
+                                        <h6 class="mb-0">Phân loại & Trạng thái</h6>
+                                    </div>
+                                    <div class="card-body py-3">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Danh mục</label>
+                                            {{ form.category }}
+                                        </div>
+                                        <div class="form-check form-switch mt-3">
+                                            {{ form.is_published }}
+                                            <label class="form-check-label fw-bold ms-2 text-success">Xuất bản ngay</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card shadow-none border">
+                                    <div class="card-header bg-light py-2">
+                                        <h6 class="mb-0">Đa phương tiện & Tóm tắt</h6>
+                                    </div>
+                                    <div class="card-body py-3">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Ảnh đại diện (Bìa)</label>
+                                            {{ form.image }}
+                                            {% if instance and instance.image %}
+                                                <div class="mt-2 text-center">
+                                                    <img src="{{ instance.image.url }}" class="img-fluid rounded border" style="max-height: 150px;">
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Tóm tắt ngắn</label>
+                                            {{ form.summary }}
+                                            <div class="form-text small">Hiển thị khoảng 2-3 câu ngắn ngoài trang chủ.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer text-end">
+                        <button class="btn btn-light me-2" type="button" onclick="window.location.href='{% url 'cms:mofi_post_list' %}'">Hủy bỏ</button>
+                        <button class="btn btn-primary" type="submit"><i class="fa fa-save me-2"></i>Lưu bài viết</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ form.media.js }}
+{% endblock %}

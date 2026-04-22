@@ -5,7 +5,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
         <title>Hệ thống quản lý và chăm sóc sinh viên - HUMG</title>
-        <link rel="shortcut icon" type="image/x-icon" href="{% static 'img/favicon.svg' %}">
+        <link rel="icon" href="{% static 'mofi/images/favicon.png' %}" type="image/x-icon">
+        <link rel="shortcut icon" href="{% static 'mofi/images/favicon.png' %}" type="image/x-icon">
         <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
         <link rel="stylesheet" href="{% static 'plugins/fontawesome/css/fontawesome.min.css' %}">
         <link rel="stylesheet" href="{% static 'plugins/fontawesome/css/all.min.css' %}">
@@ -13,6 +14,7 @@
         <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
         <link rel="stylesheet" href="{% static 'plugins/bootstrap-tagsinput/css/bootstrap-tagsinput.css' %}">
         <link rel="stylesheet" href="{% static 'css/style.css' %}">
+        {% block extra_css %}{% endblock %}
     </head>
     <body>
         <div class="main-wrapper">
@@ -26,27 +28,43 @@
                                 <a id="mobile_btn" href="javascript:void(0);">
                                     <span class="bar-icon"><span></span><span></span><span></span></span>
                                 </a>
-                                <a href="{% url 'home' %}" class="navbar-brand logo">
+                                <a href="{% url 'students:home' %}" class="navbar-brand logo">
                                     <img src="{% static 'img/logo.svg' %}" class="img-fluid" alt="Logo">
                                 </a>
                             </div>
                             
                             <div class="main-menu-wrapper">
                                 <div class="menu-header">
-                                    <a href="{% url 'home' %}" class="menu-logo">
+                                    <a href="{% url 'students:home' %}" class="menu-logo">
                                         <img src="{% static 'img/logo.svg' %}" class="img-fluid" alt="Logo">
                                     </a>
                                     <a id="menu_close" class="menu-close" href="javascript:void(0);">
                                         <i class="fas fa-times"></i>
                                     </a>
                                 </div>
+                                
                                 <ul class="main-nav">
-                                    <li><a href="{% url 'home' %}">Trang chủ</a></li>
-                                    {% for cat in nav_categories %}
-                                        <li><a href="{% url 'cms:post_list_by_category' cat.slug %}">{{ cat.name }}</a></li>
-                                    {% endfor %}
-                                    <li><a href="{% url 'danh_sach_lop' %}">Đăng ký Lớp bồi dưỡng</a></li>
-                                    <li><a href="{% url 'tra_cuu' %}">Tra cứu Kết quả</a></li>
+                                    <li><a href="{% url 'students:home' %}">Trang chủ</a></li>
+                                    
+                                    <li class="has-submenu">
+                                        <a href="{% url 'cms:post_list' %}">Tin tức - Thông báo <i class="fas fa-chevron-down"></i></a>
+                                        <ul class="submenu">
+                                            {% for cat in nav_categories %}
+                                                <li><a href="{% url 'cms:post_list_by_category' cat.slug %}">{{ cat.name }}</a></li>
+                                            {% endfor %}
+                                        </ul>
+                                    </li>
+
+                                    <li><a href="{% url 'students:danh_sach_lop' %}">Đăng ký Lớp bồi dưỡng</a></li>
+                                    <li><a href="{% url 'students:tra_cuu' %}">Tra cứu Kết quả</a></li>
+
+                                    {% if request.user.is_staff %}
+                                    <li>
+                                        <a href="{% url 'students:admin_mofi_dashboard' %}" class="text-danger fw-bold">
+                                            <i class="fa fa-cogs"></i> Quản trị
+                                        </a>
+                                    </li>
+                                    {% endif %}
                                 </ul>      
                             </div>       
                             
@@ -77,13 +95,13 @@
                                                     <p class="text-muted mb-0">Sinh viên</p>
                                                 </div>
                                             </div>
-                                            <a class="dropdown-item" href="{% url 'dashboard' %}"><i class="feather-user me-1"></i> Trang cá nhân</a>
-                                            <a class="dropdown-item" href="{% url 'dang_xuat' %}"><i class="feather-log-out me-1"></i> Đăng xuất</a>
+                                            <a class="dropdown-item" href="{% url 'students:dashboard' %}"><i class="feather-user me-1"></i> Trang cá nhân</a>
+                                            <a class="dropdown-item" href="{% url 'students:dang_xuat' %}"><i class="feather-log-out me-1"></i> Đăng xuất</a>
                                         </div>
                                     </li>
                                 {% else %}
                                     <li class="nav-item">
-                                        <a class="nav-link btn btn-primary" href="{% url 'dang_nhap' %}">
+                                        <a class="nav-link btn btn-primary" href="{% url 'students:dang_nhap' %}">
                                             <i class="feather-lock"></i> Đăng nhập
                                         </a>
                                     </li>
@@ -156,5 +174,6 @@
         <script src="{% static 'js/ckeditor.js' %}"></script>
         <script src="{% static 'plugins/bootstrap-tagsinput/js/bootstrap-tagsinput.js' %}"></script>
         <script src="{% static 'js/script.js' %}"></script>
+        {% block extra_js %}{% endblock %}
     </body>
 </html>

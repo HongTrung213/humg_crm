@@ -1,0 +1,95 @@
+{% extends 'admin_mofi/base.html' %}
+{% load static %}
+
+{% block title %}Duyệt Chứng Chỉ | HUMG CRM{% endblock %}
+{% block page_title %}Trạm Kiểm Định Chứng Chỉ Tập Trung{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    {% for cert in pending_certs %}
+    <div class="col-xl-6">
+      <div class="card border-l-primary shadow-sm hover-shadow">
+        <div class="card-body p-3">
+          <div class="row align-items-center">
+            
+            <div class="col-sm-6">
+              <div class="bg-dark rounded overflow-hidden shadow-inner" style="height: 230px; position: relative;">
+                {% if cert.file_minh_chung %}
+                  {% with extension=cert.file_minh_chung.url|lower %}
+                    {% if ".pdf" in extension %}
+                      <embed src="{{ cert.file_minh_chung.url }}#toolbar=0" type="application/pdf" width="100%" height="100%">
+                    {% else %}
+                      <div class="d-flex align-items-center justify-content-center h-100 bg-white">
+                        <img src="{{ cert.file_minh_chung.url }}" class="img-fluid" style="max-height: 100%; object-fit: contain;">
+                      </div>
+                    {% endif %}
+                  {% endwith %}
+                {% else %}
+                  <div class="d-flex align-items-center justify-content-center h-100 text-white f-12">Không có file</div>
+                {% endif %}
+                
+                <a href="{{ cert.file_minh_chung.url }}" target="_blank" class="btn btn-xs btn-primary position-absolute style-custom" style="bottom: 5px; right: 5px; opacity: 0.8;">
+                  <i class="fa fa-search-plus"></i>
+                </a>
+              </div>
+            </div>
+
+            <div class="col-sm-6 mt-3 mt-sm-0">
+              <div class="mb-2">
+                <span class="badge badge-light-primary f-10 mb-1">{{ cert.get_loai_display }}</span>
+                <h6 class="fw-bold mb-0 text-truncate">{{ cert.sinh_vien.ho_ten }}</h6>
+                <p class="f-12 text-muted mb-0">MSSV: <b>{{ cert.sinh_vien.mssv }}</b></p>
+                <p class="f-12 text-primary mb-2">Số hiệu: <code class="fw-bold">{{ cert.so_hieu }}</code></p>
+              </div>
+
+              <form method="POST" action="{% url 'verify_certificate' cert.id %}">
+                {% csrf_token %}
+                <textarea name="ghi_chu" class="form-control form-control-sm mb-2" rows="2" 
+                  placeholder="Nhập lý do duyệt, báo lỗi hoặc lý do xóa rác..." required></textarea>
+                
+                <div class="d-flex flex-column gap-2">
+                  <button type="submit" name="action" value="approve" class="btn btn-success btn-sm w-100 fw-bold">
+                    <i class="fa fa-check-circle"></i> DUYỆT ĐẠT
+                  </button>
+                  
+                  <div class="d-flex gap-2">
+                    <button type="submit" name="action" value="reject" class="btn btn-warning btn-sm flex-grow-1 text-dark">
+                      <i class="fa fa-exclamation-triangle"></i> BÁO LỖI
+                    </button>
+                    
+                    <button type="submit" name="action" value="delete" class="btn btn-danger btn-sm px-3" 
+                      onclick="return confirm('Xác nhận XÓA VĨNH VIỄN file rác này? Dữ liệu sẽ biến mất khỏi hệ thống.');" title="Xóa file rác">
+                      <i class="fa fa-trash-o"></i>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        </div>
+        <div class="card-footer py-2 px-3 bg-light d-flex justify-content-between">
+          <span class="f-12 text-muted">Nộp ngày: {{ cert.ngay_cap|date:"d/m/Y" }}</span>
+          <a href="{% url 'student_detail' cert.sinh_vien.id %}" class="f-12 fw-bold text-primary">Xem hồ sơ gốc <i class="fa fa-angle-right"></i></a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+      <div class="card p-5 shadow-none border">
+        <i class="fa fa-check-circle text-success fs-1 mb-3"></i>
+        <h5>Tuyệt vời! Không còn chứng chỉ nào đang chờ xử lý.</h5>
+        <p class="text-muted">Mọi hồ sơ nộp lên đã được kiểm định sạch sẽ.</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+  .hover-shadow:hover { transform: translateY(-3px); transition: all 0.3s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+  .shadow-inner { box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+  .btn-xs { padding: 0.2rem 0.4rem; font-size: 0.75rem; }
+</style>
+{% endblock %}

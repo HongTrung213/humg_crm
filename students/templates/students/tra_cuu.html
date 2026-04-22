@@ -27,7 +27,7 @@
                 <div class="card search-widget blog-search blog-widget mb-4 border-0 shadow-sm">
                     <div class="card-body">
                         <h4 class="text-center mb-4">Tra cứu kết quả Ngoại ngữ / Tin học</h4>
-                        <form class="search-form" method="GET" action="{% url 'tra_cuu' %}">
+                        <form class="search-form" method="GET" action="{% url 'students:tra_cuu' %}">
                             <div class="input-group">
                                 <input type="text" name="mssv" value="{{ query_mssv }}" placeholder="Nhập Mã sinh viên (MSSV)..." class="form-control" required>
                                 <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i> Tra cứu</button>

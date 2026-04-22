@@ -1,0 +1,36 @@
+{% extends 'admin_mofi/base.html' %}
+{% block title %}{% if instance %}Sửa{% else %}Thêm{% endif %} Khoa | HUMG CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-title">
+        <h4 class="mb-0">{% if instance %}Cập nhật thông tin{% else %}Thêm Khoa mới{% endif %}</h4>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <h5>Biểu mẫu nhập liệu</h5>
+                </div>
+                <form class="form theme-form" method="POST">
+                    {% csrf_token %}
+                    <div class="card-body py-3">
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ field.label }} <span class="text-danger">*</span></label>
+                            {{ field }}
+                            {% if field.errors %}<div class="text-danger f-12 mt-1">{{ field.errors }}</div>{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="card-footer text-end">
+                        <a href="{% url 'students:mofi_khoa_list' %}" class="btn btn-light me-2">Quay lại</a>
+                        <button class="btn btn-primary" type="submit"><i class="fa fa-save me-1"></i> Lưu thông tin</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

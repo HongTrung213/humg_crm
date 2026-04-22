@@ -1,0 +1,41 @@
+{% extends 'admin_mofi/base.html' %}
+
+{% block title %}Import Excel | HUMG CRM{% endblock %}
+{% block page_title %}Nhập Dữ liệu từ Excel{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xl-8 offset-xl-2">
+      <div class="card">
+        <div class="card-header pb-0">
+          <h4><i class="fa fa-file-excel-o text-success"></i> Tải lên danh sách Sinh viên</h4>
+          <p class="mt-1">File Excel cần có các cột: <b>MSSV, HoTen, Khoa, Lop, Email</b>.</p>
+        </div>
+        
+        <form method="POST" action="{% url 'students:import_sinh_vien' %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="card-body">
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+            
+            <input class="form-control form-control-lg" type="file" name="excel_file" accept=".xlsx, .xls" required>
+          </div>
+          
+          <div class="card-footer text-end">
+            <a href="{% url 'students:student_list' %}" class="btn btn-light me-2">Hủy bỏ</a>
+            <button type="submit" class="btn btn-success"><i class="fa fa-upload"></i> Tải lên hệ thống</button>
+          </div>
+        </form>
+        
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
