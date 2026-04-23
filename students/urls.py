@@ -78,4 +78,14 @@ urlpatterns = [
     path('he-thong/nhom-quyen/xoa/<int:pk>/', views.mofi_group_delete, name='mofi_group_delete'),
     path('he-thong/khoa/xoa/<int:pk>/', views.mofi_khoa_delete, name='mofi_khoa_delete'),
     path('he-thong/danh-muc-chung-chi/xoa/<int:pk>/', views.mofi_chungchi_danhmuc_delete, name='mofi_chungchi_danhmuc_delete'),
+
+# Quản trị Đợt thi & Lịch thi
+    path('quan-tri/dot-thi/', views.mofi_dot_thi_list, name='mofi_dot_thi_list'),
+    path('quan-tri/dot-thi/chi-tiet/<int:dot_thi_id>/', views.mofi_dot_thi_detail, name='mofi_dot_thi_detail'),
+    path('quan-tri/dot-thi/import/', views.mofi_import_lich_thi, name='mofi_import_lich_thi'),
+    
+    # Logic nghiệp vụ Điểm thi
+    path('quan-tri/dot-thi/sua-diem/<int:lich_thi_id>/', views.mofi_sua_diem_thi, name='mofi_sua_diem_thi'),
+    path('quan-tri/dot-thi/xuat-excel/<int:dot_thi_id>/', views.mofi_export_bang_diem, name='mofi_export_bang_diem'),
+    path('quan-tri/lop-hoc/import/', views.mofi_import_class_list, name='mofi_import_class_list'),
 ]

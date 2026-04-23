@@ -2,96 +2,163 @@
 {% load static %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h3 class="fw-bold text-primary border-start border-4 border-primary ps-3 text-uppercase">
-                Danh sách lớp bồi dưỡng đang mở
-            </h3>
-            <p class="text-muted">Sinh viên vui lòng chọn lớp và tải lên minh chứng lệ phí để đăng ký.</p>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        {% for lop in lops %}
-        <div class="col-lg-4 col-md-6">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-header bg-primary text-white py-3">
-                    <span class="badge bg-white text-primary mb-2">{{ lop.get_loai_display }}</span>
-                    <h5 class="card-title fw-bold mb-0 text-truncate">{{ lop.ten_lop }}</h5>
-                </div>
-                <div class="card-body">
-                    <p class="mb-2"><strong>Mã lớp:</strong> {{ lop.ma_lop }}</p>
-                    <p class="mb-2"><strong>Cán bộ:</strong> {{ lop.can_bo.first_name|default:"Đang cập nhật" }}</p>
-                    <div class="d-flex justify-content-between align-items-center mt-3 p-2 bg-light rounded">
-                        <span class="small text-muted">Sĩ số tối đa:</span>
-                        <span class="fw-bold text-dark">{{ lop.si_so_toi_da }} SV</span>
-                    </div>
-                </div>
-                <div class="card-footer bg-white border-0 p-3">
-                    {% if lop.id in da_dang_ky_ids %}
-                        <button class="btn btn-secondary w-100 fw-bold py-2" disabled>
-                            <i class="feather-check-circle me-1"></i> ĐÃ GỬI ĐƠN
-                        </button>
-                    {% else %}
-                        <button class="btn btn-primary w-100 fw-bold py-2 btn-open-modal" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#modalRegister" 
-                                data-id="{{ lop.id }}" 
-                                data-name="{{ lop.ten_lop }}">
-                            ĐĂNG KÝ NGAY
-                        </button>
-                    {% endif %}
-                </div>
+<div class="breadcrumb-bar mt-3 mb-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12 col-12">
+                <nav aria-label="breadcrumb" class="page-breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{% url 'students:home' %}">Trang chủ</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Đăng ký lớp bồi dưỡng</li>
+                    </ol>
+                </nav>
             </div>
         </div>
-        {% empty %}
-        <div class="col-12 text-center py-5">
-            <img src="{% static 'img/icon/empty-box.svg' %}" style="width: 100px; opacity: 0.5;">
-            <p class="mt-3 text-muted">Hiện chưa có lớp bồi dưỡng nào mở đăng ký.</p>
-        </div>
-        {% endfor %}
     </div>
 </div>
 
-<div class="modal fade" id="modalRegister" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <form method="POST" enctype="multipart/form-data">
+<section class="page-content course-sec mb-5">
+    <div class="container">
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-8">
+                <h3 class="fw-bold text-primary mb-2"><i class="feather-book-open me-2"></i>Danh sách Lớp Bồi dưỡng & Ôn thi</h3>
+                <p class="text-muted mb-0">Sinh viên chọn lớp phù hợp, quét mã QR thanh toán và tải lên biên lai chuyển khoản để hoàn tất đăng ký.</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            {% for lop in lops %}
+            <div class="col-lg-4 col-md-6">
+                <div class="card border-0 shadow-sm h-100 hover-lift overflow-hidden rounded-3">
+                    <div class="card-img-top bg-soft-primary position-relative d-flex align-items-center justify-content-center" style="height: 160px;">
+                        {% if lop.loai == 'TIN_HOC' %}
+                            <i class="feather-monitor text-primary" style="font-size: 4rem; opacity: 0.8;"></i>
+                        {% else %}
+                            <i class="feather-globe text-success" style="font-size: 4rem; opacity: 0.8;"></i>
+                        {% endif %}
+                        <div class="position-absolute top-0 end-0 m-3">
+                            <span class="badge bg-primary fs-6 shadow-sm">{{ lop.get_loai_display }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title fw-bold text-dark lh-base mb-3 line-clamp-2" title="{{ lop.ten_lop }}">{{ lop.ten_lop }}</h5>
+                        
+                        <ul class="list-unstyled text-muted f-14 mb-4 flex-grow-1">
+                            <li class="mb-2"><i class="feather-calendar text-info me-2 fw-bold"></i>Khai giảng: <strong class="text-dark">{{ lop.ngay_khai_giang|date:"d/m/Y" }}</strong></li>
+                            <li class="mb-2"><i class="feather-clock text-warning me-2 fw-bold"></i>Lịch học: <strong class="text-dark">{{ lop.lich_hoc }}</strong></li>
+                            <li class="mb-2"><i class="feather-map-pin text-danger me-2 fw-bold"></i>Phòng học: <strong class="text-dark">{{ lop.phong_hoc }}</strong></li>
+                            <li><i class="feather-credit-card text-success me-2 fw-bold"></i>Học phí: <strong class="text-danger fs-5">{{ lop.hoc_phi }} ₫</strong></li>
+                        </ul>
+                        
+                        <div class="mt-auto">
+                            {% if lop.id in da_dang_ky_ids %}
+                                <button class="btn btn-secondary w-100 fw-bold py-2" disabled>
+                                    <i class="feather-check-circle me-1"></i> Đã gửi yêu cầu ĐK
+                                </button>
+                            {% else %}
+                                <button class="btn btn-primary w-100 fw-bold py-2 btn-dang-ky" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#dangKyModal"
+                                        data-id="{{ lop.id }}"
+                                        data-ten="{{ lop.ten_lop }}"
+                                        data-hocphi="{{ lop.hoc_phi }}">
+                                    Đăng ký tham gia <i class="feather-arrow-right ms-1"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5 bg-white shadow-sm rounded">
+                <i class="feather-coffee text-muted mb-3" style="font-size: 4rem;"></i>
+                <h4 class="text-muted fw-bold">Hiện tại chưa có lớp bồi dưỡng nào được mở.</h4>
+                <p class="text-muted">Sinh viên vui lòng quay lại sau hoặc theo dõi thông báo trên trang chủ.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="dangKyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <form method="POST" action="{% url 'students:danh_sach_lop' %}" enctype="multipart/form-data">
                 {% csrf_token %}
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title fw-bold">Xác nhận Đăng ký học</h5>
+                <input type="hidden" name="lop_id" id="modal_lop_id">
+                
+                <div class="modal-header bg-primary py-3">
+                    <h5 class="modal-title fw-bold text-white"><i class="feather-edit me-2"></i>Đăng ký Lớp học</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4">
-                    <input type="hidden" name="lop_id" id="input_lop_id">
-                    <div class="mb-3 text-center">
-                        <p class="mb-1 text-muted">Bạn đang đăng ký lớp:</p>
-                        <h5 id="display_lop_name" class="fw-bold text-primary"></h5>
+                
+                <div class="modal-body p-4 bg-light">
+                    <div class="alert alert-info border-info shadow-sm mb-4">
+                        <h6 class="fw-bold mb-2">Bạn đang đăng ký:</h6>
+                        <h5 class="text-primary fw-bold mb-0" id="modal_ten_lop">Tên lớp hiển thị ở đây</h5>
                     </div>
-                    <hr>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Tải lên minh chứng lệ phí (Ảnh biên lai) <span class="text-danger">*</span></label>
-                        <input type="file" name="file_minh_chung" class="form-control" accept="image/*" required>
-                        <div class="form-text mt-2 small">Vui lòng chụp rõ biên lai chuyển khoản hoặc phiếu thu.</div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-7 border-end">
+                            <h6 class="fw-bold text-dark mb-3"><i class="feather-credit-card me-2 text-success"></i>Thông tin chuyển khoản</h6>
+                            <ul class="list-group list-group-flush border rounded shadow-sm">
+                                <li class="list-group-item bg-white"><small class="text-muted d-block">Ngân hàng:</small> <strong>Agribank - CN Nam Từ Liêm</strong></li>
+                                <li class="list-group-item bg-white"><small class="text-muted d-block">Số tài khoản:</small> <strong class="text-primary fs-5">1300201235678</strong></li>
+                                <li class="list-group-item bg-white"><small class="text-muted d-block">Chủ tài khoản:</small> <strong>TRƯỜNG ĐẠI HỌC MỎ - ĐỊA CHẤT</strong></li>
+                                <li class="list-group-item bg-white"><small class="text-muted d-block">Số tiền:</small> <strong class="text-danger fs-5" id="modal_hoc_phi">0 ₫</strong></li>
+                                <li class="list-group-item bg-warning-subtle text-dark border-warning">
+                                    <small class="text-muted d-block mb-1">Nội dung chuyển khoản (BẮT BUỘC):</small> 
+                                    <strong class="font-monospace fs-6">{{ sinh_vien.mssv }} {{ sinh_vien.ho_ten }} NOP HOC PHI</strong>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-5 d-flex flex-column align-items-center justify-content-center">
+                            <h6 class="fw-bold text-muted mb-2">Quét mã QR để thanh toán</h6>
+                            <div class="bg-white p-2 border rounded shadow-sm">
+                                <img src="{% static 'img/qr-code-placeholder.png' %}" alt="QR Code" class="img-fluid" style="max-width: 180px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <label class="form-label fw-bold text-dark mb-2">Tải lên Biên lai / Ảnh chụp màn hình <span class="text-danger">*</span></label>
+                            <input type="file" name="file_minh_chung" class="form-control form-control-lg border-primary shadow-none" accept="image/*,.pdf" required>
+                            <small class="text-muted mt-2 d-block"><i class="feather-info me-1"></i>Định dạng hỗ trợ: JPG, PNG, PDF. Dung lượng tối đa 5MB.</small>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-success px-4 fw-bold shadow-sm">GỬI ĐĂNG KÝ</button>
+                
+                <div class="modal-footer bg-white border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Xác nhận Đăng ký</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<style>
+    .hover-lift { transition: transform 0.2s ease-in-out; }
+    .hover-lift:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,.1)!important; }
+    .bg-soft-primary { background-color: rgba(13, 110, 253, 0.05); }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('modalRegister');
-        modal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            document.getElementById('input_lop_id').value = button.getAttribute('data-id');
-            document.getElementById('display_lop_name').textContent = button.getAttribute('data-name');
+    // JS để đẩy dữ liệu từ nút bấm ngoài danh sách vào trong Modal
+    document.addEventListener("DOMContentLoaded", function() {
+        const btns = document.querySelectorAll('.btn-dang-ky');
+        btns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('modal_lop_id').value = this.getAttribute('data-id');
+                document.getElementById('modal_ten_lop').innerText = this.getAttribute('data-ten');
+                document.getElementById('modal_hoc_phi').innerText = this.getAttribute('data-hocphi') + ' ₫';
+            });
         });
     });
 </script>

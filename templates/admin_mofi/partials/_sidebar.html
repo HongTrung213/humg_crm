@@ -1,11 +1,11 @@
 {% load static %}
 <div class="sidebar-wrapper" data-layout="stroke-svg">
   <div>
-<div class="logo-wrapper">
-  <a href="{% url 'students:admin_mofi_dashboard' %}">
-    <img class="img-fluid" src="{% static 'img/logo.jpg' %}" alt="HUMG CRM" style="max-height: 40px; object-fit: contain;">
-  </a>
-  <div class="back-btn"><i class="fa fa-angle-left"></i></div>
+    <div class="logo-wrapper">
+      <a href="{% url 'students:admin_mofi_dashboard' %}">
+        <img class="img-fluid" src="{% static 'img/logo.jpg' %}" alt="HUMG CRM" style="max-height: 40px; object-fit: contain;">
+      </a>
+      <div class="back-btn"><i class="fa fa-angle-left"></i></div>
       <div class="toggle-sidebar">
         <svg class="stroke-icon sidebar-toggle status_toggle middle">
           <use href="{% static 'mofi/svg/icon-sprite.svg' %}#toggle-icon"></use>
@@ -13,21 +13,21 @@
       </div>
     </div>
     <div class="logo-icon-wrapper">
-  <a href="{% url 'students:admin_mofi_dashboard' %}">
-    <img class="img-fluid" src="{% static 'img/logo.jpg' %}" alt="HUMG CRM" style="height: 35px; width: 35px; object-fit: cover; border-radius: 5px;">
-  </a>
-</div>
+      <a href="{% url 'students:admin_mofi_dashboard' %}">
+        <img class="img-fluid" src="{% static 'img/logo.jpg' %}" alt="HUMG CRM" style="height: 35px; width: 35px; object-fit: cover; border-radius: 5px;">
+      </a>
+    </div>
     
     <nav class="sidebar-main">
       <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
       <div id="sidebar-menu">
         <ul class="sidebar-links" id="simple-bar">
           <li class="back-btn">
-  <a href="{% url 'students:admin_mofi_dashboard' %}">
-    <img class="img-fluid" src="{% static 'img/logo.jpg' %}" alt="HUMG CRM" style="height: 30px; border-radius: 5px;">
-  </a>
-  <div class="mobile-back text-end"><span>Back</span><i class="fa fa-angle-right ps-2" aria-hidden="true"></i></div>
-</li>
+            <a href="{% url 'students:admin_mofi_dashboard' %}">
+              <img class="img-fluid" src="{% static 'img/logo.jpg' %}" alt="HUMG CRM" style="height: 30px; border-radius: 5px;">
+            </a>
+            <div class="mobile-back text-end"><span>Back</span><i class="fa fa-angle-right ps-2" aria-hidden="true"></i></div>
+          </li>
           
           <li class="sidebar-main-title">
             <div><h6 class="lan-1">Hệ thống</h6></div>
@@ -47,12 +47,12 @@
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
             <a class="sidebar-link sidebar-title" href="javascript:void(0)">
               <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-user"></use></svg>
-              <span>Sinh viên & Điểm số</span>
+              <span>Hồ sơ Sinh viên</span>
             </a>
             <ul class="sidebar-submenu">
               <li><a href="{% url 'students:student_list' %}">Danh sách Sinh viên</a></li>
               <li><a href="{% url 'students:student_add' %}">Thêm Sinh viên mới</a></li>
-              <li><a href="{% url 'students:import_sinh_vien' %}">Nhập file Excel</a></li>
+              <li><a href="{% url 'students:import_sinh_vien' %}">Nhập file Excel SV</a></li>
               <li><a href="{% url 'students:mofi_khoa_list' %}" class="fw-bold text-primary">Quản lý Khoa</a></li>
             </ul>
           </li>
@@ -60,12 +60,12 @@
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
             <a class="sidebar-link sidebar-title" href="javascript:void(0)">
               <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-learning"></use></svg>
-              <span>Tổ chức Đào tạo</span>
+              <span>Tổ chức Lớp học</span>
             </a>
             <ul class="sidebar-submenu">
-              <li><a href="{% url 'admin:students_lopboiduong_changelist' %}">Quản lý Lớp học</a></li>
-              <li><a href="{% url 'students:registration_list' %}">Duyệt Đăng ký học</a></li>
-            </ul>
+              <li><a href="{% url 'students:class_list' %}">Quản lý Lớp Bồi dưỡng</a></li>
+              <li><a href="{% url 'students:mofi_import_class_list' %}">Import Danh sách (Excel)</a></li>
+              </ul>
           </li>
 
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
@@ -74,9 +74,9 @@
               <span>Khảo thí & Chứng chỉ</span>
             </a>
             <ul class="sidebar-submenu">
-              <li><a href="{% url 'admin:students_dotthi_changelist' %}">Quản lý Đợt thi</a></li>
-              <li><a href="{% url 'admin:students_lichsuthi_changelist' %}">Nhập Điểm thi nội bộ</a></li>
-              <li><a href="{% url 'students:certificate_verification_list' %}">Xác minh Chứng chỉ</a></li>
+              <li><a href="{% url 'students:mofi_dot_thi_list' %}">Quản lý Đợt thi / Điểm thi</a></li>
+              <li><a href="{% url 'students:mofi_import_lich_thi' %}" class="fw-bold text-success">Đồng bộ Excel (Điểm/Lịch)</a></li>
+              <li><a href="{% url 'students:certificate_verification_list' %}">Xét duyệt Chứng chỉ</a></li>
               <li><a href="{% url 'students:mofi_chungchi_list' %}" class="fw-bold text-info">Danh mục Chứng chỉ</a></li>
             </ul>
           </li>
@@ -92,27 +92,23 @@
             </a>
             <ul class="sidebar-submenu">
               <li>
-                <a class="submenu-title" href="#">Bài viết<span class="sub-arrow"><i class="fa fa-angle-right"></i></span></a>
+                <a class="submenu-title" href="javascript:void(0)">Bài viết<span class="sub-arrow"><i class="fa fa-angle-right"></i></span></a>
                 <ul class="nav-sub-childmenu submenu-content">
-                  <li><a href="{% url 'cms:mofi_post_list' %}">Danh sách bài viết</a></li>
-                  <li><a href="{% url 'cms:mofi_post_add' %}">Viết bài mới</a></li>
-                  <li><a href="{% url 'cms:mofi_category_list' %}">Danh mục tin tức</a></li>
+                  <li><a href="#">Danh sách bài viết</a></li>
+                  <li><a href="#">Viết bài mới</a></li>
+                  <li><a href="#">Danh mục tin tức</a></li>
                 </ul>
               </li>
-              
               <li>
-                <a class="submenu-title" href="#">Slider trang chủ<span class="sub-arrow"><i class="fa fa-angle-right"></i></span></a>
+                <a class="submenu-title" href="javascript:void(0)">Slider trang chủ<span class="sub-arrow"><i class="fa fa-angle-right"></i></span></a>
                 <ul class="nav-sub-childmenu submenu-content">
-                  <li><a href="{% url 'cms:mofi_slider_list' %}">Danh sách Slider</a></li>
-                  <li><a href="{% url 'cms:mofi_slider_add' %}">Thêm Slider mới</a></li>
+                  <li><a href="#">Danh sách Slider</a></li>
                 </ul>
               </li>
-
               <li>
-                <a class="submenu-title" href="#">Liên kết nhanh<span class="sub-arrow"><i class="fa fa-angle-right"></i></span></a>
+                <a class="submenu-title" href="javascript:void(0)">Liên kết nhanh<span class="sub-arrow"><i class="fa fa-angle-right"></i></span></a>
                 <ul class="nav-sub-childmenu submenu-content">
-                  <li><a href="{% url 'cms:mofi_quicklink_list' %}">Danh sách liên kết</a></li>
-                  <li><a href="{% url 'cms:mofi_quicklink_add' %}">Thêm liên kết mới</a></li>
+                  <li><a href="#">Danh sách liên kết</a></li>
                 </ul>
               </li>
             </ul>

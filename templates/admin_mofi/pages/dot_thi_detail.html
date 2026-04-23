@@ -1,0 +1,99 @@
+{% extends 'admin_mofi/base.html' %}
+{% block content %}
+<div class="container-fluid">
+    <div class="page-title">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="fw-bold mb-1">{{ dot_thi.ten_dot }}</h4>
+                <span class="text-muted small">Ngày thi: {{ dot_thi.thoi_gian_bat_dau|date:"d/m/Y" }}</span>
+            </div>
+            <div class="col-6 text-end">
+                <a href="{% url 'students:mofi_export_bang_diem' dot_thi.id %}" class="btn btn-success fw-bold shadow-sm me-2">
+                    <i class="fa fa-file-excel-o me-1"></i> Xuất Bảng Điểm
+                </a>
+                <a href="{% url 'students:mofi_dot_thi_list' %}" class="btn btn-light border fw-bold">Trở lại</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Thí sinh (MSSV)</th>
+                            <th class="text-center">Phòng/Ca</th>
+                            <th class="text-center">SBD</th>
+                            <th class="text-center">Điểm TP1</th>
+                            <th class="text-center">Điểm TP2</th>
+                            <th class="text-center">Trạng thái</th>
+                            <th class="text-center pe-4">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lt in lich_thi_list %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-primary">{{ lt.sinh_vien.ho_ten }}</div>
+                                <small class="text-muted">{{ lt.sinh_vien.mssv }}</small>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-light-secondary text-dark">P: {{ lt.phong_thi|default:"-" }}</span>
+                                <div class="small">Ca: {{ lt.ca_thi|default:"-" }}</div>
+                            </td>
+                            <td class="text-center fw-bold text-danger">{{ lt.sbd|default:"-" }}</td>
+                            <td class="text-center fw-bold fs-6">{{ lt.diem_thanh_phan_1|default:"-" }}</td>
+                            <td class="text-center fw-bold fs-6">{{ lt.diem_thanh_phan_2|default:"-" }}</td>
+                            <td class="text-center">
+                                {% if lt.diem_thanh_phan_1 %}
+                                    <span class="badge bg-success">Đã có điểm</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Chờ thi</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center pe-4">
+                                <button class="btn btn-sm btn-info shadow-none" data-bs-toggle="modal" data-bs-target="#editScore{{ lt.id }}">
+                                    <i class="fa fa-edit"></i> Ghi điểm
+                                </button>
+                                
+                                <div class="modal fade text-start" id="editScore{{ lt.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-sm">
+                                        <div class="modal-content border-0">
+                                            <form method="POST" action="{% url 'students:mofi_sua_diem_thi' lt.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-header bg-primary py-2">
+                                                    <h6 class="modal-title text-white">Nhập điểm cho SV</h6>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body bg-light">
+                                                    <div class="mb-2">
+                                                        <label class="small fw-bold">Điểm TP 1</label>
+                                                        <input type="number" step="0.1" name="diem_thanh_phan_1" class="form-control" value="{{ lt.diem_thanh_phan_1|default:'' }}">
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <label class="small fw-bold">Điểm TP 2</label>
+                                                        <input type="number" step="0.1" name="diem_thanh_phan_2" class="form-control" value="{{ lt.diem_thanh_phan_2|default:'' }}">
+                                                    </div>
+                                                    <div class="mb-0">
+                                                        <label class="small fw-bold">Ghi chú</label>
+                                                        <input type="text" name="ghi_chu" class="form-control" value="{{ lt.ghi_chu|default:'' }}">
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer border-0 pt-0">
+                                                    <button type="submit" class="btn btn-primary w-100 fw-bold">Lưu thay đổi</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

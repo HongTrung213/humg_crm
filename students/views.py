@@ -387,7 +387,8 @@ def import_sinh_vien(request):
 def class_list(request):
     if not request.user.is_staff: return redirect('students:home')
     classes = LopBoiDuong.objects.all().order_by('-id')
-    return render(request, 'admin_mofi/classes/class_list.html', {'classes': classes})
+    return render(request, 'admin_mofi/pages/class_list.html', {'classes': classes}) 
+    # ^ Đã sửa chữ classes thành pages
 
 @login_required
 def registration_list(request):
@@ -678,3 +679,322 @@ def mofi_chungchi_danhmuc_delete(request, pk):
     dm.delete()
     messages.success(request, 'Đã xóa Danh mục Chứng chỉ thành công.')
     return redirect('students:mofi_chungchi_list')
+
+import pandas as pd
+import re
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import SinhVien, DotThi, LichSuThi
+from django.contrib.admin.views.decorators import staff_member_required
+
+# Hàm tiện ích để chuẩn hóa chuỗi tìm kiếm cột
+def clean_col(s):
+    return str(s).lower().strip()
+
+@staff_member_required
+def mofi_import_exam_data(request):
+    if request.method == 'POST':
+        dot_thi_id = request.POST.get('dot_thi')
+        file_type = request.POST.get('file_type') # 'LICH' hoặc 'DIEM'
+        excel_file = request.FILES.get('excel_file')
+        
+        if not excel_file:
+            messages.error(request, "Vui lòng chọn file Excel.")
+            return redirect(request.path)
+            
+        dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+        
+        try:
+            # 1. Đọc file không header để dò dòng tiêu đề
+            df_raw = pd.read_excel(excel_file, header=None)
+            header_row = 0
+            for i, row in df_raw.iterrows():
+                row_vals = [clean_col(v) for v in row.values]
+                if 'mã sinh viên' in row_vals or 'mssv' in row_vals:
+                    header_row = i
+                    break
+            
+            # 2. Đọc lại file với header chuẩn
+            df = pd.read_excel(excel_file, header=header_row)
+            df.columns = [clean_col(c) for c in df.columns]
+            
+            count = 0
+            for _, row in df.iterrows():
+                # Tìm cột MSSV
+                mssv_key = next((c for c in df.columns if 'mã' in c and 'sinh viên' in c or 'mssv' in c), None)
+                if not mssv_key or pd.isna(row[mssv_key]): continue
+                
+                mssv = str(row[mssv_key]).split('.')[0].strip() # Xử lý mssv bị biến thành float
+                
+                try:
+                    sv = SinhVien.objects.get(mssv=mssv)
+                except SinhVien.DoesNotExist: continue
+
+                # Xác định môn thi dựa trên loại đợt thi
+                mon_thi = "Công nghệ thông tin" if dot_thi.loai == 'TIN_HOC' else "Ngoại ngữ"
+
+                defaults = {}
+                if file_type == 'LICH':
+                    # Dò các cột lịch thi
+                    col_ngay = next((c for c in df.columns if 'ngày' in c), None)
+                    col_ca = next((c for c in df.columns if 'ca' in c), None)
+                    col_phong = next((c for c in df.columns if 'phòng' in c), None)
+                    col_sbd = next((c for c in df.columns if 'sbd' in c or 'báo danh' in c), None)
+                    
+                    if col_ca: defaults['ca_thi'] = str(row[col_ca])
+                    if col_phong: defaults['phong_thi'] = str(row[col_phong])
+                    if col_sbd: defaults['sbd'] = str(row[col_sbd])
+                
+                else: # Import ĐIỂM
+                    if dot_thi.loai == 'TIN_HOC':
+                        # Lấy điểm Trắc nghiệm & Thực hành
+                        c_tn = next((c for c in df.columns if 'trắc nghiệm' in c), None)
+                        c_th = next((c for c in df.columns if 'thực hành' in c), None)
+                        if c_tn: defaults['diem_thanh_phan_1'] = row[c_tn]
+                        if c_th: defaults['diem_thanh_phan_2'] = row[c_th]
+                    else:
+                        # Lấy điểm Ngoại ngữ (thường là cột Điểm đánh giá)
+                        c_tong = next((c for c in df.columns if 'đánh giá' in c or 'tổng' in c), None)
+                        c_xl = next((c for c in df.columns if 'xếp loại' in c or 'kết quả' in c), None)
+                        if c_tong: defaults['diem_thanh_phan_1'] = row[c_tong]
+                        if c_xl: defaults['ghi_chu'] = str(row[c_xl])
+
+                LichSuThi.objects.update_or_create(
+                    sinh_vien=sv, dot_thi=dot_thi, mon_thi=mon_thi,
+                    defaults=defaults
+                )
+                count += 1
+            
+            messages.success(request, f"Thành công! Đã cập nhật dữ liệu cho {count} sinh viên.")
+            
+        except Exception as e:
+            messages.error(request, f"Lỗi xử lý file: {str(e)}")
+            
+    return redirect('students:mofi_dot_thi_list')
+
+import pandas as pd
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from .models import DotThi, SinhVien, LichSuThi
+
+@staff_member_required
+def mofi_import_lich_thi(request):
+    if request.method == 'POST':
+        dot_thi_id = request.POST.get('dot_thi')
+        excel_file = request.FILES.get('excel_file')
+        
+        if not excel_file or not dot_thi_id:
+            messages.error(request, "Vui lòng chọn đợt thi và file Excel.")
+            return redirect('students:mofi_import_lich_thi')
+            
+        dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+        
+        try:
+            # 1. Đọc file để tự động tìm dòng tiêu đề chứa chữ "Mã sinh viên"
+            df_raw = pd.read_excel(excel_file, header=None)
+            header_row = 0
+            for i, row in df_raw.iterrows():
+                row_str = ' '.join([str(v).lower() for v in row.values])
+                if 'mã sinh viên' in row_str or 'mssv' in row_str:
+                    header_row = i
+                    break
+            
+            # 2. Đọc dữ liệu chính thức từ dòng Header đã tìm thấy
+            df = pd.read_excel(excel_file, header=header_row)
+            # Chuyển tên cột về chữ thường để dễ tìm
+            df.columns = [str(c).strip().lower() for c in df.columns]
+            
+            count = 0
+            for _, row in df.iterrows():
+                # Tìm cột MSSV
+                mssv_col = next((c for c in df.columns if 'mã' in c and 'sinh viên' in c or 'mssv' in c), None)
+                if not mssv_col or pd.isna(row[mssv_col]): continue
+                
+                # Cắt đuôi .0 nếu Excel tự convert mã sinh viên thành số thập phân
+                mssv = str(row[mssv_col]).split('.')[0].strip()
+                
+                try:
+                    sv = SinhVien.objects.get(mssv=mssv)
+                except SinhVien.DoesNotExist:
+                    continue # Bỏ qua nếu sinh viên không có trên CRM
+                    
+                # Tìm linh hoạt các cột Ca, Phòng, SBD
+                ca_col = next((c for c in df.columns if 'ca' in c), None)
+                phong_col = next((c for c in df.columns if 'phòng' in c), None)
+                sbd_col = next((c for c in df.columns if 'sbd' in c or 'báo danh' in c), None)
+                
+                ca_thi = str(row[ca_col]).strip() if ca_col and pd.notna(row[ca_col]) else ""
+                phong_thi = str(row[phong_col]).strip() if phong_col and pd.notna(row[phong_col]) else ""
+                sbd = str(row[sbd_col]).strip() if sbd_col and pd.notna(row[sbd_col]) else ""
+                
+                # Loại môn thi phụ thuộc vào cấu hình Đợt thi lúc Admin tạo
+                mon_thi = "Công nghệ thông tin" if dot_thi.loai == 'TIN_HOC' else "Ngoại ngữ"
+                
+                # Cập nhật hoặc thêm mới thông tin lịch thi cho sinh viên
+                LichSuThi.objects.update_or_create(
+                    sinh_vien=sv, 
+                    dot_thi=dot_thi, 
+                    mon_thi=mon_thi,
+                    defaults={
+                        'ca_thi': ca_thi,
+                        'phong_thi': phong_thi,
+                        'sbd': sbd
+                    }
+                )
+                count += 1
+                
+            messages.success(request, f"Đã đồng bộ Lịch thi & Phòng thi thành công cho {count} sinh viên.")
+            return redirect('students:mofi_dot_thi_list')
+            
+        except Exception as e:
+            messages.error(request, f"Lỗi xử lý file Excel: {str(e)}")
+            
+    # Lấy danh sách đợt thi để đưa vào dropdown
+    dot_this = DotThi.objects.all().order_by('-ngay_thi')
+    return render(request, 'admin_mofi/exams/import_lich_thi.html', {'dot_this': dot_this})
+
+@staff_member_required
+def mofi_sua_diem_thi(request, lich_thi_id):
+    if request.method == 'POST':
+        lt = get_object_or_404(LichSuThi, id=lich_thi_id)
+        diem1 = request.POST.get('diem_thanh_phan_1')
+        diem2 = request.POST.get('diem_thanh_phan_2')
+        ghi_chu = request.POST.get('ghi_chu', '').strip()
+        
+        if diem1: lt.diem_thanh_phan_1 = float(diem1)
+        if diem2: lt.diem_thanh_phan_2 = float(diem2)
+        lt.ghi_chu = ghi_chu
+        
+        lt.save()
+        messages.success(request, f"Đã cập nhật điểm thành công cho SV: {lt.sinh_vien.mssv}")
+        return redirect('students:mofi_dot_thi_detail', dot_thi_id=lt.dot_thi.id)
+    
+
+import io
+from django.http import HttpResponse
+
+# ==========================================
+# CÁC HÀM BỔ SUNG CHO GIAO DIỆN ADMIN MOFI
+# (Dán toàn bộ phần này xuống dưới cùng của file views.py)
+# ==========================================
+
+@staff_member_required
+def mofi_dot_thi_list(request):
+    # Đã sử dụng đúng trường thoi_gian_bat_dau theo CSDL của bạn
+    dot_this = DotThi.objects.all().order_by('-thoi_gian_bat_dau')
+    return render(request, 'admin_mofi/pages/dot_thi_list.html', {'dot_this': dot_this})
+
+@staff_member_required
+def mofi_dot_thi_detail(request, dot_thi_id):
+    dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+    lich_thi_list = LichSuThi.objects.filter(dot_thi=dot_thi).select_related('sinh_vien')
+    return render(request, 'admin_mofi/pages/dot_thi_detail.html', {
+        'dot_thi': dot_thi, 
+        'lich_thi_list': lich_thi_list
+    })
+
+@staff_member_required
+def mofi_sua_diem_thi(request, lich_thi_id):
+    if request.method == 'POST':
+        lt = get_object_or_404(LichSuThi, id=lich_thi_id)
+        diem1 = request.POST.get('diem_thanh_phan_1')
+        diem2 = request.POST.get('diem_thanh_phan_2')
+        ghi_chu = request.POST.get('ghi_chu', '').strip()
+        
+        if diem1: lt.diem_thanh_phan_1 = float(diem1)
+        if diem2: lt.diem_thanh_phan_2 = float(diem2)
+        lt.ghi_chu = ghi_chu
+        
+        lt.save()
+        messages.success(request, f"Đã cập nhật điểm thành công cho SV: {lt.sinh_vien.mssv}")
+        return redirect('students:mofi_dot_thi_detail', dot_thi_id=lt.dot_thi.id)
+    return redirect('students:mofi_dot_thi_list')
+
+@staff_member_required
+def mofi_export_bang_diem(request, dot_thi_id):
+    dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+    lich_thi_list = LichSuThi.objects.filter(dot_thi=dot_thi).select_related('sinh_vien').order_by('sbd')
+    
+    data = []
+    for lt in lich_thi_list:
+        data.append({
+            'MSSV': lt.sinh_vien.mssv,
+            'Họ và tên': lt.sinh_vien.ho_ten,
+            'Lớp': lt.sinh_vien.lop if lt.sinh_vien.lop else '',
+            'Ca thi': lt.ca_thi if lt.ca_thi else '',
+            'Phòng thi': lt.phong_thi if lt.phong_thi else '',
+            'SBD': lt.sbd if lt.sbd else '',
+            'Điểm TP1': lt.diem_thanh_phan_1 if lt.diem_thanh_phan_1 is not None else '',
+            'Điểm TP2': lt.diem_thanh_phan_2 if lt.diem_thanh_phan_2 is not None else '',
+            'Ghi chú': lt.ghi_chu if lt.ghi_chu else ''
+        })
+        
+    df = pd.DataFrame(data)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='BangDiem', index=False)
+        
+        # Căn chỉnh độ rộng cột Excel
+        worksheet = writer.sheets['BangDiem']
+        for column_cells in worksheet.columns:
+            length = max(len(str(cell.value)) for cell in column_cells)
+            worksheet.column_dimensions[column_cells[0].column_letter].width = length + 2
+
+    output.seek(0)
+    response = HttpResponse(
+        output.read(), 
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    safe_filename = str(dot_thi.ten_dot).replace(' ', '_')
+    response['Content-Disposition'] = f'attachment; filename="Bang_Diem_{safe_filename}.xlsx"'
+    return response
+
+@staff_member_required
+def mofi_import_class_list(request):
+    if request.method == 'POST':
+        lop_id = request.POST.get('lop_id')
+        excel_file = request.FILES.get('excel_file')
+        
+        if not excel_file or not lop_id:
+            messages.error(request, "Vui lòng chọn lớp học và file Excel.")
+            return redirect('students:mofi_import_class_list')
+            
+        lop_hoc = get_object_or_404(LopBoiDuong, id=lop_id)
+        try:
+            df_raw = pd.read_excel(excel_file, header=None)
+            header_row = 0
+            for i, row in df_raw.iterrows():
+                row_vals = [str(v).lower().strip() for v in row.values]
+                if 'mã sinh viên' in row_vals or 'mssv' in row_vals:
+                    header_row = i
+                    break
+            
+            df = pd.read_excel(excel_file, header=header_row)
+            df.columns = [str(c).lower().strip() for c in df.columns]
+            
+            count = 0
+            for _, row in df.iterrows():
+                mssv_key = next((c for c in df.columns if 'mã' in c and 'sinh viên' in c or 'mssv' in c), None)
+                if not mssv_key or pd.isna(row[mssv_key]): continue
+                
+                mssv = str(row[mssv_key]).split('.')[0].strip()
+                try:
+                    sv = SinhVien.objects.get(mssv=mssv)
+                    DangKyLop.objects.update_or_create(
+                        sinh_vien=sv, 
+                        lop_hoc=lop_hoc,
+                        defaults={'trang_thai': 'THANH_CONG'}
+                    )
+                    count += 1
+                except SinhVien.DoesNotExist:
+                    continue
+            
+            messages.success(request, f"Đã thêm thành công {count} sinh viên vào lớp {lop_hoc.ten_lop}!")
+            return redirect('students:class_list')
+            
+        except Exception as e:
+            messages.error(request, f"Lỗi xử lý file Excel: {str(e)}")
+            
+    lops = LopBoiDuong.objects.filter(trang_thai=True).order_by('-id')
+    return render(request, 'admin_mofi/pages/import_class_list.html', {'lops': lops})
