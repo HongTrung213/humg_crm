@@ -28,10 +28,10 @@ class ChungChiInline(admin.TabularInline):
 
 class LichSuThiInline(admin.TabularInline):
     model = LichSuThi
-    extra = 1
+    extra = 0
     autocomplete_fields = ['dot_thi']
     fields = ('mon_thi', 'dot_thi', 'diem_thanh_phan_1', 'diem_thanh_phan_2', 'diem_thi', 'ket_qua_dat')
-    readonly_fields = ('ket_qua_dat', 'diem_thi') # Diem thi duoc tu tinh trong models
+    readonly_fields = ['mon_thi', 'diem_tong', 'xep_loai', 'ket_qua_dat']
 
 # ==========================================
 # 3. ĐĂNG KÝ CÁC BẢNG CHÍNH
@@ -63,11 +63,11 @@ class DotThiAdmin(admin.ModelAdmin):
 
 @admin.register(LichSuThi)
 class LichSuThiAdmin(admin.ModelAdmin):
-    list_display = ('sinh_vien', 'mon_thi', 'dot_thi', 'diem_thi', 'ket_qua_dat')
+    list_display = ['sinh_vien', 'mon_thi', 'dot_thi', 'diem_tong', 'xep_loai', 'ket_qua_dat']
     search_fields = ('sinh_vien__mssv', 'sinh_vien__ho_ten')
     autocomplete_fields = ['sinh_vien', 'dot_thi']
     list_filter = ('mon_thi', 'dot_thi', 'ket_qua_dat')
-    readonly_fields = ('ket_qua_dat', 'diem_thi')
+    readonly_fields = ['mon_thi', 'diem_tong', 'xep_loai', 'ket_qua_dat']
 
 @admin.register(ChungChi)
 class ChungChiAdmin(admin.ModelAdmin):

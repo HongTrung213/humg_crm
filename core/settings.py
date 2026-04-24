@@ -70,6 +70,9 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20, # Tăng thời gian chờ lên 20 giây
+        },
     }
 }
 
@@ -152,3 +155,5 @@ SOCIAL_AUTH_MICROSOFT_GRAPH_WHITELISTED_DOMAINS = ['student.humg.edu.vn', 'humg.
 
 LOGIN_URL = 'students:dang_nhap'
 LOGIN_REDIRECT_URL = 'students:dashboard'
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240

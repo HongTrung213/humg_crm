@@ -1,0 +1,85 @@
+{% extends 'admin_mofi/base.html' %}
+{% block content %}
+{% if messages %}
+<div class="row justify-content-center mb-3">
+    <div class="col-md-7">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show shadow-sm border-0 border-start border-4 {% if message.tags == 'error' %}border-danger{% else %}border-success{% endif %}" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fa fs-4 me-3 {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %}"></i>
+                <div>
+                    <h6 class="alert-heading fw-bold mb-1">{% if message.tags == 'error' %}Lỗi xử lý!{% else %}Thành công!{% endif %}</h6>
+                    <span class="small">{{ message }}</span>
+                </div>
+            </div>
+            <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+<div class="container-fluid">
+    <div class="page-title">
+        <h4 class="fw-bold"><i class="fa fa-graduation-cap text-success me-2"></i>Nhập điểm Chuẩn đầu ra Ngoại Ngữ</h4>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-0 border-top border-success border-4">
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-success">1. Chọn Đợt thi CĐR Ngoại Ngữ</label>
+                            <select name="dot_thi" class="form-select shadow-none" required>
+                                {% for dt in dot_this %}
+                                    <option value="{{ dt.id }}">{{ dt.ten_dot }} ({{ dt.thoi_gian_bat_dau|date:"d/m/Y" }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-success">2. Tải file Excel Kết quả</label>
+                            <input type="file" name="excel_file" class="form-control shadow-none" accept=".xlsx, .xls, .csv" required>
+                        </div>
+                        <div class="alert alert-success bg-light-success small border-success">
+                            <i class="fa fa-info-circle me-1"></i> Bắt buộc phải có đủ 4 cột: <strong>Nghe, Đọc, Viết, Nói</strong>.
+                            Hệ thống sẽ tự động cập nhật Xếp loại (Đạt Bậc 2, Bậc 3...) và tự cấp tài khoản <code>cfihumg</code> cho sinh viên mới.
+                        </div>
+                        <button type="submit" class="btn btn-success text-white w-100 fw-bold">
+                            <i class="fa fa-upload me-1"></i> Bắt đầu Nạp Bảng Điểm
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const uploadForms = document.querySelectorAll("form");
+        
+        uploadForms.forEach(form => {
+            form.addEventListener("submit", function(e) {
+                // Tìm nút submit trong form này
+                const btn = this.querySelector('button[type="submit"]');
+                if(btn) {
+                    // Đổi giao diện nút thành Loading
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Đang xử lý, vui lòng chờ...';
+                    btn.classList.add("disabled"); // Khóa nút
+                    btn.style.pointerEvents = "none";
+                }
+            });
+        });
+    });
+    // Thêm đoạn này vào chung thẻ <script> ở Bước 2
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function(e) {
+            const fileName = this.value;
+            if(fileName && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls') && !fileName.endsWith('.csv')) {
+                alert('❌ LỖI ĐỊNH DẠNG: Vui lòng chỉ chọn file Excel (.xlsx, .xls) hoặc CSV!');
+                this.value = ''; // Xóa file vừa chọn
+            }
+        });
+    });
+</script>
+{% endblock %}

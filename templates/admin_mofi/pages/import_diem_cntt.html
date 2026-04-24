@@ -1,0 +1,113 @@
+{% extends 'admin_mofi/base.html' %}
+{% block content %}
+{% if messages %}
+<div class="row justify-content-center mb-3">
+    <div class="col-md-7">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show shadow-sm border-0 border-start border-4 {% if message.tags == 'error' %}border-danger{% else %}border-success{% endif %}" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fa fs-4 me-3 {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %}"></i>
+                <div>
+                    <h6 class="alert-heading fw-bold mb-1">{% if message.tags == 'error' %}Lỗi xử lý!{% else %}Thành công!{% endif %}</h6>
+                    <span class="small">{{ message }}</span>
+                </div>
+            </div>
+            <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+<div class="container-fluid">
+    <div class="page-title">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="fw-bold"><i class="fa fa-desktop text-info me-2"></i>Nạp điểm Chuẩn đầu ra TIN HỌC</h4>
+            </div>
+            <div class="col-6 text-end">
+                <a href="{% url 'students:mofi_dot_thi_list' %}" class="btn btn-outline-secondary fw-bold shadow-sm">
+                    <i class="fa fa-arrow-left me-2"></i>Quay lại danh sách
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-7 col-lg-9">
+            <div class="card shadow border-0 border-top border-4 border-info rounded-3">
+                <div class="card-header bg-white pb-0 border-bottom-0 pt-4 px-4">
+                    <h5 class="fw-bold text-dark mb-1">Module: Nạp Kết quả CĐR Công nghệ Thông tin</h5>
+                    <p class="text-muted small">Hệ thống bóc tách tự động: <b>Trắc nghiệm</b>, <b>Thực hành</b> và <b>Tổng điểm</b>.</p>
+                </div>
+                
+                <div class="card-body px-4 pb-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-info">1. Chọn Đợt thi Tin học tương ứng <span class="text-danger">*</span></label>
+                            <select name="dot_thi" class="form-select form-select-lg shadow-none bg-light border-0" required>
+                                <option value="">--- Vui lòng chọn đợt thi ---</option>
+                                {% for dt in dot_this %}
+                                    <option value="{{ dt.id }}">{{ dt.ten_dot }} (Ngày thi: {{ dt.thoi_gian_bat_dau|date:"d/m/Y" }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-info">2. Tải lên File Kết quả Excel <span class="text-danger">*</span></label>
+                            <input type="file" name="excel_file" class="form-control form-control-lg shadow-none border-info" accept=".xlsx, .xls, .csv" required>
+                        </div>
+
+                        <div class="alert alert-warning border-warning bg-light-warning small mb-4">
+                            <div class="d-flex align-items-start">
+                                <i class="fa fa-check-square fs-4 text-warning me-3 mt-1"></i>
+                                <div>
+                                    <strong class="d-block mb-1 text-dark">Lưu ý định dạng File:</strong>
+                                    - File bắt buộc phải có các cột: <code>Mã sinh viên</code>, <code>Trắc nghiệm</code>, <code>Thực hành</code>, <code>Điểm đánh giá</code>.<br>
+                                    - Sinh viên chưa có trong hệ thống sẽ được tự động cấp tài khoản với mật khẩu mặc định là <code>cfihumg</code>.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-info text-white btn-lg fw-bold px-5 shadow-sm">
+                                <i class="fa fa-upload me-2"></i> Nạp Bảng Điểm Tin Học
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const uploadForms = document.querySelectorAll("form");
+        
+        uploadForms.forEach(form => {
+            form.addEventListener("submit", function(e) {
+                // Tìm nút submit trong form này
+                const btn = this.querySelector('button[type="submit"]');
+                if(btn) {
+                    // Đổi giao diện nút thành Loading
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Đang xử lý, vui lòng chờ...';
+                    btn.classList.add("disabled"); // Khóa nút
+                    btn.style.pointerEvents = "none";
+                }
+            });
+        });
+    });
+    // Thêm đoạn này vào chung thẻ <script> ở Bước 2
+const fileInputs = document.querySelectorAll('input[type="file"]');
+fileInputs.forEach(input => {
+    input.addEventListener('change', function(e) {
+        const fileName = this.value;
+        if(fileName && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls') && !fileName.endsWith('.csv')) {
+            alert('❌ LỖI ĐỊNH DẠNG: Vui lòng chỉ chọn file Excel (.xlsx, .xls) hoặc CSV!');
+            this.value = ''; // Xóa file vừa chọn
+        }
+    });
+});
+</script>
+{% endblock %}

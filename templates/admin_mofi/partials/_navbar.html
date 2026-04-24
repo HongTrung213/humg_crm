@@ -1,16 +1,19 @@
 {% load static %}
-<div class="page-header row">
-  <div class="header-logo-wrapper col-auto">
+<div class="page-header row align-items-center"> 
+  
+  <div class="header-logo-wrapper col-auto pe-1">
     <div class="logo-wrapper">
       <a href="{% url 'students:admin_mofi_dashboard' %}">
-        <img class="img-fluid for-light" src="{% static 'mofi/images/logo/logo.png' %}" alt=""/>
-        <img class="img-fluid for-dark" src="{% static 'mofi/images/logo/logo_light.png' %}" alt=""/>
+        <img class="img-fluid for-light" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG" style="max-height: 40px; object-fit: contain;"/>
+        <img class="img-fluid for-dark" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG" style="max-height: 40px; object-fit: contain;"/>
       </a>
     </div>
   </div>
-  <div class="col-4 col-xl-4 page-title">
-    <h4 class="f-w-700">{% block page_title %}Bảng Điều Khiển{% endblock %}</h4>
+
+  <div class="col-auto page-title ps-2">
+    <h4 class="f-w-700 mb-0">{% block page_title %}Bảng Điều Khiển{% endblock %}</h4>
   </div>
+
   <div class="header-wrapper col m-0">
     <div class="row">
       <form class="form-inline search-full col" action="#" method="get">
@@ -24,7 +27,11 @@
         </div>
       </form>
       <div class="header-logo-wrapper col-auto p-0">
-        <div class="logo-wrapper"><a href="{% url 'students:admin_mofi_dashboard' %}"><img class="img-fluid" src="{% static 'mofi/images/logo/logo.png' %}" alt=""></a></div>
+        <div class="logo-wrapper">
+          <a href="{% url 'students:admin_mofi_dashboard' %}">
+            <img class="img-fluid" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG" style="max-height: 35px; object-fit: contain;">
+          </a>
+        </div>
         <div class="toggle-sidebar">
           <svg class="stroke-icon sidebar-toggle status_toggle middle">
             <use href="{% static 'mofi/svg/icon-sprite.svg' %}#toggle-icon"></use>

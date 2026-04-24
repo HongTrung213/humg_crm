@@ -38,6 +38,8 @@ class DanhMucChungChi(models.Model):
 # PHÂN HỆ 1: QUẢN LÝ HỒ SƠ SINH VIÊN & CHỨNG CHỈ (CHUẨN ĐẦU RA)
 # ==============================================================================
 class SinhVien(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='ho_so')
+    
     mssv = models.CharField('Mã Sinh Viên', max_length=15, unique=True)
     ho_ten = models.CharField('Họ và Tên', max_length=100)
     
@@ -74,7 +76,7 @@ class SinhVien(models.Model):
         max_val = self.lich_su_thi.filter(
             mon_thi=loai_mon, 
             ngay_cap_nhat__gte=five_years_ago
-        ).aggregate(Max('diem_thi'))['diem_thi__max']
+        ).aggregate(Max('diem_tong'))['diem_tong__max'] # Sửa diem_thi thành diem_tong
         return max_val if max_val is not None else 0
 
     @property
@@ -180,39 +182,104 @@ class LichSuThi(models.Model):
     mon_thi = models.CharField('Môn thi', max_length=20, choices=MON_THI)
     dot_thi = models.ForeignKey(DotThi, on_delete=models.CASCADE, related_name='ket_qua')
     
-    diem_thanh_phan_1 = models.FloatField('Điểm TP 1', null=True, blank=True)
-    diem_thanh_phan_2 = models.FloatField('Điểm TP 2', null=True, blank=True)
-    diem_thi = models.FloatField('Điểm tổng', null=True, blank=True)
+    # --- BỘ LỊCH THI ---
+    sbd = models.CharField(max_length=50, null=True, blank=True, verbose_name="Số báo danh")
+    ngay_thi = models.CharField(max_length=50, null=True, blank=True, verbose_name="Ngày thi 1")
+    ca_thi = models.CharField(max_length=50, null=True, blank=True, verbose_name="Ca thi 1")
+    phong_thi = models.CharField(max_length=50, null=True, blank=True, verbose_name="Phòng thi 1")
     
-    ket_qua_dat = models.BooleanField('Đạt chuẩn', default=False)
-    ghi_chu_xac_minh = models.TextField('Ghi chú giám thị', blank=True)
-    ngay_cap_nhat = models.DateTimeField(auto_now_add=True)
+    ngay_thi_2 = models.CharField(max_length=50, null=True, blank=True, verbose_name="Ngày thi Nói")
+    ca_thi_2 = models.CharField(max_length=50, null=True, blank=True, verbose_name="Ca thi Nói")
+    phong_thi_2 = models.CharField(max_length=50, null=True, blank=True, verbose_name="Phòng thi Nói")
+    
+    # --- BỘ ĐIỂM THI (Các cột này vừa được bổ sung để hứng dữ liệu từ Excel) ---
+    diem_thanh_phan_1 = models.FloatField(null=True, blank=True, verbose_name="Nghe / Trắc nghiệm")
+    diem_thanh_phan_2 = models.FloatField(null=True, blank=True, verbose_name="Đọc / Thực hành")
+    diem_thanh_phan_3 = models.FloatField(null=True, blank=True, verbose_name="Viết")
+    diem_thanh_phan_4 = models.FloatField(null=True, blank=True, verbose_name="Nói")
+    diem_tong = models.FloatField(null=True, blank=True, verbose_name="Tổng điểm / Đánh giá")
+    
+    xep_loai = models.CharField(max_length=100, null=True, blank=True, verbose_name="Xếp loại")
+    ghi_chu = models.CharField(max_length=255, null=True, blank=True, verbose_name="Ghi chú")
+    
+    ket_qua_dat = models.BooleanField('Kết quả Đạt', default=False)
+    ngay_cap_nhat = models.DateTimeField(auto_now=True) # Cần thiết để lấy điểm mới nhất trong vòng 5 năm
 
     class Meta:
-        verbose_name = 'Điểm thi'
+        verbose_name = 'Điểm thi / Lịch thi'
         verbose_name_plural = '6. Quản lý Điểm thi'
 
     def save(self, *args, **kwargs):
-        if self.diem_thanh_phan_1 is not None and self.diem_thanh_phan_2 is not None:
-            self.diem_thi = round((self.diem_thanh_phan_1 + self.diem_thanh_phan_2) / 2, 2)
-        
-        if self.diem_thi is None: self.diem_thi = 0.0
+        diems = [self.diem_thanh_phan_1, self.diem_thanh_phan_2, self.diem_thanh_phan_3, self.diem_thanh_phan_4]
+        valid_diems = [d for d in diems if d is not None]
+
+        if self.diem_tong is None and valid_diems:
+            self.diem_tong = round(sum(valid_diems), 2)
 
         is_pass = False
-        if self.mon_thi in ['TA_DAU_VAO', 'CDR_NGOAI_NGU']:
-            if (self.diem_thanh_phan_1 is not None and self.diem_thanh_phan_1 <= self.dot_thi.diem_liet_ngoai_ngu):
-                is_pass = False
+        xl_str = str(self.xep_loai).lower() if self.xep_loai else ""
+        gc_str = str(self.ghi_chu).lower() if self.ghi_chu else ""
+
+        # Ưu tiên 1: Chặn đứng Vắng thi, Không đạt
+        if any(k in xl_str or k in gc_str for k in ['vắng', 'bỏ thi', 'đình chỉ', 'không đạt']):
+            is_pass = False
+            
+        # Ưu tiên 2: Xét chữ "Đủ điều kiện", "Đạt", "B1"...
+        elif any(k in xl_str for k in ['đủ điều kiện', 'đạt', 'pass', 'b1', 'b2', 'a2', 'c1']):
+            is_pass = True
+            
+        # Ưu tiên 3: Xét bằng Số (Khi Excel không có cột Xếp loại)
+        else:
+            d_tong = self.diem_tong or 0
+            if self.mon_thi in ['TA_DAU_VAO', 'CDR_NGOAI_NGU']:
+                d_chuan = self.dot_thi.diem_chuan_ngoai_ngu
+                d_liet = self.dot_thi.diem_liet_ngoai_ngu
             else:
-                is_pass = self.diem_thi >= self.dot_thi.diem_chuan_ngoai_ngu
-        elif self.mon_thi == 'CDR_TIN_HOC':
-            if (self.diem_thanh_phan_1 is not None and self.diem_thanh_phan_1 <= self.dot_thi.diem_liet_tin_hoc):
-                is_pass = False
-            else:
-                is_pass = self.diem_thi >= self.dot_thi.diem_chuan_tin_hoc
+                d_chuan = self.dot_thi.diem_chuan_tin_hoc
+                d_liet = self.dot_thi.diem_liet_tin_hoc
+
+            # Chú ý: Chỉ xét liệt nếu d_liet > 0 hoặc sinh viên thực sự có điểm 0
+            bi_liet = any(d <= d_liet for d in valid_diems) if d_liet >= 0 else False
+            
+            if not bi_liet and d_tong >= d_chuan:
+                is_pass = True
 
         self.ket_qua_dat = is_pass
         super().save(*args, **kwargs)
+        # 1. Tự động tính TỔNG ĐIỂM (Cộng dồn 4 kỹ năng theo chuẩn HUMG)
+        diems = [self.diem_thanh_phan_1, self.diem_thanh_phan_2, self.diem_thanh_phan_3, self.diem_thanh_phan_4]
+        valid_diems = [d for d in diems if d is not None]
+        
+        # HUMG dùng tổng điểm cho TĐNN và CĐR
+        if self.diem_tong is None and valid_diems:
+            self.diem_tong = sum(valid_diems)
 
+        # 2. Logic xét ĐẠT / TRƯỢT (Logic đa tầng)
+        is_pass = False
+        xl_str = str(self.xep_loai).lower() if self.xep_loai else ""
+        gc_str = str(self.ghi_chu).lower() if self.ghi_chu else ""
+
+        # Ưu tiên 1: Chặn ngay nếu có dấu hiệu vắng thi hoặc bỏ thi
+        if any(k in xl_str or k in gc_str for k in ['vắng', 'bỏ thi', 'đình chỉ']):
+            is_pass = False
+        
+        # Ưu tiên 2: Xét chữ "Đủ điều kiện" hoặc "Đạt" (Rất quan trọng cho TĐNN)
+        elif any(k in xl_str for k in ['đủ điều kiện', 'đạt', 'b1', 'b2', 'a2']):
+            is_pass = True
+            
+        # Ưu tiên 3: Xét theo ngưỡng điểm chuẩn của Đợt thi (Nếu cột Xếp loại rỗng)
+        else:
+            d_tong = self.diem_tong or 0
+            d_chuan = self.dot_thi.diem_chuan_ngoai_ngu
+            d_liet = self.dot_thi.diem_liet_ngoai_ngu
+            
+            # Kiểm tra điểm liệt từng phần
+            bi_liet = any(d <= d_liet for d in valid_diems)
+            if not bi_liet and d_tong >= d_chuan:
+                is_pass = True
+
+        self.ket_qua_dat = is_pass
+        super().save(*args, **kwargs)
 
 # ==============================================================================
 # PHÂN HỆ 3: QUẢN LÝ LỚP HỌC

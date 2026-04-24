@@ -181,58 +181,70 @@
                     </div>
                 </div>
 
-                <div class="card content-sec border-0 shadow-sm mb-4">
-                    <div class="card-body">
-                        <h5 class="subs-title"><i class="feather-clock"></i> Lịch sử thi (Tổ chức tại trường)</h5>
-                        {% if lich_su_thi %}
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0 text-center align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>STT</th>
-                                        <th class="text-start">Môn thi</th>
-                                        <th class="text-start">Đợt thi</th>
-                                        <th>Điểm TP 1<br><small class="text-muted">(Lý thuyết/Nghe-Đọc)</small></th>
-                                        <th>Điểm TP 2<br><small class="text-muted">(Thực hành/Nói)</small></th>
-                                        <th>Tổng điểm</th>
-                                        <th>Kết quả xét</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for ls in lich_su_thi %}
-                                    <tr>
-                                        <td>{{ forloop.counter }}</td>
-                                        <td class="text-start"><strong>{{ ls.get_mon_thi_display }}</strong></td>
-                                        <td class="text-start">{{ ls.dot_thi.ten_dot }}</td>
-                                        
-                                        <td>{{ ls.diem_thanh_phan_1|default:"-" }}</td>
-                                        
-                                        <td>{{ ls.diem_thanh_phan_2|default:"-" }}</td>
-                                        
-                                        <td><strong>{{ ls.diem_thi }}</strong></td>
-                                        
-                                        <td>
-                                            {% if ls.ket_qua_dat %}
-                                                <span class="badge bg-success text-white">ĐẠT CHUẨN</span>
-                                            {% else %}
-                                                <span class="badge bg-danger text-white">KHÔNG ĐẠT</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="mt-2 text-muted" style="font-size: 12px;">
-                            <i>* Lưu ý: Kết quả "ĐẠT CHUẨN" được tính khi Tổng điểm vượt mức điểm chuẩn của đợt thi và không có Điểm thành phần nào bị dính điểm liệt.</i>
-                        </div>
-                        {% else %}
-                        <div class="alert alert-secondary text-center mb-0">
-                            <i>Hệ thống chưa ghi nhận lịch sử dự thi nào của sinh viên này.</i>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
+                <div class="card-body p-4">
+    <div class="row mb-4 pb-3 border-bottom">
+        <div class="col-md-6 {% if lt.ngay_thi_2 %}border-end{% endif %}">
+            <p class="mb-2 {% if lt.ngay_thi_2 %}text-primary{% else %}text-dark{% endif %} fw-bold">
+                <i class="fa fa-calendar-alt me-1"></i> 
+                {% if lt.ngay_thi_2 %}Lịch thi 1 (Nghe - Đọc - Viết){% else %}Thông tin Lịch thi{% endif %}
+            </p>
+            <div class="d-flex flex-column text-muted small gap-1">
+                <div><span class="badge bg-danger text-white px-2 py-1 fs-6">SBD: {{ lt.sbd|default:"Chưa có" }}</span></div>
+                <div><strong>Ngày thi:</strong> {{ lt.ngay_thi|default:"Đang cập nhật" }}</div>
+                <div><strong>Phòng thi:</strong> <span class="text-dark fw-bold">{{ lt.phong_thi|default:"-" }}</span></div>
+                <div><strong>Ca thi:</strong> {{ lt.ca_thi|default:"-" }}</div>
+            </div>
+        </div>
+        
+        {% if lt.ngay_thi_2 %}
+        <div class="col-md-6 ps-md-4 mt-3 mt-md-0">
+            <p class="mb-2 text-success fw-bold">
+                <i class="fa fa-microphone me-1"></i> Lịch thi 2 (Kỹ năng Nói)
+            </p>
+            <div class="d-flex flex-column text-muted small gap-1">
+                <div><span class="badge bg-danger text-white px-2 py-1 fs-6">SBD: {{ lt.sbd|default:"Chưa có" }}</span></div>
+                <div><strong>Ngày thi:</strong> {{ lt.ngay_thi_2|default:"Đang cập nhật" }}</div>
+                <div><strong>Phòng thi:</strong> <span class="text-dark fw-bold">{{ lt.phong_thi_2|default:"-" }}</span></div>
+                <div><strong>Ca thi:</strong> {{ lt.ca_thi_2|default:"-" }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="table-responsive">
+        <h6 class="fw-bold text-dark mb-2"><i class="fa fa-clipboard-check me-1 text-warning"></i> Điểm thi chi tiết</h6>
+        <table class="table table-bordered text-center align-middle mb-0">
+            <thead class="table-light small">
+                <tr>
+                    {% if 'tin' in lt.dot_thi.ten_dot|lower or 'cntt' in lt.dot_thi.ten_dot|lower %}
+                        <th class="text-primary">Trắc nghiệm</th>
+                        <th class="text-success">Thực hành</th>
+                    {% else %}
+                        <th class="text-primary">Nghe</th>
+                        <th class="text-success">Đọc</th>
+                        <th class="text-info">Viết</th>
+                        <th class="text-secondary">Nói</th>
+                    {% endif %}
+                    <th class="bg-warning bg-opacity-10">TỔNG/ĐÁNH GIÁ</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="fw-bold fs-6">
+                    {% if 'tin' in lt.dot_thi.ten_dot|lower or 'cntt' in lt.dot_thi.ten_dot|lower %}
+                        <td class="text-primary">{{ lt.diem_thanh_phan_1|default:"-" }}</td>
+                        <td class="text-success">{{ lt.diem_thanh_phan_2|default:"-" }}</td>
+                    {% else %}
+                        <td class="text-primary">{{ lt.diem_thanh_phan_1|default:"-" }}</td>
+                        <td class="text-success">{{ lt.diem_thanh_phan_2|default:"-" }}</td>
+                        <td class="text-info">{{ lt.diem_thanh_phan_3|default:"-" }}</td>
+                        <td class="text-secondary">{{ lt.diem_thanh_phan_4|default:"-" }}</td>
+                    {% endif %}
+                    <td class="bg-warning bg-opacity-10 text-danger fs-5">{{ lt.diem_tong|default:"-" }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
                 <div class="text-end mb-4">
                     <button onclick="window.print()" class="btn btn-outline-primary">

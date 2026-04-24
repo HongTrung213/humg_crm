@@ -47,7 +47,7 @@ for p in posts:
         counter += 1
     p.slug = new_slug
     p.save()
-    print(f"Đã cập nhật slug cho bài: {p.title}")
+    print(f"Đã cập nhật slug cho bài: {p.title}")  
 # ==========================================
 # 1. PHÂN HỆ CÔNG CỘNG (CỔNG THÔNG TIN SINH VIÊN)
 # ==========================================
@@ -998,3 +998,450 @@ def mofi_import_class_list(request):
             
     lops = LopBoiDuong.objects.filter(trang_thai=True).order_by('-id')
     return render(request, 'admin_mofi/pages/import_class_list.html', {'lops': lops})
+
+@staff_member_required
+def mofi_import_diem_cntt(request):
+    if request.method == 'POST':
+        dot_thi_id = request.POST.get('dot_thi')
+        excel_file = request.FILES.get('excel_file')
+        
+        if not excel_file or not dot_thi_id:
+            messages.error(request, "Vui lòng chọn đợt thi và tải lên file Excel.")
+            return redirect('students:mofi_import_diem_cntt')
+            
+        dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+        
+        try:
+            # 1. Định vị dòng Tiêu đề
+            df_raw = pd.read_excel(excel_file, header=None)
+            header_row = 0
+            for i, row in df_raw.iterrows():
+                row_vals = [str(v).lower().strip() for v in row.values]
+                if any(k in v for v in row_vals for k in ['mã sinh viên', 'mssv']):
+                    header_row = i
+                    break
+            
+            df = pd.read_excel(excel_file, header=header_row)
+            df.columns = [str(c).lower().strip() for c in df.columns]
+            headers_str = " ".join(df.columns)
+            
+            # 2. VALIDATION GUARD: Bắt lỗi up nhầm file
+            if 'trắc nghiệm' not in headers_str and 'thực hành' not in headers_str:
+                messages.error(request, "❌ CẢNH BÁO: File không đúng chuẩn Tin học! Bắt buộc phải có cột 'Trắc nghiệm' hoặc 'Thực hành'.")
+                return redirect('students:mofi_import_diem_cntt')
+            
+            count_new_sv = 0
+            count_update_diem = 0
+            
+            # 3. Mở luồng xử lý tốc độ cao (Transaction)
+            with transaction.atomic():
+                for _, row in df.iterrows():
+                    c_mssv = next((c for c in df.columns if 'mã sinh viên' in c or 'mssv' in c), None)
+                    if not c_mssv or pd.isna(row[c_mssv]): continue
+                    mssv = str(row[c_mssv]).split('.')[0].strip()
+                    if not mssv: continue
+                    
+                    # Lấy Họ và tên
+                    c_hoten = next((c for c in df.columns if 'họ và tên' in c or 'họ tên' in c), None)
+                    ho_ten_full = str(row[c_hoten]).strip() if c_hoten and pd.notna(row[c_hoten]) else f"SV_{mssv}"
+
+                    # Tạo Tài khoản & Hồ sơ tự động
+                    user, u_created = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
+                    if u_created:
+                        user.set_password('cfihumg')
+                        user.save()
+                    
+                    sv, sv_created = SinhVien.objects.get_or_create(
+                        mssv=mssv, defaults={'user': user, 'ho_ten': ho_ten_full}
+                    )
+                    if sv_created: count_new_sv += 1
+
+                    # Bóc tách điểm Tin học
+                    def get_val(keys):
+                        col = next((c for c in df.columns if any(k in c for k in keys)), None)
+                        return pd.to_numeric(row[col], errors='coerce') if col and pd.notna(row[col]) else None
+
+                    # Trắc nghiệm (Module 1) và Thực hành (Module 2)
+                    defaults = {
+                        'diem_thanh_phan_1': get_val(['trắc nghiệm', 'lý thuyết']),
+                        'diem_thanh_phan_2': get_val(['thực hành']),
+                        'diem_tong': get_val(['điểm đánh giá', 'tổng']),
+                    }
+                    
+                    c_xl = next((c for c in df.columns if 'xếp loại' in c or 'kết quả' in c), None)
+                    c_gc = next((c for c in df.columns if 'ghi chú' in c), None)
+                    if c_xl and pd.notna(row[c_xl]): defaults['xep_loai'] = str(row[c_xl]).strip()
+                    if c_gc and pd.notna(row[c_gc]): defaults['ghi_chu'] = str(row[c_gc]).strip()
+
+                    LichSuThi.objects.update_or_create(
+                        sinh_vien=sv, dot_thi=dot_thi, defaults=defaults
+                    )
+                    count_update_diem += 1
+
+            messages.success(request, f"✅ Đã nạp thành công Điểm CĐR TIN HỌC! (Tạo mới {count_new_sv} hồ sơ | Cập nhật {count_update_diem} sinh viên).")
+            return redirect('students:mofi_dot_thi_detail', dot_thi_id=dot_thi.id)
+            
+        except Exception as e:
+            messages.error(request, f"❌ Lỗi xử lý file Excel: {str(e)}")
+            
+    # Lọc danh sách đợt thi
+    dot_this = DotThi.objects.all().order_by('-id')
+    return render(request, 'admin_mofi/pages/import_diem_cntt.html', {'dot_this': dot_this})
+
+import pandas as pd
+from django.db import transaction
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import SinhVien, DotThi, LichSuThi
+from django.db import transaction, connection
+
+@staff_member_required
+def mofi_import_diem_tdnn(request):
+    if request.method == 'POST':
+        dot_thi_id = request.POST.get('dot_thi')
+        excel_file = request.FILES.get('excel_file')
+        dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+        
+        connection.close() # Tránh lỗi Database is locked
+
+        try:
+            df_raw = pd.read_excel(excel_file, header=None)
+            header_idx = 0
+            for i, row in df_raw.iterrows():
+                if any('mã sinh viên' in str(v).lower() for v in row.values):
+                    header_idx = i
+                    break
+            
+            df = pd.read_excel(excel_file, header=header_idx)
+            df.columns = [str(c).lower().strip() for c in df.columns]
+
+            success_count = 0
+            with transaction.atomic():
+                for index, row in df.iterrows():
+                    # 1. Mã Sinh Viên
+                    c_mssv = next((c for c in df.columns if 'mã sinh viên' in c or 'mssv' in c), None)
+                    if not c_mssv or pd.isna(row[c_mssv]): continue
+                    mssv = str(row[c_mssv]).split('.')[0].strip()
+
+                    # 2. Ghép Tên (Khắc phục lỗi ô trống chia 2 cột)
+                    c_ho_idx = next((i for i, c in enumerate(df.columns) if 'họ và tên' in c or 'họ tên' in c), None)
+                    if c_ho_idx is not None:
+                        # Dùng replace('nan', '') để triệt tiêu lỗi Pandas
+                        ho_val = str(row.iloc[c_ho_idx]).replace('nan', '').strip()
+                        ten_val = str(row.iloc[c_ho_idx + 1]).replace('nan', '').strip()
+                        full_name = f"{ho_val} {ten_val}".strip() or f"Sinh viên {mssv}"
+                    else:
+                        c_ho = next((c for c in df.columns if 'họ' in c and 'tên' not in c), None)
+                        c_ten = next((c for c in df.columns if 'tên' in c and 'họ' not in c), None)
+                        ho = str(row[c_ho]).replace('nan', '').strip() if c_ho else ""
+                        ten = str(row[c_ten]).replace('nan', '').strip() if c_ten else ""
+                        full_name = f"{ho} {ten}".strip() or f"Sinh viên {mssv}"
+
+                    user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
+                    if _: user.set_password('cfihumg'); user.save()
+                    sv, _ = SinhVien.objects.update_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': full_name})
+
+                    # 3. Trích xuất Xếp loại an toàn
+                    def get_d(key):
+                        col = next((c for c in df.columns if key in c), None)
+                        return pd.to_numeric(row[col], errors='coerce') if col else None
+
+                    c_xl = next((c for c in df.columns if 'xếp loại' in c or 'kết quả' in c), None)
+                    c_gc = next((c for c in df.columns if 'ghi chú' in c), None)
+                    
+                    # CỰC KỲ QUAN TRỌNG: Ép chuỗi "nan" về rỗng ""
+                    xl_val = str(row[c_xl]).replace('nan', '').strip() if c_xl else ""
+                    gc_val = str(row[c_gc]).replace('nan', '').strip() if c_gc else ""
+
+                    LichSuThi.objects.update_or_create(
+                        sinh_vien=sv, dot_thi=dot_thi, mon_thi='TA_DAU_VAO',
+                        defaults={
+                            'diem_thanh_phan_1': get_d('nghe'),
+                            'diem_thanh_phan_2': get_d('đọc'),
+                            'diem_thanh_phan_3': get_d('viết'),
+                            'diem_thanh_phan_4': get_d('nói'),
+                            'diem_tong': get_d('đánh giá') or get_d('tổng'),
+                            'xep_loai': xl_val,
+                            'ghi_chu': gc_val,
+                        }
+                    )
+                    success_count += 1
+
+            messages.success(request, f"Đã đồng bộ thành công {success_count} bản ghi! Kết quả Đạt/Trượt đã được tự động hiệu chỉnh.")
+        except Exception as e:
+            messages.error(request, f"Lỗi xử lý file: {str(e)}")
+        
+        return redirect('students:mofi_import_diem_tdnn')
+
+    return render(request, 'admin_mofi/pages/import_diem_tdnn.html', {'dot_this': DotThi.objects.all().order_by('-id')})
+
+
+@staff_member_required
+def mofi_import_diem_cdr_nn(request):
+    if request.method == 'POST':
+        dot_thi_id = request.POST.get('dot_thi')
+        excel_file = request.FILES.get('excel_file')
+        
+        if not excel_file or not dot_thi_id:
+            messages.error(request, "Vui lòng chọn đợt thi và tải lên file Excel.")
+            return redirect('students:mofi_import_diem_cdr_nn')
+            
+        dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+        
+        try:
+            # 1. Tìm dòng Tiêu đề
+            df_raw = pd.read_excel(excel_file, header=None)
+            header_row = 0
+            for i, row in df_raw.iterrows():
+                row_vals = [str(v).lower().strip() for v in row.values]
+                if any(k in v for v in row_vals for k in ['mã sinh viên', 'mssv']):
+                    header_row = i
+                    break
+            
+            df = pd.read_excel(excel_file, header=header_row)
+            df.columns = [str(c).lower().strip() for c in df.columns]
+            headers_str = " ".join(df.columns)
+            
+            # 2. VALIDATION GUARD: Bắt lỗi up nhầm file
+            if not all(k in headers_str for k in ['nghe', 'đọc', 'viết', 'nói']):
+                messages.error(request, "❌ CẢNH BÁO: File không đúng chuẩn CĐR Ngoại Ngữ! Bắt buộc phải có đủ 4 cột 'Nghe', 'Đọc', 'Viết', 'Nói'.")
+                return redirect('students:mofi_import_diem_cdr_nn')
+            
+            count_new_sv = 0
+            count_update_diem = 0
+            
+            # 3. Bắt đầu Import tốc độ cao
+            with transaction.atomic():
+                for _, row in df.iterrows():
+                    c_mssv = next((c for c in df.columns if 'mã sinh viên' in c or 'mssv' in c), None)
+                    if not c_mssv or pd.isna(row[c_mssv]): continue
+                    mssv = str(row[c_mssv]).split('.')[0].strip()
+                    if not mssv: continue
+                    
+                    # Ghép Họ và Tên
+                    c_ho = next((c for c in df.columns if 'họ' in c), None)
+                    c_ten = next((c for c in df.columns if 'tên' in c and 'họ' not in c), None)
+                    ho_ten = f"{row[c_ho] if c_ho else ''} {row[c_ten] if c_ten else ''}".strip() or f"SV_{mssv}"
+
+                    # Tự động cấp Tài khoản
+                    user, u_created = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
+                    if u_created:
+                        user.set_password('cfihumg')
+                        user.save()
+                    
+                    # Tự động tạo Hồ sơ
+                    sv, sv_created = SinhVien.objects.get_or_create(
+                        mssv=mssv, defaults={'user': user, 'ho_ten': ho_ten}
+                    )
+                    if sv_created: count_new_sv += 1
+
+                    # Bóc tách điểm 4 kỹ năng CĐR
+                    def get_score(key):
+                        col = next((c for c in df.columns if key in c), None)
+                        return pd.to_numeric(row[col], errors='coerce') if col else None
+
+                    defaults = {
+                        'diem_thanh_phan_1': get_score('nghe'),
+                        'diem_thanh_phan_2': get_score('đọc'),
+                        'diem_thanh_phan_3': get_score('viết'),
+                        'diem_thanh_phan_4': get_score('nói'),
+                        'diem_tong': get_score('điểm đánh giá') or get_score('tổng') or get_score('phương án'),
+                    }
+                    
+                    # Lấy Xếp loại, Ghi chú và Bảo lưu (nếu có)
+                    c_xl = next((c for c in df.columns if 'xếp loại' in c or 'kết quả' in c), None)
+                    c_gc = next((c for c in df.columns if 'ghi chú' in c), None)
+                    
+                    if c_xl and pd.notna(row[c_xl]): defaults['xep_loai'] = str(row[c_xl]).strip()
+                    if c_gc and pd.notna(row[c_gc]): defaults['ghi_chu'] = str(row[c_gc]).strip()
+
+                    LichSuThi.objects.update_or_create(
+                        sinh_vien=sv, dot_thi=dot_thi, defaults=defaults
+                    )
+                    count_update_diem += 1
+
+            messages.success(request, f"✅ Nạp CĐR NGOẠI NGỮ thành công! Tạo mới {count_new_sv} hồ sơ | Cập nhật điểm cho {count_update_diem} SV.")
+            return redirect('students:mofi_dot_thi_detail', dot_thi_id=dot_thi.id)
+            
+        except Exception as e:
+            messages.error(request, f"❌ Lỗi xử lý file: {str(e)}")
+            return redirect('students:mofi_import_diem_cdr_nn')
+            
+    dot_this = DotThi.objects.all().order_by('-id')
+    return render(request, 'admin_mofi/pages/import_diem_cdr_nn.html', {'dot_this': dot_this})
+
+from django.db import transaction
+import pandas as pd
+
+# --- 1. IMPORT LỊCH THI TIN HỌC (1 LỊCH) ---
+@staff_member_required
+def mofi_import_lich_thi_cntt(request):
+    if request.method == 'POST':
+        dot_thi_id = request.POST.get('dot_thi')
+        excel_file = request.FILES.get('excel_file')
+        if not excel_file or not dot_thi_id:
+            messages.error(request, "Vui lòng chọn đợt thi và tải lên file.")
+            return redirect('students:mofi_import_lich_thi_cntt')
+            
+        dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+        
+        try:
+            df = pd.read_excel(excel_file, header=2) # Đọc từ dòng 3 (index 2)
+            df.columns = [str(c).lower().strip() for c in df.columns]
+
+            count_new = 0
+            with transaction.atomic():
+                for _, row in df.iterrows():
+                    c_mssv = next((c for c in df.columns if 'mssv' in c or 'mã sinh viên' in c), None)
+                    if not c_mssv or pd.isna(row[c_mssv]): continue
+                    mssv = str(row[c_mssv]).split('.')[0].strip()
+
+                    # Tự động tạo Tài khoản & Hồ sơ
+                    user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
+                    if _: 
+                        user.set_password('cfihumg')
+                        user.save()
+                    sv, _ = SinhVien.objects.get_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': f"SV_{mssv}"})
+
+                    # Dò 1 lịch thi duy nhất
+                    LichSuThi.objects.update_or_create(
+                        sinh_vien=sv, dot_thi=dot_thi,
+                        defaults={
+                            'sbd': str(row.get('số báo danh', row.get('sbd', ''))),
+                            'ngay_thi': str(row.get('ngày thi', row.get('ngày', ''))),
+                            'ca_thi': str(row.get('ca thi', row.get('ca', ''))),
+                            'phong_thi': str(row.get('phòng thi', row.get('phòng', ''))),
+                        }
+                    )
+                    count_new += 1
+            messages.success(request, f"Đã nạp Lịch thi Tin học thành công cho {count_new} sinh viên!")
+            return redirect('students:mofi_dot_thi_detail', dot_thi_id=dot_thi.id)
+        except Exception as e:
+            messages.error(request, f"Lỗi: {e}")
+            return redirect('students:mofi_import_lich_thi_cntt')
+            
+    return render(request, 'admin_mofi/pages/import_lich_thi_cntt.html', {'dot_this': DotThi.objects.all().order_by('-id')})
+
+
+# --- 2. IMPORT LỊCH THI NGOẠI NGỮ (DÒ 2 LỊCH) ---
+@staff_member_required
+def mofi_import_lich_thi_nn(request):
+    if request.method == 'POST':
+        dot_thi_id = request.POST.get('dot_thi')
+        excel_file = request.FILES.get('excel_file')
+        if not excel_file or not dot_thi_id:
+            messages.error(request, "Vui lòng chọn đợt thi và tải lên file.")
+            return redirect('students:mofi_import_lich_thi_nn')
+            
+        dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+        
+        try:
+            df = pd.read_excel(excel_file, header=2)
+            df.columns = [str(c).lower().strip() for c in df.columns]
+            
+            count_new = 0
+            with transaction.atomic():
+                for _, row in df.iterrows():
+                    c_mssv = next((c for c in df.columns if 'mssv' in c or 'mã sinh viên' in c), None)
+                    if not c_mssv or pd.isna(row[c_mssv]): continue
+                    mssv = str(row[c_mssv]).split('.')[0].strip()
+
+                    user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
+                    if _: 
+                        user.set_password('cfihumg')
+                        user.save()
+                    sv, _ = SinhVien.objects.get_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': f"SV_{mssv}"})
+                    
+                    # Tìm các cột Ngày, Ca, Phòng
+                    date_cols = [c for c in df.columns if 'ngày' in str(c).lower()]
+                    room_cols = [c for c in df.columns if 'phòng' in str(c).lower()]
+                    shift_cols = [c for c in df.columns if 'ca' in str(c).lower()]
+
+                    defaults = {
+                        'sbd': str(row.get('số báo danh', row.get('sbd', ''))),
+                        # Lịch 1
+                        'ngay_thi': str(row[date_cols[0]]) if len(date_cols) > 0 and pd.notna(row[date_cols[0]]) else None,
+                        'phong_thi': str(row[room_cols[0]]) if len(room_cols) > 0 and pd.notna(row[room_cols[0]]) else None,
+                        'ca_thi': str(row[shift_cols[0]]) if len(shift_cols) > 0 and pd.notna(row[shift_cols[0]]) else None,
+                        # Lịch 2 (Nói)
+                        'ngay_thi_2': str(row[date_cols[1]]) if len(date_cols) > 1 and pd.notna(row[date_cols[1]]) else None,
+                        'phong_thi_2': str(row[room_cols[1]]) if len(room_cols) > 1 and pd.notna(row[room_cols[1]]) else None,
+                        'ca_thi_2': str(row[shift_cols[1]]) if len(shift_cols) > 1 and pd.notna(row[shift_cols[1]]) else None,
+                    }
+                    LichSuThi.objects.update_or_create(sinh_vien=sv, dot_thi=dot_thi, defaults=defaults)
+                    count_new += 1
+                    
+            messages.success(request, f"Đã nạp Lịch thi Ngoại ngữ thành công cho {count_new} sinh viên!")
+            return redirect('students:mofi_dot_thi_detail', dot_thi_id=dot_thi.id)
+        except Exception as e: 
+            messages.error(request, f"Lỗi: {e}")
+            return redirect('students:mofi_import_lich_thi_nn')
+            
+    return render(request, 'admin_mofi/pages/import_lich_thi_nn.html', {'dot_this': DotThi.objects.all().order_by('-id')})
+
+from django.utils.dateparse import parse_datetime
+
+@staff_member_required
+def mofi_dot_thi_list(request):
+    if request.method == 'POST':
+        # Bắt dữ liệu từ Form Modal
+        ma_dot = request.POST.get('ma_dot')
+        ten_dot = request.POST.get('ten_dot')
+        thoi_gian_bat_dau = request.POST.get('thoi_gian_bat_dau')
+        thoi_gian_ket_thuc = request.POST.get('thoi_gian_ket_thuc')
+        
+        # Cấu hình điểm
+        diem_chuan_nn = request.POST.get('diem_chuan_ngoai_ngu', 5.0)
+        diem_liet_nn = request.POST.get('diem_liet_ngoai_ngu', 0.0)
+        diem_chuan_th = request.POST.get('diem_chuan_tin_hoc', 5.0)
+        diem_liet_th = request.POST.get('diem_liet_tin_hoc', 0.0)
+        
+        file_tb = request.FILES.get('file_thong_bao')
+        trang_thai = request.POST.get('trang_thai') == 'on' # Checkbox
+
+        try:
+            DotThi.objects.create(
+                ma_dot=ma_dot,
+                ten_dot=ten_dot,
+                thoi_gian_bat_dau=parse_datetime(thoi_gian_bat_dau) if thoi_gian_bat_dau else timezone.now(),
+                thoi_gian_ket_thuc=parse_datetime(thoi_gian_ket_thuc) if thoi_gian_ket_thuc else timezone.now(),
+                diem_chuan_ngoai_ngu=float(diem_chuan_nn),
+                diem_liet_ngoai_ngu=float(diem_liet_nn),
+                diem_chuan_tin_hoc=float(diem_chuan_th),
+                diem_liet_tin_hoc=float(diem_liet_th),
+                file_thong_bao=file_tb,
+                trang_thai=trang_thai
+            )
+            messages.success(request, f"Tạo thành công đợt thi: {ten_dot}")
+        except Exception as e:
+            messages.error(request, f"Lỗi tạo đợt thi: Kiểm tra xem Mã đợt đã tồn tại chưa. ({str(e)})")
+        
+        return redirect('students:mofi_dot_thi_list')
+
+    # Hiển thị danh sách bình thường
+    dot_this = DotThi.objects.all().order_by('-id')
+    return render(request, 'admin_mofi/pages/dot_thi_list.html', {'dot_this': dot_this})
+
+@staff_member_required
+def mofi_dot_thi_detail(request, dot_thi_id):
+    dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+    
+    # Lấy danh sách kết quả, ưu tiên dùng select_related để tránh n+1 query cho 10k dòng
+    ket_qua_list = LichSuThi.objects.filter(dot_thi=dot_thi).select_related('sinh_vien').order_by('sbd')
+    
+    # Thống kê nhanh
+    tong_sv = ket_qua_list.count()
+    sv_dat = ket_qua_list.filter(ket_qua_dat=True).count()
+    sv_truot = tong_sv - sv_dat
+    ti_le_dat = round((sv_dat / tong_sv * 100), 1) if tong_sv > 0 else 0
+    
+    context = {
+        'dot_thi': dot_thi,
+        'ket_qua_list': ket_qua_list,
+        'tong_sv': tong_sv,
+        'sv_dat': sv_dat,
+        'sv_truot': sv_truot,
+        'ti_le_dat': ti_le_dat,
+    }
+    return render(request, 'admin_mofi/pages/dot_thi_detail.html', context)

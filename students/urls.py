@@ -83,6 +83,12 @@ urlpatterns = [
     path('quan-tri/dot-thi/', views.mofi_dot_thi_list, name='mofi_dot_thi_list'),
     path('quan-tri/dot-thi/chi-tiet/<int:dot_thi_id>/', views.mofi_dot_thi_detail, name='mofi_dot_thi_detail'),
     path('quan-tri/dot-thi/import/', views.mofi_import_lich_thi, name='mofi_import_lich_thi'),
+    path('quan-tri/dot-thi/import-cntt/', views.mofi_import_diem_cntt, name='mofi_import_diem_cntt'),
+    path('quan-tri/dot-thi/import-tdnn/', views.mofi_import_diem_tdnn, name='mofi_import_diem_tdnn'),
+    path('quan-tri/dot-thi/import-cdr-nn/', views.mofi_import_diem_cdr_nn, name='mofi_import_diem_cdr_nn'),
+    # Nhập Lịch thi kép (Tin học và Ngoại ngữ)
+    path('quan-tri/dot-thi/import-lich-thi-cntt/', views.mofi_import_lich_thi_cntt, name='mofi_import_lich_thi_cntt'),
+    path('quan-tri/dot-thi/import-lich-thi-nn/', views.mofi_import_lich_thi_nn, name='mofi_import_lich_thi_nn'),
     
     # Logic nghiệp vụ Điểm thi
     path('quan-tri/dot-thi/sua-diem/<int:lich_thi_id>/', views.mofi_sua_diem_thi, name='mofi_sua_diem_thi'),

@@ -4,91 +4,97 @@
     <div class="page-title">
         <div class="row align-items-center">
             <div class="col-6">
-                <h4 class="fw-bold mb-1">{{ dot_thi.ten_dot }}</h4>
-                <span class="text-muted small">Ngày thi: {{ dot_thi.thoi_gian_bat_dau|date:"d/m/Y" }}</span>
+                <h4 class="fw-bold"><i class="fa fa-file-text text-primary me-2"></i>Báo cáo: {{ dot_thi.ten_dot }}</h4>
             </div>
             <div class="col-6 text-end">
-                <a href="{% url 'students:mofi_export_bang_diem' dot_thi.id %}" class="btn btn-success fw-bold shadow-sm me-2">
-                    <i class="fa fa-file-excel-o me-1"></i> Xuất Bảng Điểm
-                </a>
-                <a href="{% url 'students:mofi_dot_thi_list' %}" class="btn btn-light border fw-bold">Trở lại</a>
+                <div class="btn-group shadow-sm">
+                    <button type="button" class="btn btn-primary dropdown-toggle fw-bold" data-bs-toggle="dropdown">
+                        <i class="fa fa-upload me-2"></i>Nạp dữ liệu Excel
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-menu-item p-2" href="{% url 'students:mofi_import_lich_thi_nn' %}?dot={{ dot_thi.id }}">Nạp Lịch thi NN</a></li>
+                        <li><a class="dropdown-menu-item p-2" href="{% url 'students:mofi_import_diem_tdnn' %}?dot={{ dot_thi.id }}">Nạp Điểm TĐNN</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-menu-item p-2 text-info" href="{% url 'students:mofi_import_lich_thi_cntt' %}?dot={{ dot_thi.id }}">Nạp Lịch thi Tin học</a></li>
+                        <li><a class="dropdown-menu-item p-2 text-info" href="{% url 'students:mofi_import_diem_cntt' %}?dot={{ dot_thi.id }}">Nạp Điểm Tin học</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white text-center p-3">
+                <h6 class="small opacity-75">TỔNG THÍ SINH</h6>
+                <h3 class="fw-bold mb-0">{{ tong_sv }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white text-center p-3">
+                <h6 class="small opacity-75">SỐ LƯỢNG ĐẠT</h6>
+                <h3 class="fw-bold mb-0">{{ sv_dat }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-danger text-white text-center p-3">
+                <h6 class="small opacity-75">SỐ LƯỢNG TRƯỢT</h6>
+                <h3 class="fw-bold mb-0">{{ sv_truot }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-info text-white text-center p-3">
+                <h6 class="small opacity-75">TỈ LỆ ĐẠT (%)</h6>
+                <h3 class="fw-bold mb-0">{{ ti_le_dat }}%</h3>
             </div>
         </div>
     </div>
 
     <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">Danh sách kết quả chi tiết</h5>
+            <div class="input-group w-25">
+                <input type="text" class="form-control" placeholder="Tìm MSSV/Họ tên..." id="searchTable">
+                <span class="input-group-text bg-light"><i class="fa fa-search"></i></span>
+            </div>
+        </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                <table class="table table-hover align-middle text-center mb-0" id="resultTable">
+                    <thead class="table-light text-muted small">
                         <tr>
-                            <th class="ps-4">Thí sinh (MSSV)</th>
-                            <th class="text-center">Phòng/Ca</th>
-                            <th class="text-center">SBD</th>
-                            <th class="text-center">Điểm TP1</th>
-                            <th class="text-center">Điểm TP2</th>
-                            <th class="text-center">Trạng thái</th>
-                            <th class="text-center pe-4">Thao tác</th>
+                            <th>SBD</th>
+                            <th class="text-start">Sinh viên</th>
+                            <th>Môn thi</th>
+                            <th>Thành phần (1-2-3-4)</th>
+                            <th>Tổng</th>
+                            <th>Kết quả</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for lt in lich_thi_list %}
+                        {% for kq in ket_qua_list %}
                         <tr>
-                            <td class="ps-4">
-                                <div class="fw-bold text-primary">{{ lt.sinh_vien.ho_ten }}</div>
-                                <small class="text-muted">{{ lt.sinh_vien.mssv }}</small>
+                            <td class="fw-bold text-danger">{{ kq.sbd|default:"-" }}</td>
+                            <td class="text-start">
+                                <div class="fw-bold text-dark">{{ kq.sinh_vien.ho_ten }}</div>
+                                <div class="small text-muted">{{ kq.sinh_vien.mssv }}</div>
                             </td>
-                            <td class="text-center">
-                                <span class="badge badge-light-secondary text-dark">P: {{ lt.phong_thi|default:"-" }}</span>
-                                <div class="small">Ca: {{ lt.ca_thi|default:"-" }}</div>
+                            <td><span class="badge bg-light text-dark border">{{ kq.get_mon_thi_display }}</span></td>
+                            <td class="small">
+                                {{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }} 
+                                {% if kq.diem_thanh_phan_3 %}| {{ kq.diem_thanh_phan_3 }} | {{ kq.diem_thanh_phan_4 }}{% endif %}
                             </td>
-                            <td class="text-center fw-bold text-danger">{{ lt.sbd|default:"-" }}</td>
-                            <td class="text-center fw-bold fs-6">{{ lt.diem_thanh_phan_1|default:"-" }}</td>
-                            <td class="text-center fw-bold fs-6">{{ lt.diem_thanh_phan_2|default:"-" }}</td>
-                            <td class="text-center">
-                                {% if lt.diem_thanh_phan_1 %}
-                                    <span class="badge bg-success">Đã có điểm</span>
+                            <td class="fw-bold fs-6">{{ kq.diem_tong|default:"0" }}</td>
+                            <td>
+                                {% if kq.ket_qua_dat %}
+                                    <span class="badge bg-success-subtle text-success px-3">ĐẠT</span>
                                 {% else %}
-                                    <span class="badge bg-warning text-dark">Chờ thi</span>
+                                    <span class="badge bg-danger-subtle text-danger px-3">TRƯỢT</span>
                                 {% endif %}
                             </td>
-                            <td class="text-center pe-4">
-                                <button class="btn btn-sm btn-info shadow-none" data-bs-toggle="modal" data-bs-target="#editScore{{ lt.id }}">
-                                    <i class="fa fa-edit"></i> Ghi điểm
-                                </button>
-                                
-                                <div class="modal fade text-start" id="editScore{{ lt.id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-sm">
-                                        <div class="modal-content border-0">
-                                            <form method="POST" action="{% url 'students:mofi_sua_diem_thi' lt.id %}">
-                                                {% csrf_token %}
-                                                <div class="modal-header bg-primary py-2">
-                                                    <h6 class="modal-title text-white">Nhập điểm cho SV</h6>
-                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body bg-light">
-                                                    <div class="mb-2">
-                                                        <label class="small fw-bold">Điểm TP 1</label>
-                                                        <input type="number" step="0.1" name="diem_thanh_phan_1" class="form-control" value="{{ lt.diem_thanh_phan_1|default:'' }}">
-                                                    </div>
-                                                    <div class="mb-2">
-                                                        <label class="small fw-bold">Điểm TP 2</label>
-                                                        <input type="number" step="0.1" name="diem_thanh_phan_2" class="form-control" value="{{ lt.diem_thanh_phan_2|default:'' }}">
-                                                    </div>
-                                                    <div class="mb-0">
-                                                        <label class="small fw-bold">Ghi chú</label>
-                                                        <input type="text" name="ghi_chu" class="form-control" value="{{ lt.ghi_chu|default:'' }}">
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer border-0 pt-0">
-                                                    <button type="submit" class="btn btn-primary w-100 fw-bold">Lưu thay đổi</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </td>
                         </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho đợt thi này.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -96,4 +102,15 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('searchTable').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        let rows = document.querySelector("#resultTable tbody").rows;
+        for (let row of rows) {
+            let text = row.innerText.toLowerCase();
+            row.style.display = text.includes(filter) ? "" : "none";
+        }
+    });
+</script>
 {% endblock %}

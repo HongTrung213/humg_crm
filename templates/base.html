@@ -5,8 +5,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
         <title>Hệ thống quản lý và chăm sóc sinh viên - HUMG</title>
-        <link rel="icon" href="{% static 'mofi/images/favicon.png' %}" type="image/x-icon">
-        <link rel="shortcut icon" href="{% static 'mofi/images/favicon.png' %}" type="image/x-icon">
+        <link rel="icon" href="{% static 'img/logo/logo.jpg' %}" type="image/x-icon">
+        <link rel="shortcut icon" href="{% static 'img/logo/logo.jpg' %}" type="image/x-icon">
         <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
         <link rel="stylesheet" href="{% static 'plugins/fontawesome/css/fontawesome.min.css' %}">
         <link rel="stylesheet" href="{% static 'plugins/fontawesome/css/all.min.css' %}">
@@ -29,14 +29,14 @@
                                     <span class="bar-icon"><span></span><span></span><span></span></span>
                                 </a>
                                 <a href="{% url 'students:home' %}" class="navbar-brand logo">
-                                    <img src="{% static 'img/logo.svg' %}" class="img-fluid" alt="Logo">
+                                    <img src="{% static 'img/logo/logo.jpg' %}" class="img-fluid" style="max-height: 45px; object-fit: contain;" alt="Logo">
                                 </a>
                             </div>
                             
                             <div class="main-menu-wrapper">
                                 <div class="menu-header">
                                     <a href="{% url 'students:home' %}" class="menu-logo">
-                                        <img src="{% static 'img/logo.svg' %}" class="img-fluid" alt="Logo">
+                                        <img src="{% static 'img/logo/logo.jpg' %}" class="img-fluid" style="max-height: 40px; object-fit: contain;" alt="Logo">
                                     </a>
                                     <a id="menu_close" class="menu-close" href="javascript:void(0);">
                                         <i class="fas fa-times"></i>
@@ -55,7 +55,6 @@
                                         </ul>
                                     </li>
 
-                                    <li><a href="{% url 'students:danh_sach_lop' %}">Đăng ký Lớp bồi dưỡng</a></li>
                                     <li><a href="{% url 'students:tra_cuu' %}">Tra cứu Kết quả</a></li>
 
                                     {% if request.user.is_staff %}
@@ -68,41 +67,43 @@
                                 </ul>      
                             </div>       
                             
-                            <ul class="nav header-navbar-rht">
+                            <ul class="nav header-navbar-rht align-items-center">
                                 {% if request.user.is_authenticated %}
                                     <li class="nav-item user-nav">
-                                        <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
+                                        <a href="#" class="dropdown-toggle d-flex align-items-center text-decoration-none" data-bs-toggle="dropdown">
                                             <span class="user-img">
                                                 {% if sinh_vien_global.anh_dai_dien %}
-                                                    <img src="{{ sinh_vien_global.anh_dai_dien.url }}" alt="Avatar" style="object-fit: cover;">
+                                                    <img src="{{ sinh_vien_global.anh_dai_dien.url }}" class="rounded-circle border" alt="Avatar" style="width: 35px; height: 35px; object-fit: cover;">
                                                 {% else %}
-                                                    <img src="{% static 'img/user/user11.jpg' %}" alt="Avatar">
+                                                    <img src="{% static 'img/user/user11.jpg' %}" class="rounded-circle border" alt="Avatar" style="width: 35px; height: 35px; object-fit: cover;">
                                                 {% endif %}
                                                 <span class="status online"></span>
                                             </span>
+                                            <span class="ms-2 d-none d-md-block text-dark fw-bold">{{ sinh_vien_global.ho_ten|default:request.user.username }}</span>
                                         </a>
-                                        <div class="users dropdown-menu dropdown-menu-right" data-popper-placement="bottom-end">
+                                        <div class="users dropdown-menu dropdown-menu-end shadow" data-popper-placement="bottom-end">
                                             <div class="user-header">
                                                 <div class="avatar avatar-sm">
                                                     {% if sinh_vien_global.anh_dai_dien %}
-                                                        <img src="{{ sinh_vien_global.anh_dai_dien.url }}" alt="Avatar" class="avatar-img rounded-circle" style="object-fit: cover;">
+                                                        <img src="{{ sinh_vien_global.anh_dai_dien.url }}" alt="Avatar" class="avatar-img rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
                                                     {% else %}
-                                                        <img src="{% static 'img/user/user11.jpg' %}" alt="Avatar" class="avatar-img rounded-circle">
+                                                        <img src="{% static 'img/user/user11.jpg' %}" alt="Avatar" class="avatar-img rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
                                                     {% endif %}
                                                 </div>
                                                 <div class="user-text">
-                                                    <h6>{{ sinh_vien_global.ho_ten|default:request.user.username }}</h6>
-                                                    <p class="text-muted mb-0">Sinh viên</p>
+                                                    <h6 class="mb-0">{{ sinh_vien_global.ho_ten|default:request.user.username }}</h6>
+                                                    <p class="text-muted mb-0 small">Sinh viên</p>
                                                 </div>
                                             </div>
-                                            <a class="dropdown-item" href="{% url 'students:dashboard' %}"><i class="feather-user me-1"></i> Trang cá nhân</a>
-                                            <a class="dropdown-item" href="{% url 'students:dang_xuat' %}"><i class="feather-log-out me-1"></i> Đăng xuất</a>
+                                            <hr class="dropdown-divider">
+                                            <a class="dropdown-item" href="{% url 'students:dashboard' %}"><i class="feather-user me-2"></i> Trang cá nhân</a>
+                                            <a class="dropdown-item text-danger" href="{% url 'students:dang_xuat' %}"><i class="feather-log-out me-2"></i> Đăng xuất</a>
                                         </div>
                                     </li>
                                 {% else %}
                                     <li class="nav-item">
-                                        <a class="nav-link btn btn-primary" href="{% url 'students:dang_nhap' %}">
-                                            <i class="feather-lock"></i> Đăng nhập
+                                        <a class="nav-link btn btn-primary px-4 fw-bold text-white" href="{% url 'students:dang_nhap' %}">
+                                            <i class="feather-lock me-1"></i> Đăng nhập
                                         </a>
                                     </li>
                                 {% endif %}
@@ -113,8 +114,7 @@
             </header>
 
             {% if messages %}
-            <div class="container mt-4">
-                {% for message in messages %}
+            <div class="container" style="margin-top: 80px;"> {% for message in messages %}
                     <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} alert-dismissible fade show shadow-sm" role="alert">
                         <i class="feather-info me-2"></i> {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -123,44 +123,59 @@
             </div>
             {% endif %}
 
-            {% block content %}{% endblock %}
+            <main style="min-height: 70vh;">
+                {% block content %}{% endblock %}
+            </main>
 
-            <footer class="footer">
-                <div class="footer-top">
+            <footer class="footer mt-5 border-top">
+                <div class="footer-top py-5">
                     <div class="container">
                         <div class="row">
-                            <div class="col-lg-6 col-md-6">
+                            <div class="col-lg-6 col-md-6 mb-4 mb-lg-0">
                                 <div class="footer-widget footer-about">
-                                    <div class="footer-logo"><img src="{% static 'img/logo.svg' %}" alt="logo"></div>
-                                    <div class="footer-about-content"><p>Hệ thống quản lý và chăm sóc sinh viên trường Đại học Mỏ - Địa chất về chuẩn ngoại ngữ và công nghệ thông tin.</p></div>
+                                    <div class="footer-logo mb-3">
+                                        <img src="{% static 'img/logo/logo.jpg' %}" alt="HUMG Logo" style="max-height: 50px; object-fit: contain;">
+                                    </div>
+                                    <div class="footer-about-content">
+                                        <p class="text-muted pe-md-5">Hệ thống quản lý và chăm sóc sinh viên trường Đại học Mỏ - Địa chất về chuẩn ngoại ngữ và công nghệ thông tin.</p>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-lg-6 col-md-6">
                                 <div class="footer-widget footer-contact">
-                                    <h2 class="footer-title">Thông tin liên hệ</h2>
-                                    <div class="footer-contact-info">
-                                        <div class="footer-address">
-                                            <img src="{% static 'img/icon/icon-20.svg' %}" alt="" class="img-fluid">
-                                            <p>Số 18 Phố Viên, phường Đức Thắng<br> quận Bắc Từ Liêm, Hà Nội</p>
+                                    <h5 class="footer-title fw-bold mb-4">Thông tin liên hệ</h5>
+                                    <div class="footer-contact-info text-muted">
+                                        <div class="footer-address d-flex align-items-start mb-3">
+                                            <img src="{% static 'img/icon/icon-20.svg' %}" alt="Address" class="me-3 mt-1" style="width: 20px;">
+                                            <p class="mb-0">Số 18 Phố Viên, phường Đức Thắng<br> quận Bắc Từ Liêm, Hà Nội</p>
                                         </div>
-                                        <p><img src="{% static 'img/icon/icon-19.svg' %}" alt="" class="img-fluid"> daotao@humg.edu.vn</p>
-                                        <p class="mb-0"><img src="{% static 'img/icon/icon-21.svg' %}" alt="" class="img-fluid"> (+84) 24 3838 9633</p>
+                                        <div class="d-flex align-items-center mb-3">
+                                            <img src="{% static 'img/icon/icon-19.svg' %}" alt="Email" class="me-3" style="width: 20px;">
+                                            <p class="mb-0">daotao@humg.edu.vn</p>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{% static 'img/icon/icon-21.svg' %}" alt="Phone" class="me-3" style="width: 20px;">
+                                            <p class="mb-0">(+84) 24 3838 9633</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="footer-bottom">
+                <div class="footer-bottom bg-light py-3">
                     <div class="container">
-                        <div class="copyright">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="privacy-policy"><ul><li><a href="#">Quy chế Đào tạo</a></li><li><a href="#">Bảo mật thông tin</a></li></ul></div>
+                        <div class="row align-items-center">
+                            <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
+                                <div class="privacy-policy">
+                                    <ul class="list-inline mb-0 small">
+                                        <li class="list-inline-item"><a href="#" class="text-decoration-none text-muted">Quy chế Đào tạo</a></li>
+                                        <li class="list-inline-item ms-3"><a href="#" class="text-decoration-none text-muted">Bảo mật thông tin</a></li>
+                                    </ul>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="copyright-text"><p class="mb-0">&copy; 2026 HUMG. All rights reserved.</p></div>
-                                </div>
+                            </div>
+                            <div class="col-md-6 text-center text-md-end">
+                                <p class="mb-0 small text-muted">&copy; 2026 HUMG. All rights reserved.</p>
                             </div>
                         </div>
                     </div>
