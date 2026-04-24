@@ -176,6 +176,9 @@ class DotThi(models.Model):
 
 
 class LichSuThi(models.Model):
+    # --- 1. ÉP BUỘC TỰ NHẢY SỐ ID (CHỐNG LỖI UNIQUE) ---
+    id = models.BigAutoField(primary_key=True)
+
     MON_THI = [('TA_DAU_VAO', 'Tiếng Anh đầu vào'), ('CDR_NGOAI_NGU', 'CĐR Ngoại ngữ'), ('CDR_TIN_HOC', 'CĐR Tin học')]
     
     sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE, related_name='lich_su_thi')
@@ -192,7 +195,7 @@ class LichSuThi(models.Model):
     ca_thi_2 = models.CharField(max_length=50, null=True, blank=True, verbose_name="Ca thi Nói")
     phong_thi_2 = models.CharField(max_length=50, null=True, blank=True, verbose_name="Phòng thi Nói")
     
-    # --- BỘ ĐIỂM THI (Các cột này vừa được bổ sung để hứng dữ liệu từ Excel) ---
+    # --- BỘ ĐIỂM THI ---
     diem_thanh_phan_1 = models.FloatField(null=True, blank=True, verbose_name="Nghe / Trắc nghiệm")
     diem_thanh_phan_2 = models.FloatField(null=True, blank=True, verbose_name="Đọc / Thực hành")
     diem_thanh_phan_3 = models.FloatField(null=True, blank=True, verbose_name="Viết")
@@ -203,19 +206,21 @@ class LichSuThi(models.Model):
     ghi_chu = models.CharField(max_length=255, null=True, blank=True, verbose_name="Ghi chú")
     
     ket_qua_dat = models.BooleanField('Kết quả Đạt', default=False)
-    ngay_cap_nhat = models.DateTimeField(auto_now=True) # Cần thiết để lấy điểm mới nhất trong vòng 5 năm
+    ngay_cap_nhat = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'Điểm thi / Lịch thi'
         verbose_name_plural = '6. Quản lý Điểm thi'
 
     def save(self, *args, **kwargs):
+        # 1. Tính tổng điểm
         diems = [self.diem_thanh_phan_1, self.diem_thanh_phan_2, self.diem_thanh_phan_3, self.diem_thanh_phan_4]
         valid_diems = [d for d in diems if d is not None]
 
         if self.diem_tong is None and valid_diems:
             self.diem_tong = round(sum(valid_diems), 2)
 
+        # 2. Logic xét Đạt/Trượt
         is_pass = False
         xl_str = str(self.xep_loai).lower() if self.xep_loai else ""
         gc_str = str(self.ghi_chu).lower() if self.ghi_chu else ""
@@ -228,7 +233,7 @@ class LichSuThi(models.Model):
         elif any(k in xl_str for k in ['đủ điều kiện', 'đạt', 'pass', 'b1', 'b2', 'a2', 'c1']):
             is_pass = True
             
-        # Ưu tiên 3: Xét bằng Số (Khi Excel không có cột Xếp loại)
+        # Ưu tiên 3: Xét bằng Số học
         else:
             d_tong = self.diem_tong or 0
             if self.mon_thi in ['TA_DAU_VAO', 'CDR_NGOAI_NGU']:
@@ -238,49 +243,17 @@ class LichSuThi(models.Model):
                 d_chuan = self.dot_thi.diem_chuan_tin_hoc
                 d_liet = self.dot_thi.diem_liet_tin_hoc
 
-            # Chú ý: Chỉ xét liệt nếu d_liet > 0 hoặc sinh viên thực sự có điểm 0
             bi_liet = any(d <= d_liet for d in valid_diems) if d_liet >= 0 else False
             
             if not bi_liet and d_tong >= d_chuan:
                 is_pass = True
 
         self.ket_qua_dat = is_pass
-        super().save(*args, **kwargs)
-        # 1. Tự động tính TỔNG ĐIỂM (Cộng dồn 4 kỹ năng theo chuẩn HUMG)
-        diems = [self.diem_thanh_phan_1, self.diem_thanh_phan_2, self.diem_thanh_phan_3, self.diem_thanh_phan_4]
-        valid_diems = [d for d in diems if d is not None]
         
-        # HUMG dùng tổng điểm cho TĐNN và CĐR
-        if self.diem_tong is None and valid_diems:
-            self.diem_tong = sum(valid_diems)
-
-        # 2. Logic xét ĐẠT / TRƯỢT (Logic đa tầng)
-        is_pass = False
-        xl_str = str(self.xep_loai).lower() if self.xep_loai else ""
-        gc_str = str(self.ghi_chu).lower() if self.ghi_chu else ""
-
-        # Ưu tiên 1: Chặn ngay nếu có dấu hiệu vắng thi hoặc bỏ thi
-        if any(k in xl_str or k in gc_str for k in ['vắng', 'bỏ thi', 'đình chỉ']):
-            is_pass = False
-        
-        # Ưu tiên 2: Xét chữ "Đủ điều kiện" hoặc "Đạt" (Rất quan trọng cho TĐNN)
-        elif any(k in xl_str for k in ['đủ điều kiện', 'đạt', 'b1', 'b2', 'a2']):
-            is_pass = True
-            
-        # Ưu tiên 3: Xét theo ngưỡng điểm chuẩn của Đợt thi (Nếu cột Xếp loại rỗng)
-        else:
-            d_tong = self.diem_tong or 0
-            d_chuan = self.dot_thi.diem_chuan_ngoai_ngu
-            d_liet = self.dot_thi.diem_liet_ngoai_ngu
-            
-            # Kiểm tra điểm liệt từng phần
-            bi_liet = any(d <= d_liet for d in valid_diems)
-            if not bi_liet and d_tong >= d_chuan:
-                is_pass = True
-
-        self.ket_qua_dat = is_pass
+        # 3. CHỈ GỌI LỆNH SAVE ĐÚNG 1 LẦN DUY NHẤT Ở CUỐI CÙNG
         super().save(*args, **kwargs)
 
+        
 # ==============================================================================
 # PHÂN HỆ 3: QUẢN LÝ LỚP HỌC
 # ==============================================================================

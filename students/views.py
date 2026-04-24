@@ -10,7 +10,6 @@ from .models import DanhMucChungChi
 from .forms import DanhMucChungChiForm
 from cms.models import Slider, QuickLink 
 from cms.models import Category, Post, QuickLink
-
 from django.contrib.auth.models import User, Group
 from django.contrib.admin.views.decorators import staff_member_required
 from .forms import UserAccountForm # Nhớ import form vừa tạo
@@ -19,6 +18,7 @@ from django.utils import timezone
 from cms.models import Post
 from django.utils.text import slugify
 import re
+
 
 # Khai báo lại hàm tạo slug tiếng Việt cho Shell
 def vi_slugify(text):
@@ -1102,80 +1102,115 @@ def mofi_import_diem_tdnn(request):
         dot_thi_id = request.POST.get('dot_thi')
         excel_file = request.FILES.get('excel_file')
         dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
-        
-        connection.close() # Tránh lỗi Database is locked
+        connection.close()
 
         try:
+            # 1. Tìm dòng header
             df_raw = pd.read_excel(excel_file, header=None)
-            header_idx = 0
-            for i, row in df_raw.iterrows():
-                if any('mã sinh viên' in str(v).lower() for v in row.values):
-                    header_idx = i
-                    break
+            header_idx = next((i for i, row in df_raw.iterrows() if any('mã sinh viên' in str(v).lower() for v in row.values)), 0)
             
             df = pd.read_excel(excel_file, header=header_idx)
             df.columns = [str(c).lower().strip() for c in df.columns]
 
-            success_count = 0
+            # 2. TỐI ƯU HÓA: KÉO DỮ LIỆU CŨ LÊN RAM ĐỂ ĐỐI CHIẾU
+            c_mssv = next((c for c in df.columns if 'mã sinh viên' in c or 'mssv' in c), None)
+            if not c_mssv:
+                raise Exception("Không tìm thấy cột Mã sinh viên trong file.")
+
+            # Lấy danh sách MSSV từ Excel
+            mssv_list = df[c_mssv].dropna().astype(str).str.split('.').str[0].str.strip().tolist()
+            
+            # Đưa toàn bộ Sinh Viên và User vào RAM dưới dạng Từ điển (Dictionary)
+            users_dict = {u.username: u for u in User.objects.filter(username__in=mssv_list)}
+            sv_dict = {sv.mssv: sv for sv in SinhVien.objects.filter(mssv__in=mssv_list)}
+
+            lich_su_thi_objects = []
+            d_chuan = dot_thi.diem_chuan_ngoai_ngu
+            d_liet = dot_thi.diem_liet_ngoai_ngu
+
             with transaction.atomic():
+                # XÓA ĐIỂM CŨ CỦA ĐỢT NÀY ĐỂ TRÁNH TRÙNG LẶP KHI NẠP LẠI NHIỀU LẦN
+                LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi='TA_DAU_VAO').delete()
+
                 for index, row in df.iterrows():
-                    # 1. Mã Sinh Viên
-                    c_mssv = next((c for c in df.columns if 'mã sinh viên' in c or 'mssv' in c), None)
-                    if not c_mssv or pd.isna(row[c_mssv]): continue
                     mssv = str(row[c_mssv]).split('.')[0].strip()
+                    if not mssv or mssv == 'nan': continue
 
-                    # 2. Ghép Tên (Khắc phục lỗi ô trống chia 2 cột)
-                    c_ho_idx = next((i for i, c in enumerate(df.columns) if 'họ và tên' in c or 'họ tên' in c), None)
-                    if c_ho_idx is not None:
-                        # Dùng replace('nan', '') để triệt tiêu lỗi Pandas
-                        ho_val = str(row.iloc[c_ho_idx]).replace('nan', '').strip()
-                        ten_val = str(row.iloc[c_ho_idx + 1]).replace('nan', '').strip()
-                        full_name = f"{ho_val} {ten_val}".strip() or f"Sinh viên {mssv}"
-                    else:
-                        c_ho = next((c for c in df.columns if 'họ' in c and 'tên' not in c), None)
-                        c_ten = next((c for c in df.columns if 'tên' in c and 'họ' not in c), None)
-                        ho = str(row[c_ho]).replace('nan', '').strip() if c_ho else ""
-                        ten = str(row[c_ten]).replace('nan', '').strip() if c_ten else ""
-                        full_name = f"{ho} {ten}".strip() or f"Sinh viên {mssv}"
+                    # ---- ĐỒNG BỘ SINH VIÊN SIÊU TỐC ----
+                    if mssv not in users_dict:
+                        user = User.objects.create_user(username=mssv, password='cfihumg', is_active=True)
+                        users_dict[mssv] = user
+                    user = users_dict[mssv]
 
-                    user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
-                    if _: user.set_password('cfihumg'); user.save()
-                    sv, _ = SinhVien.objects.update_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': full_name})
+                    if mssv not in sv_dict:
+                        c_ho_idx = next((i for i, c in enumerate(df.columns) if 'họ và tên' in c or 'họ tên' in c), None)
+                        if c_ho_idx is not None:
+                            ho_val = str(row.iloc[c_ho_idx]).replace('nan', '').strip()
+                            ten_val = str(row.iloc[c_ho_idx + 1]).replace('nan', '').strip()
+                            full_name = f"{ho_val} {ten_val}".strip() or f"Sinh viên {mssv}"
+                        else:
+                            full_name = f"Sinh viên {mssv}"
 
-                    # 3. Trích xuất Xếp loại an toàn
+                        sv = SinhVien.objects.create(mssv=mssv, user=user, ho_ten=full_name)
+                        sv_dict[mssv] = sv
+                    sv = sv_dict[mssv]
+
+                    # ---- LẤY ĐIỂM VÀ TÍNH TOÁN TRONG RAM ----
                     def get_d(key):
                         col = next((c for c in df.columns if key in c), None)
                         return pd.to_numeric(row[col], errors='coerce') if col else None
 
-                    c_xl = next((c for c in df.columns if 'xếp loại' in c or 'kết quả' in c), None)
-                    c_gc = next((c for c in df.columns if 'ghi chú' in c), None)
-                    
-                    # CỰC KỲ QUAN TRỌNG: Ép chuỗi "nan" về rỗng ""
-                    xl_val = str(row[c_xl]).replace('nan', '').strip() if c_xl else ""
-                    gc_val = str(row[c_gc]).replace('nan', '').strip() if c_gc else ""
+                    nghe = get_d('nghe')
+                    doc = get_d('đọc')
+                    viet = get_d('viết')
+                    noi = get_d('nói')
+                    xep_loai = str(row.get('xếp loại', '')).replace('nan', '').strip()
+                    ghi_chu = str(row.get('ghi chú', '')).replace('nan', '').strip()
 
-                    LichSuThi.objects.update_or_create(
-                        sinh_vien=sv, dot_thi=dot_thi, mon_thi='TA_DAU_VAO',
-                        defaults={
-                            'diem_thanh_phan_1': get_d('nghe'),
-                            'diem_thanh_phan_2': get_d('đọc'),
-                            'diem_thanh_phan_3': get_d('viết'),
-                            'diem_thanh_phan_4': get_d('nói'),
-                            'diem_tong': get_d('đánh giá') or get_d('tổng'),
-                            'xep_loai': xl_val,
-                            'ghi_chu': gc_val,
-                        }
+                    # Tính tổng điểm
+                    valid_diems = [d for d in [nghe, doc, viet, noi] if pd.notna(d)]
+                    diem_tong = round(sum(valid_diems), 2) if valid_diems else 0
+
+                    # Xét Đạt/Trượt ngay trên RAM
+                    is_pass = False
+                    xl_lower = xep_loai.lower()
+                    gc_lower = ghi_chu.lower()
+
+                    if any(k in xl_lower or k in gc_lower for k in ['vắng', 'bỏ thi', 'đình chỉ', 'không đạt']):
+                        is_pass = False
+                    elif any(k in xl_lower for k in ['đủ điều kiện', 'đạt', 'pass', 'b1', 'b2', 'a2', 'c1']):
+                        is_pass = True
+                    else:
+                        bi_liet = any(d <= d_liet for d in valid_diems) if d_liet >= 0 else False
+                        if not bi_liet and diem_tong >= d_chuan:
+                            is_pass = True
+
+                    # TẠO GÓI HÀNG (Chưa gửi vào Database)
+                    lst = LichSuThi(
+                        sinh_vien=sv,
+                        dot_thi=dot_thi,
+                        mon_thi='TA_DAU_VAO',
+                        diem_thanh_phan_1=nghe,
+                        diem_thanh_phan_2=doc,
+                        diem_thanh_phan_3=viet,
+                        diem_thanh_phan_4=noi,
+                        diem_tong=diem_tong,
+                        xep_loai=xep_loai,
+                        ghi_chu=ghi_chu,
+                        ket_qua_dat=is_pass
                     )
-                    success_count += 1
+                    lich_su_thi_objects.append(lst)
 
-            messages.success(request, f"Đã đồng bộ thành công {success_count} bản ghi! Kết quả Đạt/Trượt đã được tự động hiệu chỉnh.")
+                # 3. GỬI 1.139 BẢN GHI VÀO DATABASE BẰNG 1 LỆNH DUY NHẤT (BULK CREATE)
+                LichSuThi.objects.bulk_create(lich_su_thi_objects, batch_size=500)
+
+            messages.success(request, f"Đã nạp siêu tốc {len(lich_su_thi_objects)} bản ghi điểm thi!")
         except Exception as e:
             messages.error(request, f"Lỗi xử lý file: {str(e)}")
         
         return redirect('students:mofi_import_diem_tdnn')
 
     return render(request, 'admin_mofi/pages/import_diem_tdnn.html', {'dot_this': DotThi.objects.all().order_by('-id')})
-
 
 @staff_member_required
 def mofi_import_diem_cdr_nn(request):
