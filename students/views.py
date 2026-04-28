@@ -1465,46 +1465,63 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 @staff_member_required
 def mofi_dot_thi_detail(request, dot_thi_id):
+    # Lấy thông tin đợt thi
     dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
     
-    # 1. TRÍCH XUẤT 3 LUỒNG DỮ LIỆU ĐỘC LẬP
-    qs_tdnn = LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi='TA_DAU_VAO').select_related('sinh_vien').order_by('sbd')
-    qs_cdr_nn = LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi='CDR_NGOAI_NGU').select_related('sinh_vien').order_by('sbd')
-    qs_cdr_tin = LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi='CDR_TIN_HOC').select_related('sinh_vien').order_by('sbd')
+    # 1. LẤY THAM SỐ TỪ URL (Tìm kiếm, Sắp xếp, Tab)
+    search_query = request.GET.get('q', '').strip()
+    sort_by = request.GET.get('sort', '-ngay_cap_nhat') # Mặc định bản ghi mới lên đầu
+    active_tab = request.GET.get('tab', 'tdnn')
 
-    # 2. HÀM TÍNH THỐNG KÊ (Dùng chung cho cả 3 môn)
-    def get_stats(qs):
-        total = qs.count()
-        passed = qs.filter(ket_qua_dat=True).count()
+    # 2. HÀM TRÍCH XUẤT, LỌC & SẮP XẾP CHUNG
+    def get_filtered_qs(mon_thi_code):
+        # select_related để chống lỗi N+1 Query
+        qs = LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi=mon_thi_code).select_related('sinh_vien')
+        
+        # Nếu người dùng có nhập ô tìm kiếm
+        if search_query:
+            qs = qs.filter(
+                Q(sinh_vien__mssv__icontains=search_query) | 
+                Q(sinh_vien__ho_ten__icontains=search_query)
+            )
+            
+        return qs.order_by(sort_by)
+
+    # Lấy 3 luồng dữ liệu (đã áp dụng Tìm kiếm & Sắp xếp)
+    qs_tdnn = get_filtered_qs('TA_DAU_VAO')
+    qs_cdr_nn = get_filtered_qs('CDR_NGOAI_NGU')
+    qs_cdr_tin = get_filtered_qs('CDR_TIN_HOC')
+
+    # 3. HÀM TÍNH THỐNG KÊ TỔNG QUAN
+    # Tối ưu BA: Tính trên dữ liệu GỐC để bảng thống kê không bị teo nhỏ khi gõ Tìm kiếm
+    def get_stats(mon_thi_code):
+        qs_base = LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi=mon_thi_code)
+        total = qs_base.count()
+        passed = qs_base.filter(ket_qua_dat=True).count()
         failed = total - passed
         rate = round((passed / total * 100), 1) if total > 0 else 0
         return {'total': total, 'passed': passed, 'failed': failed, 'rate': rate}
 
     stats = {
-        'tdnn': get_stats(qs_tdnn),
-        'cdr_nn': get_stats(qs_cdr_nn),
-        'cdr_tin': get_stats(qs_cdr_tin)
+        'tdnn': get_stats('TA_DAU_VAO'),
+        'cdr_nn': get_stats('CDR_NGOAI_NGU'),
+        'cdr_tin': get_stats('CDR_TIN_HOC')
     }
 
-    # 3. PHÂN TRANG (PAGING) - 50 dòng mỗi trang
-    p_tdnn = Paginator(qs_tdnn, 50)
-    page_tdnn = p_tdnn.get_page(request.GET.get('p_tdnn', 1))
+    # 4. PHÂN TRANG (50 dòng mỗi trang)
+    page_tdnn = Paginator(qs_tdnn, 50).get_page(request.GET.get('p_tdnn', 1))
+    page_cdr_nn = Paginator(qs_cdr_nn, 50).get_page(request.GET.get('p_cdr_nn', 1))
+    page_cdr_tin = Paginator(qs_cdr_tin, 50).get_page(request.GET.get('p_cdr_tin', 1))
 
-    p_cdr_nn = Paginator(qs_cdr_nn, 50)
-    page_cdr_nn = p_cdr_nn.get_page(request.GET.get('p_cdr_nn', 1))
-
-    p_cdr_tin = Paginator(qs_cdr_tin, 50)
-    page_cdr_tin = p_cdr_tin.get_page(request.GET.get('p_cdr_tin', 1))
-
-    # 4. Xác định tab nào đang mở để không bị văng khi lật trang
-    active_tab = request.GET.get('tab', 'tdnn')
-
+    # 5. ĐÓNG GÓI RA GIAO DIỆN
     context = {
         'dot_thi': dot_thi,
         'stats': stats,
         'page_tdnn': page_tdnn,
         'page_cdr_nn': page_cdr_nn,
         'page_cdr_tin': page_cdr_tin,
-        'active_tab': active_tab
+        'active_tab': active_tab,
+        'search_query': search_query, # Truyền ra để giữ chữ trong ô input HTML
+        'sort_by': sort_by            # Truyền ra để xử lý highlight nút Sắp xếp
     }
     return render(request, 'admin_mofi/pages/dot_thi_detail.html', context)

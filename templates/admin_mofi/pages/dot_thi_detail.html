@@ -1,25 +1,63 @@
 {% extends 'admin_mofi/base.html' %}
 {% block content %}
 <div class="container-fluid">
-    <div class="page-title">
+    
+    <div class="page-title mb-3">
         <div class="row align-items-center">
-            <div class="col-6">
-                <h4 class="fw-bold"><i class="fa fa-file-text text-primary me-2"></i>Báo cáo: {{ dot_thi.ten_dot }}</h4>
+            <div class="col-md-6">
+                <h4 class="fw-bold mb-0"><i class="fa fa-file-text text-primary me-2"></i>Báo cáo: {{ dot_thi.ten_dot }}</h4>
             </div>
-            <div class="col-6 text-end">
-                <div class="btn-group shadow-sm">
-                    <button type="button" class="btn btn-primary dropdown-toggle fw-bold" data-bs-toggle="dropdown">
-                        <i class="fa fa-upload me-2"></i>Nạp dữ liệu Excel
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-menu-item p-2" href="{% url 'students:mofi_import_lich_thi_nn' %}?dot={{ dot_thi.id }}">Nạp Lịch thi NN</a></li>
-                        <li><a class="dropdown-menu-item p-2" href="{% url 'students:mofi_import_diem_tdnn' %}?dot={{ dot_thi.id }}">Nạp Điểm TĐNN</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-menu-item p-2 text-info" href="{% url 'students:mofi_import_lich_thi_cntt' %}?dot={{ dot_thi.id }}">Nạp Lịch thi Tin học</a></li>
-                        <li><a class="dropdown-menu-item p-2 text-info" href="{% url 'students:mofi_import_diem_cntt' %}?dot={{ dot_thi.id }}">Nạp Điểm Tin học</a></li>
-                    </ul>
+<div class="col-md-6 text-end">
+    <div class="dropdown shadow-sm d-inline-block">
+        <button class="btn btn-primary dropdown-toggle fw-bold text-nowrap w-auto pe-4" type="button" data-bs-toggle="dropdown">
+            <i class="fa fa-upload me-2"></i> Nạp dữ liệu Excel
+        </button>
+        
+        <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: max-content;">
+            <li><h6 class="dropdown-header fs-6">1. TIẾNG ANH ĐẦU VÀO</h6></li>
+            <li><a class="dropdown-item py-2 text-primary fw-bold" href="{% url 'students:mofi_import_diem_tdnn' %}?dot={{ dot_thi.id }}"><i class="fa fa-flag-checkered me-2"></i> Nạp điểm TĐNN</a></li>
+            
+            <li><hr class="dropdown-divider"></li>
+            
+            <li><h6 class="dropdown-header fs-6">2. CHUẨN ĐẦU RA NGOẠI NGỮ</h6></li>
+            <li><a class="dropdown-item py-2 text-success fw-bold" href="{% url 'students:mofi_import_diem_cdr_nn' %}?dot={{ dot_thi.id }}"><i class="fa fa-language me-2"></i> Nạp điểm CĐR NN</a></li>
+            
+            <li><hr class="dropdown-divider"></li>
+            
+            <li><h6 class="dropdown-header fs-6">3. CHUẨN ĐẦU RA TIN HỌC</h6></li>
+            <li><a class="dropdown-item py-2 text-info fw-bold" href="{% url 'students:mofi_import_diem_cntt' %}?dot={{ dot_thi.id }}"><i class="fa fa-desktop me-2"></i> Nạp điểm CĐR Tin học</a></li>
+        </ul>
+    </div>
+</div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body p-3">
+            <form method="GET" class="row g-2 align-items-center">
+                <input type="hidden" name="tab" value="{{ active_tab }}">
+                
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa fa-search text-muted"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Tìm theo Mã sinh viên hoặc Họ tên..." value="{{ search_query }}">
+                    </div>
                 </div>
-            </div>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa fa-sort text-muted"></i></span>
+                        <select name="sort" class="form-select border-start-0 ps-0">
+                            <option value="-ngay_cap_nhat" {% if sort_by == '-ngay_cap_nhat' %}selected{% endif %}>Mới nhất lên đầu</option>
+                            <option value="-diem_tong" {% if sort_by == '-diem_tong' %}selected{% endif %}>Tổng điểm: Cao xuống thấp</option>
+                            <option value="diem_tong" {% if sort_by == 'diem_tong' %}selected{% endif %}>Tổng điểm: Thấp lên cao</option>
+                            <option value="sinh_vien__mssv" {% if sort_by == 'sinh_vien__mssv' %}selected{% endif %}>Mã sinh viên (A - Z)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-dark fw-bold">Tra cứu</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -44,7 +82,6 @@
     <div class="tab-content" id="reportTabContent">
         
         <div class="tab-pane fade {% if active_tab == 'tdnn' %}show active{% endif %}" id="tab-tdnn" role="tabpanel">
-            
             <div class="row g-3 mb-4 text-center">
                 <div class="col-md-3"><div class="card bg-primary text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">TỔNG THÍ SINH</h6><h3 class="fw-bold mb-0">{{ stats.tdnn.total }}</h3></div></div>
                 <div class="col-md-3"><div class="card bg-success text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">ĐẠT</h6><h3 class="fw-bold mb-0">{{ stats.tdnn.passed }}</h3></div></div>
@@ -71,7 +108,7 @@
                                 <td>{% if kq.ket_qua_dat %}<span class="badge bg-success-subtle text-success px-3">ĐẠT</span>{% else %}<span class="badge bg-danger-subtle text-danger px-3">TRƯỢT</span>{% endif %}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho bảng này.</td></tr>
+                            <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho bảng này hoặc không tìm thấy kết quả.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -80,9 +117,9 @@
 
             {% if page_tdnn.has_other_pages %}
             <nav class="mt-4"><ul class="pagination justify-content-center">
-                {% if page_tdnn.has_previous %}<li class="page-item"><a class="page-link" href="?tab=tdnn&p_tdnn={{ page_tdnn.previous_page_number }}">Trang trước</a></li>{% endif %}
+                {% if page_tdnn.has_previous %}<li class="page-item"><a class="page-link" href="?tab=tdnn&p_tdnn={{ page_tdnn.previous_page_number }}&q={{ search_query|urlencode }}&sort={{ sort_by }}">Trang trước</a></li>{% endif %}
                 <li class="page-item disabled"><span class="page-link">Trang {{ page_tdnn.number }} / {{ page_tdnn.paginator.num_pages }}</span></li>
-                {% if page_tdnn.has_next %}<li class="page-item"><a class="page-link" href="?tab=tdnn&p_tdnn={{ page_tdnn.next_page_number }}">Trang sau</a></li>{% endif %}
+                {% if page_tdnn.has_next %}<li class="page-item"><a class="page-link" href="?tab=tdnn&p_tdnn={{ page_tdnn.next_page_number }}&q={{ search_query|urlencode }}&sort={{ sort_by }}">Trang sau</a></li>{% endif %}
             </ul></nav>
             {% endif %}
         </div>
@@ -112,7 +149,7 @@
                                 <td>{% if kq.ket_qua_dat %}<span class="badge bg-success-subtle text-success px-3">ĐẠT</span>{% else %}<span class="badge bg-danger-subtle text-danger px-3">TRƯỢT</span>{% endif %}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho bảng này.</td></tr>
+                            <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho bảng này hoặc không tìm thấy kết quả.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -121,9 +158,9 @@
 
             {% if page_cdr_nn.has_other_pages %}
             <nav class="mt-4"><ul class="pagination justify-content-center">
-                {% if page_cdr_nn.has_previous %}<li class="page-item"><a class="page-link" href="?tab=cdr-nn&p_cdr_nn={{ page_cdr_nn.previous_page_number }}">Trang trước</a></li>{% endif %}
+                {% if page_cdr_nn.has_previous %}<li class="page-item"><a class="page-link" href="?tab=cdr-nn&p_cdr_nn={{ page_cdr_nn.previous_page_number }}&q={{ search_query|urlencode }}&sort={{ sort_by }}">Trang trước</a></li>{% endif %}
                 <li class="page-item disabled"><span class="page-link">Trang {{ page_cdr_nn.number }} / {{ page_cdr_nn.paginator.num_pages }}</span></li>
-                {% if page_cdr_nn.has_next %}<li class="page-item"><a class="page-link" href="?tab=cdr-nn&p_cdr_nn={{ page_cdr_nn.next_page_number }}">Trang sau</a></li>{% endif %}
+                {% if page_cdr_nn.has_next %}<li class="page-item"><a class="page-link" href="?tab=cdr-nn&p_cdr_nn={{ page_cdr_nn.next_page_number }}&q={{ search_query|urlencode }}&sort={{ sort_by }}">Trang sau</a></li>{% endif %}
             </ul></nav>
             {% endif %}
         </div>
@@ -153,7 +190,7 @@
                                 <td>{% if kq.ket_qua_dat %}<span class="badge bg-success-subtle text-success px-3">ĐẠT</span>{% else %}<span class="badge bg-danger-subtle text-danger px-3">TRƯỢT</span>{% endif %}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho bảng này.</td></tr>
+                            <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho bảng này hoặc không tìm thấy kết quả.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -162,13 +199,28 @@
 
             {% if page_cdr_tin.has_other_pages %}
             <nav class="mt-4"><ul class="pagination justify-content-center">
-                {% if page_cdr_tin.has_previous %}<li class="page-item"><a class="page-link" href="?tab=cdr-tin&p_cdr_tin={{ page_cdr_tin.previous_page_number }}">Trang trước</a></li>{% endif %}
+                {% if page_cdr_tin.has_previous %}<li class="page-item"><a class="page-link" href="?tab=cdr-tin&p_cdr_tin={{ page_cdr_tin.previous_page_number }}&q={{ search_query|urlencode }}&sort={{ sort_by }}">Trang trước</a></li>{% endif %}
                 <li class="page-item disabled"><span class="page-link">Trang {{ page_cdr_tin.number }} / {{ page_cdr_tin.paginator.num_pages }}</span></li>
-                {% if page_cdr_tin.has_next %}<li class="page-item"><a class="page-link" href="?tab=cdr-tin&p_cdr_tin={{ page_cdr_tin.next_page_number }}">Trang sau</a></li>{% endif %}
+                {% if page_cdr_tin.has_next %}<li class="page-item"><a class="page-link" href="?tab=cdr-tin&p_cdr_tin={{ page_cdr_tin.next_page_number }}&q={{ search_query|urlencode }}&sort={{ sort_by }}">Trang sau</a></li>{% endif %}
             </ul></nav>
             {% endif %}
         </div>
 
     </div>
 </div>
+
+<script>
+// Đoạn script nhỏ để khi người dùng bấm Tab, Form Tìm Kiếm sẽ tự động nhận diện Tab đó
+document.addEventListener("DOMContentLoaded", function() {
+    var tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    var hiddenTabInput = document.querySelector('input[name="tab"]');
+    
+    tabs.forEach(function(tab) {
+        tab.addEventListener('shown.bs.tab', function (event) {
+            var targetId = event.target.getAttribute('data-bs-target').replace('#tab-', '');
+            hiddenTabInput.value = targetId;
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -53,7 +53,7 @@
               <li><a href="{% url 'students:student_list' %}">Danh sách Sinh viên</a></li>
               <li><a href="{% url 'students:student_add' %}">Thêm Sinh viên mới</a></li>
               <li><a href="{% url 'students:import_sinh_vien' %}">Nhập file Excel SV</a></li>
-              <li><a href="{% url 'students:mofi_khoa_list' %}" class="fw-bold text-primary">Quản lý Khoa</a></li>
+              <li><a href="{% url 'students:mofi_khoa_list' %}">Quản lý Khoa</a></li>
             </ul>
           </li>
 
@@ -64,32 +64,31 @@
             </a>
             <ul class="sidebar-submenu">
               <li><a href="{% url 'students:class_list' %}">Quản lý Lớp Bồi dưỡng</a></li>
-              <li><a href="{% url 'students:mofi_import_class_list' %}">Import Danh sách (Excel)</a></li>
-              </ul>
+              <li><a href="{% url 'students:mofi_import_class_list' %}">Import Danh sách</a></li>
+            </ul>
           </li>
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-              <a class="sidebar-link sidebar-title" href="javascript:void(0)">
-                  <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-file"></use></svg>
-                  <span>Điểm Thi</span>
-              </a>
-              <ul class="sidebar-submenu">
-                  <li><a href="{% url 'students:mofi_import_diem_tdnn' %}" class="text-primary"><i class="fa fa-pencil me-1"></i> Điểm TĐNN</a></li>
-                  <li><a href="{% url 'students:mofi_import_diem_cntt' %}" class="text-info"><i class="fa fa-desktop me-1"></i> Điểm CĐR Tin học</a></li>
-                  <li><a href="{% url 'students:mofi_import_diem_cdr_nn' %}" class="text-success"><i class="fa fa-graduation-cap me-1"></i> Điểm CĐR Ngoại Ngữ</a></li>
-                  <hr class="my-1 border-secondary">
-                  <li><a href="{% url 'students:mofi_import_lich_thi_cntt' %}" class="fw-bold text-info"><i class="fa fa-calendar me-1"></i> Nạp Lịch thi Tin học</a></li>
-                  <li><a href="{% url 'students:mofi_import_lich_thi_nn' %}" class="fw-bold text-success"><i class="fa fa-calendar-check me-1"></i> Nạp Lịch thi Ngoại ngữ</a></li>
-              </ul>
-          </li>
+          
           <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
             <a class="sidebar-link sidebar-title" href="javascript:void(0)">
               <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-file"></use></svg>
-              <span>Khảo thí & Chứng chỉ</span>
+              <span>Khảo thí & Điểm thi</span>
             </a>
             <ul class="sidebar-submenu">
-              <li><a href="{% url 'students:mofi_dot_thi_list' %}">Quản lý Đợt thi </a></li>
+              <li><a href="{% url 'students:mofi_dot_thi_list' %}">Quản lý Đợt thi</a></li>
+              <li><a href="{% url 'students:mofi_import_diem_tdnn' %}">Tiếng Anh Đầu Vào</a></li>
+              <li><a href="{% url 'students:mofi_import_diem_cdr_nn' %}">CĐR Ngoại Ngữ</a></li>
+              <li><a href="{% url 'students:mofi_import_diem_cntt' %}">CĐR Tin Học</a></li>
+            </ul>
+          </li>
+
+          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+            <a class="sidebar-link sidebar-title" href="javascript:void(0)">
+              <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-board"></use></svg>
+              <span>Quản lý Chứng chỉ</span>
+            </a>
+            <ul class="sidebar-submenu">
               <li><a href="{% url 'students:certificate_verification_list' %}">Xét duyệt Chứng chỉ</a></li>
-              <li><a href="{% url 'students:mofi_chungchi_list' %}" class="fw-bold text-info">Danh mục Chứng chỉ</a></li>
+              <li><a href="{% url 'students:mofi_chungchi_list' %}">Danh mục Chứng chỉ</a></li>
             </ul>
           </li>
           

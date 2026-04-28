@@ -21,14 +21,20 @@ class Khoa(models.Model):
     def __str__(self):
         return self.ten_khoa
 
+# ==============================================================================
+# DANH MỤC LOẠI CHỨNG CHỈ
+# ==============================================================================
 class DanhMucChungChi(models.Model):
-    LOAI_CC = [('NGOAI_NGU', 'Ngoại ngữ'), ('TIN_HOC', 'Tin học')]
+    LOAI_CC = [
+        ('NGOAI_NGU', 'Chuẩn đầu ra Ngoại ngữ'), 
+        ('TIN_HOC', 'Chuẩn đầu ra Tin học')
+    ]
     loai = models.CharField('Phân loại', max_length=20, choices=LOAI_CC)
-    ten_chung_chi = models.CharField('Tên chứng chỉ', max_length=150, help_text='VD: TOEIC, IELTS, MOS, IC3...')
+    ten_chung_chi = models.CharField('Tên chứng chỉ', max_length=150, unique=True, help_text='VD: IELTS, TOEIC, MOS Word...')
 
     class Meta:
-        verbose_name = 'Loại chứng chỉ'
-        verbose_name_plural = '2. Danh mục Chứng chỉ'
+        verbose_name = 'Danh mục Chứng chỉ'
+        verbose_name_plural = 'Danh mục Chứng chỉ'
 
     def __str__(self):
         return f"[{self.get_loai_display()}] {self.ten_chung_chi}"
@@ -113,42 +119,53 @@ class SinhVien(models.Model):
     def check_dat_tin_hoc(self): return self.has_valid_cert_tin_hoc or self._has_passed_exam('CDR_TIN_HOC')
 
 
+# ==============================================================================
+# 2. BẢNG TRANSACTION: HỒ SƠ CHỨNG CHỈ CỦA SINH VIÊN
+# ==============================================================================
 class ChungChi(models.Model):
-    TRANG_THAI = [
-        ('CHO', 'Chờ xác minh (Staging)'), 
-        ('DAT', 'Đã xác minh (Đạt)'), 
-        ('KHONG_DAT', 'Không hợp lệ / Báo lỗi')
+    TRANG_THAI_DUYET = [
+        ('CHO', 'Chờ xét duyệt'),
+        ('DAT', 'Hợp lệ (Đạt)'),
+        ('KHONG_DAT', 'Từ chối (Không đạt)')
     ]
 
-    sinh_vien = models.ForeignKey(SinhVien, on_delete=models.CASCADE, related_name='ds_chung_chi')
+    # --- 1. Nhóm Định danh ---
+    sinh_vien = models.ForeignKey('SinhVien', on_delete=models.CASCADE, related_name='cac_chung_chi')
+    danh_muc = models.ForeignKey(DanhMucChungChi, on_delete=models.RESTRICT, verbose_name="Loại chứng chỉ")
     
-    # KHÓA NGOẠI: Lấy tên và loại chứng chỉ từ Master Data. Có null=True để không lỗi Migration.
-    danh_muc = models.ForeignKey(DanhMucChungChi, on_delete=models.PROTECT, verbose_name='Loại chứng chỉ', null=True, blank=True)
-    
-    so_hieu = models.CharField('Số hiệu/Mã vạch', max_length=50)
+    # --- 2. Nhóm Dữ liệu Văn bằng ---
+    so_hieu = models.CharField('Số hiệu / ID Chứng chỉ', max_length=100, help_text="Dùng để chuyên viên tra cứu hậu kiểm")
     ngay_cap = models.DateField('Ngày cấp')
-    file_minh_chung = models.FileField('Ảnh/PDF chứng chỉ', upload_to='certificates/%Y/')
-    trang_thai = models.CharField('Trạng thái', max_length=20, choices=TRANG_THAI, default='CHO')
-    ghi_chu_xac_minh = models.TextField('Ghi chú xác minh', blank=True)
+    
+    # --- 3. Nhóm Kết quả ---
+    diem_tong = models.FloatField('Điểm tổng', null=True, blank=True)
+    diem_thanh_phan = models.CharField('Điểm thành phần (L/R/S/W)', max_length=100, null=True, blank=True)
+    
+    # --- 4. Nhóm Minh chứng ---
+    file_minh_chung = models.FileField('File minh chứng (PDF/Ảnh)', upload_to='minh_chung_chung_chi/%Y/%m/')
+    
+    # --- 5. Nhóm Theo dõi & Kiểm toán ---
+    trang_thai = models.CharField('Trạng thái', max_length=20, choices=TRANG_THAI_DUYET, default='CHO')
+    ghi_chu_xac_minh = models.TextField('Ghi chú của Chuyên viên', null=True, blank=True)
+    
+    ngay_nop = models.DateTimeField('Ngày nộp', auto_now_add=True)
+    ngay_cap_nhat = models.DateTimeField('Lần cập nhật cuối', auto_now=True)
 
     class Meta:
-        verbose_name = 'Chứng chỉ nộp'
-        verbose_name_plural = '4. Quản lý Chứng chỉ nộp'
+        verbose_name = 'Hồ sơ Chứng chỉ'
+        verbose_name_plural = 'Hồ sơ Chứng chỉ'
+        unique_together = ['sinh_vien', 'so_hieu'] # Chống nộp trùng 1 cái bằng 2 lần
 
     def __str__(self):
-        ten = self.danh_muc.ten_chung_chi if self.danh_muc else "Chưa phân loại"
-        return f"{self.sinh_vien.mssv} - {ten}"
+        return f"{self.sinh_vien.mssv} - {self.danh_muc.ten_chung_chi} ({self.get_trang_thai_display()})"
 
-    def save(self, *args, **kwargs):
-        # Logic Staging
-        if self.pk:
-            old_instance = ChungChi.objects.get(pk=self.pk)
-            if old_instance.trang_thai == 'DAT':
-                self.danh_muc = old_instance.danh_muc
-                self.so_hieu = old_instance.so_hieu
-                self.ngay_cap = old_instance.ngay_cap
-                self.file_minh_chung = old_instance.file_minh_chung
-        super().save(*args, **kwargs)
+    @property
+    def con_han_su_dung(self):
+        """Kiểm tra chứng chỉ còn hạn 60 tháng (5 năm) theo QĐ 2025"""
+        if not self.ngay_cap:
+            return False
+        han_cuoi = self.ngay_cap + relativedelta(months=60)
+        return timezone.now().date() <= han_cuoi
 
 
 # ==============================================================================
