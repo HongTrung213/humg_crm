@@ -1458,25 +1458,53 @@ def mofi_dot_thi_list(request):
     dot_this = DotThi.objects.all().order_by('-id')
     return render(request, 'admin_mofi/pages/dot_thi_list.html', {'dot_this': dot_this})
 
+from django.core.paginator import Paginator
+from django.shortcuts import render, get_object_or_404
+from .models import DotThi, LichSuThi
+from django.contrib.admin.views.decorators import staff_member_required
+
 @staff_member_required
 def mofi_dot_thi_detail(request, dot_thi_id):
     dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
     
-    # Lấy danh sách kết quả, ưu tiên dùng select_related để tránh n+1 query cho 10k dòng
-    ket_qua_list = LichSuThi.objects.filter(dot_thi=dot_thi).select_related('sinh_vien').order_by('sbd')
-    
-    # Thống kê nhanh
-    tong_sv = ket_qua_list.count()
-    sv_dat = ket_qua_list.filter(ket_qua_dat=True).count()
-    sv_truot = tong_sv - sv_dat
-    ti_le_dat = round((sv_dat / tong_sv * 100), 1) if tong_sv > 0 else 0
-    
+    # 1. TRÍCH XUẤT 3 LUỒNG DỮ LIỆU ĐỘC LẬP
+    qs_tdnn = LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi='TA_DAU_VAO').select_related('sinh_vien').order_by('sbd')
+    qs_cdr_nn = LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi='CDR_NGOAI_NGU').select_related('sinh_vien').order_by('sbd')
+    qs_cdr_tin = LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi='CDR_TIN_HOC').select_related('sinh_vien').order_by('sbd')
+
+    # 2. HÀM TÍNH THỐNG KÊ (Dùng chung cho cả 3 môn)
+    def get_stats(qs):
+        total = qs.count()
+        passed = qs.filter(ket_qua_dat=True).count()
+        failed = total - passed
+        rate = round((passed / total * 100), 1) if total > 0 else 0
+        return {'total': total, 'passed': passed, 'failed': failed, 'rate': rate}
+
+    stats = {
+        'tdnn': get_stats(qs_tdnn),
+        'cdr_nn': get_stats(qs_cdr_nn),
+        'cdr_tin': get_stats(qs_cdr_tin)
+    }
+
+    # 3. PHÂN TRANG (PAGING) - 50 dòng mỗi trang
+    p_tdnn = Paginator(qs_tdnn, 50)
+    page_tdnn = p_tdnn.get_page(request.GET.get('p_tdnn', 1))
+
+    p_cdr_nn = Paginator(qs_cdr_nn, 50)
+    page_cdr_nn = p_cdr_nn.get_page(request.GET.get('p_cdr_nn', 1))
+
+    p_cdr_tin = Paginator(qs_cdr_tin, 50)
+    page_cdr_tin = p_cdr_tin.get_page(request.GET.get('p_cdr_tin', 1))
+
+    # 4. Xác định tab nào đang mở để không bị văng khi lật trang
+    active_tab = request.GET.get('tab', 'tdnn')
+
     context = {
         'dot_thi': dot_thi,
-        'ket_qua_list': ket_qua_list,
-        'tong_sv': tong_sv,
-        'sv_dat': sv_dat,
-        'sv_truot': sv_truot,
-        'ti_le_dat': ti_le_dat,
+        'stats': stats,
+        'page_tdnn': page_tdnn,
+        'page_cdr_nn': page_cdr_nn,
+        'page_cdr_tin': page_cdr_tin,
+        'active_tab': active_tab
     }
     return render(request, 'admin_mofi/pages/dot_thi_detail.html', context)

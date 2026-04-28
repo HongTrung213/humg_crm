@@ -23,94 +23,152 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-primary text-white text-center p-3">
-                <h6 class="small opacity-75">TỔNG THÍ SINH</h6>
-                <h3 class="fw-bold mb-0">{{ tong_sv }}</h3>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-success text-white text-center p-3">
-                <h6 class="small opacity-75">SỐ LƯỢNG ĐẠT</h6>
-                <h3 class="fw-bold mb-0">{{ sv_dat }}</h3>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-danger text-white text-center p-3">
-                <h6 class="small opacity-75">SỐ LƯỢNG TRƯỢT</h6>
-                <h3 class="fw-bold mb-0">{{ sv_truot }}</h3>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-info text-white text-center p-3">
-                <h6 class="small opacity-75">TỈ LỆ ĐẠT (%)</h6>
-                <h3 class="fw-bold mb-0">{{ ti_le_dat }}%</h3>
-            </div>
-        </div>
-    </div>
+    <ul class="nav nav-tabs fw-bold mb-4" id="reportTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'tdnn' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-tdnn" type="button" role="tab">
+                <i class="fa fa-flag-checkered me-2"></i> Tiếng Anh Đầu Vào
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'cdr-nn' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-cdr-nn" type="button" role="tab">
+                <i class="fa fa-language me-2"></i> CĐR Ngoại Ngữ
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'cdr-tin' %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-cdr-tin" type="button" role="tab">
+                <i class="fa fa-desktop me-2"></i> CĐR Tin Học
+            </button>
+        </li>
+    </ul>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center">
-            <h5 class="fw-bold mb-0">Danh sách kết quả chi tiết</h5>
-            <div class="input-group w-25">
-                <input type="text" class="form-control" placeholder="Tìm MSSV/Họ tên..." id="searchTable">
-                <span class="input-group-text bg-light"><i class="fa fa-search"></i></span>
+    <div class="tab-content" id="reportTabContent">
+        
+        <div class="tab-pane fade {% if active_tab == 'tdnn' %}show active{% endif %}" id="tab-tdnn" role="tabpanel">
+            
+            <div class="row g-3 mb-4 text-center">
+                <div class="col-md-3"><div class="card bg-primary text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">TỔNG THÍ SINH</h6><h3 class="fw-bold mb-0">{{ stats.tdnn.total }}</h3></div></div>
+                <div class="col-md-3"><div class="card bg-success text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">ĐẠT</h6><h3 class="fw-bold mb-0">{{ stats.tdnn.passed }}</h3></div></div>
+                <div class="col-md-3"><div class="card bg-danger text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">TRƯỢT / VẮNG</h6><h3 class="fw-bold mb-0">{{ stats.tdnn.failed }}</h3></div></div>
+                <div class="col-md-3"><div class="card bg-info text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">TỈ LỆ ĐẠT</h6><h3 class="fw-bold mb-0">{{ stats.tdnn.rate }}%</h3></div></div>
             </div>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle text-center mb-0" id="resultTable">
-                    <thead class="table-light text-muted small">
-                        <tr>
-                            <th>SBD</th>
-                            <th class="text-start">Sinh viên</th>
-                            <th>Môn thi</th>
-                            <th>Thành phần (1-2-3-4)</th>
-                            <th>Tổng</th>
-                            <th>Kết quả</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for kq in ket_qua_list %}
-                        <tr>
-                            <td class="fw-bold text-danger">{{ kq.sbd|default:"-" }}</td>
-                            <td class="text-start">
-                                <div class="fw-bold text-dark">{{ kq.sinh_vien.ho_ten }}</div>
-                                <div class="small text-muted">{{ kq.sinh_vien.mssv }}</div>
-                            </td>
-                            <td><span class="badge bg-light text-dark border">{{ kq.get_mon_thi_display }}</span></td>
-                            <td class="small">
-                                {{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }} 
-                                {% if kq.diem_thanh_phan_3 %}| {{ kq.diem_thanh_phan_3 }} | {{ kq.diem_thanh_phan_4 }}{% endif %}
-                            </td>
-                            <td class="fw-bold fs-6">{{ kq.diem_tong|default:"0" }}</td>
-                            <td>
-                                {% if kq.ket_qua_dat %}
-                                    <span class="badge bg-success-subtle text-success px-3">ĐẠT</span>
-                                {% else %}
-                                    <span class="badge bg-danger-subtle text-danger px-3">TRƯỢT</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho đợt thi này.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle text-center mb-0">
+                        <thead class="table-light text-muted small">
+                            <tr>
+                                <th>SBD</th><th class="text-start">Sinh viên</th><th>Phòng thi</th><th>Thành phần (1-2-3-4)</th><th>Tổng</th><th>Kết quả</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for kq in page_tdnn %}
+                            <tr>
+                                <td class="fw-bold text-danger">{{ kq.sbd|default:"-" }}</td>
+                                <td class="text-start"><div class="fw-bold text-dark">{{ kq.sinh_vien.ho_ten }}</div><div class="small text-muted">{{ kq.sinh_vien.mssv }}</div></td>
+                                <td>{{ kq.phong_thi|default:"-" }}</td>
+                                <td class="small">{{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }} | {{ kq.diem_thanh_phan_3|default:"0" }} | {{ kq.diem_thanh_phan_4|default:"0" }}</td>
+                                <td class="fw-bold fs-6">{{ kq.diem_tong|default:"0" }}</td>
+                                <td>{% if kq.ket_qua_dat %}<span class="badge bg-success-subtle text-success px-3">ĐẠT</span>{% else %}<span class="badge bg-danger-subtle text-danger px-3">TRƯỢT</span>{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho bảng này.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
+            {% if page_tdnn.has_other_pages %}
+            <nav class="mt-4"><ul class="pagination justify-content-center">
+                {% if page_tdnn.has_previous %}<li class="page-item"><a class="page-link" href="?tab=tdnn&p_tdnn={{ page_tdnn.previous_page_number }}">Trang trước</a></li>{% endif %}
+                <li class="page-item disabled"><span class="page-link">Trang {{ page_tdnn.number }} / {{ page_tdnn.paginator.num_pages }}</span></li>
+                {% if page_tdnn.has_next %}<li class="page-item"><a class="page-link" href="?tab=tdnn&p_tdnn={{ page_tdnn.next_page_number }}">Trang sau</a></li>{% endif %}
+            </ul></nav>
+            {% endif %}
         </div>
+
+        <div class="tab-pane fade {% if active_tab == 'cdr-nn' %}show active{% endif %}" id="tab-cdr-nn" role="tabpanel">
+            <div class="row g-3 mb-4 text-center">
+                <div class="col-md-3"><div class="card bg-primary text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">TỔNG THÍ SINH</h6><h3 class="fw-bold mb-0">{{ stats.cdr_nn.total }}</h3></div></div>
+                <div class="col-md-3"><div class="card bg-success text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">ĐẠT</h6><h3 class="fw-bold mb-0">{{ stats.cdr_nn.passed }}</h3></div></div>
+                <div class="col-md-3"><div class="card bg-danger text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">TRƯỢT / VẮNG</h6><h3 class="fw-bold mb-0">{{ stats.cdr_nn.failed }}</h3></div></div>
+                <div class="col-md-3"><div class="card bg-info text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">TỈ LỆ ĐẠT</h6><h3 class="fw-bold mb-0">{{ stats.cdr_nn.rate }}%</h3></div></div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle text-center mb-0">
+                        <thead class="table-light text-muted small">
+                            <tr><th>SBD</th><th class="text-start">Sinh viên</th><th>Phòng thi</th><th>Nghe | Đọc | Viết | Nói</th><th>Tổng</th><th>Kết quả</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for kq in page_cdr_nn %}
+                            <tr>
+                                <td class="fw-bold text-danger">{{ kq.sbd|default:"-" }}</td>
+                                <td class="text-start"><div class="fw-bold text-dark">{{ kq.sinh_vien.ho_ten }}</div><div class="small text-muted">{{ kq.sinh_vien.mssv }}</div></td>
+                                <td>{{ kq.phong_thi|default:"-" }}</td>
+                                <td class="small">{{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }} | {{ kq.diem_thanh_phan_3|default:"0" }} | {{ kq.diem_thanh_phan_4|default:"0" }}</td>
+                                <td class="fw-bold fs-6">{{ kq.diem_tong|default:"0" }}</td>
+                                <td>{% if kq.ket_qua_dat %}<span class="badge bg-success-subtle text-success px-3">ĐẠT</span>{% else %}<span class="badge bg-danger-subtle text-danger px-3">TRƯỢT</span>{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho bảng này.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {% if page_cdr_nn.has_other_pages %}
+            <nav class="mt-4"><ul class="pagination justify-content-center">
+                {% if page_cdr_nn.has_previous %}<li class="page-item"><a class="page-link" href="?tab=cdr-nn&p_cdr_nn={{ page_cdr_nn.previous_page_number }}">Trang trước</a></li>{% endif %}
+                <li class="page-item disabled"><span class="page-link">Trang {{ page_cdr_nn.number }} / {{ page_cdr_nn.paginator.num_pages }}</span></li>
+                {% if page_cdr_nn.has_next %}<li class="page-item"><a class="page-link" href="?tab=cdr-nn&p_cdr_nn={{ page_cdr_nn.next_page_number }}">Trang sau</a></li>{% endif %}
+            </ul></nav>
+            {% endif %}
+        </div>
+
+        <div class="tab-pane fade {% if active_tab == 'cdr-tin' %}show active{% endif %}" id="tab-cdr-tin" role="tabpanel">
+            <div class="row g-3 mb-4 text-center">
+                <div class="col-md-3"><div class="card bg-primary text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">TỔNG THÍ SINH</h6><h3 class="fw-bold mb-0">{{ stats.cdr_tin.total }}</h3></div></div>
+                <div class="col-md-3"><div class="card bg-success text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">ĐẠT</h6><h3 class="fw-bold mb-0">{{ stats.cdr_tin.passed }}</h3></div></div>
+                <div class="col-md-3"><div class="card bg-danger text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">TRƯỢT / VẮNG</h6><h3 class="fw-bold mb-0">{{ stats.cdr_tin.failed }}</h3></div></div>
+                <div class="col-md-3"><div class="card bg-info text-white p-3 border-0 shadow-sm"><h6 class="small opacity-75">TỈ LỆ ĐẠT</h6><h3 class="fw-bold mb-0">{{ stats.cdr_tin.rate }}%</h3></div></div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle text-center mb-0">
+                        <thead class="table-light text-muted small">
+                            <tr><th>SBD</th><th class="text-start">Sinh viên</th><th>Phòng thi</th><th>Trắc nghiệm | Thực hành</th><th>Tổng</th><th>Kết quả</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for kq in page_cdr_tin %}
+                            <tr>
+                                <td class="fw-bold text-danger">{{ kq.sbd|default:"-" }}</td>
+                                <td class="text-start"><div class="fw-bold text-dark">{{ kq.sinh_vien.ho_ten }}</div><div class="small text-muted">{{ kq.sinh_vien.mssv }}</div></td>
+                                <td>{{ kq.phong_thi|default:"-" }}</td>
+                                <td class="small">{{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }}</td>
+                                <td class="fw-bold fs-6">{{ kq.diem_tong|default:"0" }}</td>
+                                <td>{% if kq.ket_qua_dat %}<span class="badge bg-success-subtle text-success px-3">ĐẠT</span>{% else %}<span class="badge bg-danger-subtle text-danger px-3">TRƯỢT</span>{% endif %}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="py-5 text-muted">Chưa có dữ liệu cho bảng này.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {% if page_cdr_tin.has_other_pages %}
+            <nav class="mt-4"><ul class="pagination justify-content-center">
+                {% if page_cdr_tin.has_previous %}<li class="page-item"><a class="page-link" href="?tab=cdr-tin&p_cdr_tin={{ page_cdr_tin.previous_page_number }}">Trang trước</a></li>{% endif %}
+                <li class="page-item disabled"><span class="page-link">Trang {{ page_cdr_tin.number }} / {{ page_cdr_tin.paginator.num_pages }}</span></li>
+                {% if page_cdr_tin.has_next %}<li class="page-item"><a class="page-link" href="?tab=cdr-tin&p_cdr_tin={{ page_cdr_tin.next_page_number }}">Trang sau</a></li>{% endif %}
+            </ul></nav>
+            {% endif %}
+        </div>
+
     </div>
 </div>
-
-<script>
-    document.getElementById('searchTable').addEventListener('keyup', function() {
-        let filter = this.value.toLowerCase();
-        let rows = document.querySelector("#resultTable tbody").rows;
-        for (let row of rows) {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.includes(filter) ? "" : "none";
-        }
-    });
-</script>
 {% endblock %}
