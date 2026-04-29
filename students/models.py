@@ -95,9 +95,25 @@ class SinhVien(models.Model):
     # --- LOGIC KIỂM TRA CHỨNG CHỈ HỢP LỆ THEO DANH MỤC ---
     def _has_valid_cert(self, loai_cc):
         five_years_ago = timezone.now().date() - relativedelta(months=60)
-        return self.ds_chung_chi.filter(
-            danh_muc__loai=loai_cc, trang_thai='DAT', ngay_cap__gte=five_years_ago
-        ).exists()
+        
+        # SỬA LỖI 1: Dùng đúng related_name là 'cac_chung_chi'
+        qs = self.cac_chung_chi.filter(
+            danh_muc__loai=loai_cc, 
+            trang_thai='DAT', 
+            ngay_cap__gte=five_years_ago
+        )
+        
+        # SỬA LỖI 2: Đưa logic tích lũy 3/5 môn MOS vào
+        if loai_cc == 'TIN_HOC':
+            # 1. Nếu có bằng Tin học khác (VD: IC3, CNTT Cơ bản) -> ĐẠT luôn
+            if qs.exclude(danh_muc__ten_chung_chi__icontains='MOS').exists():
+                return True
+            # 2. Nếu chỉ có MOS -> Phải đếm đủ 3 môn khác nhau mới ĐẠT
+            so_luong_mos = qs.filter(danh_muc__ten_chung_chi__icontains='MOS').values('danh_muc').distinct().count()
+            return so_luong_mos >= 3
+            
+        # Với Ngoại ngữ, chỉ cần có 1 chứng chỉ hợp lệ là Đạt
+        return qs.exists()
 
     @property
     def has_valid_cert_ngoai_ngu(self): return self._has_valid_cert('NGOAI_NGU')
@@ -131,19 +147,13 @@ class ChungChi(models.Model):
 
     sinh_vien = models.ForeignKey('SinhVien', on_delete=models.CASCADE, related_name='cac_chung_chi')
     danh_muc = models.ForeignKey(DanhMucChungChi, on_delete=models.RESTRICT, verbose_name="Loại chứng chỉ")
-    
-    # --- 2. Nhóm Dữ liệu Văn bằng ---
-    so_hieu = models.CharField('Số hiệu / ID Chứng chỉ', max_length=100, help_text="Dùng để chuyên viên tra cứu hậu kiểm")
+    so_hieu = models.CharField('Số hiệu / ID', max_length=100, help_text="Dùng để chuyên viên tra cứu hậu kiểm")
     ngay_cap = models.DateField('Ngày cấp')
     
-    # --- 3. Nhóm Kết quả ---
     diem_tong = models.FloatField('Điểm tổng', null=True, blank=True)
     diem_thanh_phan = models.CharField('Điểm thành phần (L/R/S/W)', max_length=100, null=True, blank=True)
+    file_minh_chung = models.FileField('File minh chứng', upload_to='minh_chung_chung_chi/%Y/%m/')
     
-    # --- 4. Nhóm Minh chứng ---
-    file_minh_chung = models.FileField('File minh chứng (PDF/Ảnh)', upload_to='minh_chung_chung_chi/%Y/%m/')
-    
-    # --- 5. Nhóm Theo dõi & Kiểm toán ---
     trang_thai = models.CharField('Trạng thái', max_length=20, choices=TRANG_THAI_DUYET, default='CHO')
     ghi_chu_xac_minh = models.TextField('Ghi chú của Chuyên viên', null=True, blank=True)
     
@@ -153,19 +163,16 @@ class ChungChi(models.Model):
     class Meta:
         verbose_name = 'Hồ sơ Chứng chỉ'
         verbose_name_plural = 'Hồ sơ Chứng chỉ'
-        unique_together = ['sinh_vien', 'so_hieu'] # Chống nộp trùng 1 cái bằng 2 lần
+        unique_together = ['sinh_vien', 'so_hieu'] # Khóa chống nộp trùng lặp
 
     def __str__(self):
         return f"{self.sinh_vien.mssv} - {self.danh_muc.ten_chung_chi} ({self.get_trang_thai_display()})"
 
     @property
     def con_han_su_dung(self):
-        """Kiểm tra chứng chỉ còn hạn 60 tháng (5 năm) theo QĐ 2025"""
-        if not self.ngay_cap:
-            return False
-        han_cuoi = self.ngay_cap + relativedelta(months=60)
-        return timezone.now().date() <= han_cuoi
-
+        """Kiểm tra chứng chỉ còn hạn 60 tháng (5 năm)"""
+        if not self.ngay_cap: return False
+        return timezone.now().date() <= (self.ngay_cap + relativedelta(months=60))
 
 # ==============================================================================
 # PHÂN HỆ 2: QUẢN LÝ THI CỬ NỘI BỘ

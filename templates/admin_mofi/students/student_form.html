@@ -112,7 +112,7 @@
                 {% for diem in student.lich_su_thi.all %}
                 <tr>
                   <td>{{ diem.get_mon_thi_display }}</td><td>{{ diem.dot_thi.ten_dot }}</td>
-                  <td class="text-center fw-bold text-primary">{{ diem.diem_thi }}</td>
+                  <td class="text-center fw-bold text-primary">{{ diem.diem_tong }}</td>
                   <td class="text-center">
                     {% if diem.ket_qua_dat %}<span class="text-success"><i class="fa fa-check-circle"></i></span>
                     {% else %}<span class="text-danger"><i class="fa fa-times-circle"></i></span>{% endif %}
@@ -141,9 +141,9 @@
                 <tr><th>Loại</th><th>Tên chứng chỉ</th><th class="text-center">Trạng thái</th></tr>
               </thead>
               <tbody>
-                {% for cc in student.ds_chung_chi.all %}
+                {% for cc in student.cac_chung_chi.all %}
                 <tr>
-                  <td>{{ cc.get_loai_display }}</td><td>{{ cc.ten_chung_chi }}</td>
+                  <td>{{ cc.danh_muc.get_loai_display }}</td><td>{{ cc.danh_muc.ten_chung_chi }}</td>
                   <td class="text-center">
                     {% if cc.trang_thai == 'DAT' %}<span class="badge badge-success">Đạt</span>
                     {% elif cc.trang_thai == 'CHO' %}<span class="badge badge-warning text-dark">Chờ</span>
@@ -198,55 +198,101 @@
     </div>
   </div>
 
-  <div class="modal fade" id="modalAddCert" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <form class="modal-content" method="POST" action="{% url 'students:quick_add_chung_chi' student.id %}" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="modal-header bg-success py-3">
-          <h5 class="modal-title text-white">Nộp chứng chỉ: {{ student.ho_ten }}</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<div class="modal fade" id="modalAddCert" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="POST" action="{% url 'students:quick_add_chung_chi' student.id %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="modal-header bg-success py-3">
+        <h5 class="modal-title text-white">Nộp chứng chỉ: {{ student.ho_ten }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body row g-3">
+        
+        <div class="col-md-12">
+          <label class="form-label fw-bold">Chọn Loại Chứng chỉ <span class="text-danger">*</span></label>
+          <select name="danh_muc_id" class="form-select form-select-lg" required>
+              <option value="">-- Vui lòng chọn chứng chỉ --</option>
+              
+              <optgroup label="🔠 CHUẨN ĐẦU RA NGOẠI NGỮ">
+                  {% for dm in danh_muc_cc %}
+                      {% if dm.loai == 'NGOAI_NGU' %}
+                          <option value="{{ dm.id }}">[{{ dm.get_loai_display }}] {{ dm.ten_chung_chi }}</option>
+                      {% endif %}
+                  {% endfor %}
+              </optgroup>
+              
+              <optgroup label="💻 CHUẨN ĐẦU RA TIN HỌC">
+                  {% for dm in danh_muc_cc %}
+                      {% if dm.loai == 'TIN_HOC' %}
+                          <option value="{{ dm.id }}">[{{ dm.get_loai_display }}] {{ dm.ten_chung_chi }}</option>
+                      {% endif %}
+                  {% endfor %}
+              </optgroup>
+          </select>
         </div>
-        <div class="modal-body row g-3">
-          <div class="col-md-6">
-            <label class="form-label fw-bold">Phân loại</label>
-            <select name="loai" class="form-select" required>
-              <option value="NGOAI_NGU">Ngoại ngữ</option>
-              <option value="TIN_HOC">Tin học</option>
-            </select>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-bold">Tên chứng chỉ</label>
-            <input type="text" name="ten_chung_chi" class="form-control" placeholder="VD: TOEIC 500" required>
-          </div>
-          <div class="col-md-12">
-            <label class="form-label fw-bold">Số hiệu / Mã vạch</label>
-            <input type="text" name="so_hieu" class="form-control" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-bold">Ngày cấp</label>
-            <input type="date" name="ngay_cap" class="form-control" required>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label fw-bold">Minh chứng (Ảnh/PDF)</label>
-            <input type="file" name="file_minh_chung" class="form-control" accept="image/*,.pdf" required>
-          </div>
+        
+        <div class="col-md-12">
+          <label class="form-label fw-bold">Số hiệu / Mã vạch</label>
+          <input type="text" name="so_hieu" class="form-control" required>
         </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-success w-100">Tải lên hệ thống</button>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Ngày cấp</label>
+          <input type="date" name="ngay_cap" class="form-control" required>
         </div>
-      </form>
-    </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Minh chứng (Ảnh/PDF)</label>
+          <input type="file" name="file_minh_chung" class="form-control" accept="image/*,.pdf" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success w-100">Tải lên hệ thống</button>
+      </div>
+    </form>
   </div>
+</div>
   {% endif %}
 
 </div>
 
 <script>
+  // Script Preview ảnh đại diện
   document.getElementById('imageInput').onchange = evt => {
     const [file] = document.getElementById('imageInput').files
     if (file) {
       document.getElementById('previewImg').src = URL.createObjectURL(file)
     }
-  }
+  };
+
+  // SCRIPT LỌC CHỨNG CHỈ (Chạy ngay khi giao diện tải xong)
+  document.addEventListener('DOMContentLoaded', function() {
+    const typeFilter = document.getElementById('certTypeFilter');
+    const nameSelect = document.getElementById('certNameSelect');
+    
+    if(typeFilter && nameSelect) {
+        // Lưu lại toàn bộ options gốc từ Database vào bộ nhớ tạm
+        const originalOptions = Array.from(nameSelect.options).filter(opt => opt.value !== "");
+        
+        // Bắt sự kiện khi người dùng chọn "Ngoại ngữ" hoặc "Tin học"
+        typeFilter.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            // Xóa sạch ô chọn Tên chứng chỉ hiện tại
+            nameSelect.innerHTML = '<option value="">-- Chọn chứng chỉ --</option>';
+            
+            if (selectedType) {
+                nameSelect.disabled = false; // Mở khóa ô
+                // Lọc và nhét các option đúng nhóm vào lại
+                originalOptions.forEach(opt => {
+                    if (opt.getAttribute('data-type') === selectedType) {
+                        nameSelect.appendChild(opt.cloneNode(true));
+                    }
+                });
+            } else {
+                nameSelect.disabled = true; // Khóa lại nếu chưa chọn
+                nameSelect.innerHTML = '<option value="">-- Vui lòng chọn loại trước --</option>';
+            }
+        });
+    }
+  });
 </script>
 {% endblock %}

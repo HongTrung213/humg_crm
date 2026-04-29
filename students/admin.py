@@ -23,14 +23,14 @@ class DanhMucChungChiAdmin(admin.ModelAdmin):
 class ChungChiInline(admin.TabularInline):
     model = ChungChi
     extra = 1
-    # Dùng trường 'danh_muc' thay vì các trường cũ đã xóa
     fields = ('danh_muc', 'so_hieu', 'ngay_cap', 'trang_thai', 'file_minh_chung')
 
 class LichSuThiInline(admin.TabularInline):
     model = LichSuThi
     extra = 0
     autocomplete_fields = ['dot_thi']
-    fields = ('mon_thi', 'dot_thi', 'diem_thanh_phan_1', 'diem_thanh_phan_2', 'diem_thi', 'ket_qua_dat')
+    # Đã sửa diem_thi thành diem_tong để khớp với Model
+    fields = ('mon_thi', 'dot_thi', 'diem_thanh_phan_1', 'diem_thanh_phan_2', 'diem_tong', 'ket_qua_dat')
     readonly_fields = ['mon_thi', 'diem_tong', 'xep_loai', 'ket_qua_dat']
 
 # ==========================================
@@ -71,9 +71,11 @@ class LichSuThiAdmin(admin.ModelAdmin):
 
 @admin.register(ChungChi)
 class ChungChiAdmin(admin.ModelAdmin):
+    # Đã gộp cấu hình của bạn ở cuối file lên đây
     list_display = ['sinh_vien', 'danh_muc', 'so_hieu', 'ngay_cap', 'trang_thai']
     search_fields = ['sinh_vien__mssv', 'sinh_vien__ho_ten', 'so_hieu', 'danh_muc__ten_chung_chi']
     list_filter = ['trang_thai', 'danh_muc__loai']
+    readonly_fields = ('ngay_nop', 'ngay_cap_nhat')
 
 @admin.register(LopBoiDuong)
 class LopBoiDuongAdmin(admin.ModelAdmin):

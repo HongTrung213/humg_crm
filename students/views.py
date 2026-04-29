@@ -9,7 +9,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from .models import DanhMucChungChi
 from .forms import DanhMucChungChiForm
 from cms.models import Slider, QuickLink 
-from cms.models import Category, Post, QuickLink
+from cms.models import Category, Post, QuickLink    
 from django.contrib.auth.models import User, Group
 from django.contrib.admin.views.decorators import staff_member_required
 from .forms import UserAccountForm # Nhớ import form vừa tạo
@@ -47,7 +47,7 @@ for p in posts:
         counter += 1
     p.slug = new_slug
     p.save()
-    print(f"Đã cập nhật slug cho bài: {p.title}")  
+    print(f"Đã cập nhật slug cho bài: {p.title}") 
 # ==========================================
 # 1. PHÂN HỆ CÔNG CỘNG (CỔNG THÔNG TIN SINH VIÊN)
 # ==========================================
@@ -314,12 +314,13 @@ def student_detail(request, id):
         'danh_muc_cc': danh_muc_cc
     })
 
+
 @login_required
 def student_add(request):
     if not request.user.is_staff: return redirect('students:home')
     if request.method == 'POST':
         mssv = request.POST.get('mssv', '').strip()
-        khoa_id = request.POST.get('khoa') # Lấy ID từ select
+        khoa_id = request.POST.get('khoa')
         SinhVien.objects.create(
             mssv=mssv, ho_ten=request.POST.get('ho_ten'),
             khoa_id=khoa_id, lop=request.POST.get('lop'),
@@ -331,9 +332,12 @@ def student_add(request):
         return redirect('students:student_list')
     
     khoas = Khoa.objects.all().order_by('ten_khoa')
-    return render(request, 'admin_mofi/students/student_form.html', {'khoas': khoas})
+    # BỔ SUNG DÒNG NÀY:
+    danh_muc_cc = DanhMucChungChi.objects.all().order_by('loai', 'ten_chung_chi')
+    # NHỚ THÊM VÀO CONTEXT Ở RETURN:
+    return render(request, 'admin_mofi/students/student_form.html', {'khoas': khoas, 'danh_muc_cc': danh_muc_cc})
 
-# Cập nhật hàm Edit Sinh viên (Admin)
+
 @login_required
 def student_edit(request, id):
     if not request.user.is_staff: return redirect('students:home')
@@ -350,8 +354,10 @@ def student_edit(request, id):
         return redirect('students:student_list')
     
     khoas = Khoa.objects.all().order_by('ten_khoa')
-    return render(request, 'admin_mofi/students/student_form.html', {'student': student, 'khoas': khoas})
-
+    # BỔ SUNG DÒNG NÀY:
+    danh_muc_cc = DanhMucChungChi.objects.all().order_by('loai', 'ten_chung_chi')
+    # NHỚ THÊM VÀO CONTEXT Ở RETURN:
+    return render(request, 'admin_mofi/students/student_form.html', {'student': student, 'khoas': khoas, 'danh_muc_cc': danh_muc_cc})
 @login_required
 def student_delete(request, id):
     if not request.user.is_staff: return redirect('students:home')
@@ -418,20 +424,32 @@ def quick_add_diem(request, student_id):
             diem_thanh_phan_2=request.POST.get('diem_tp2') or None
         )
         messages.success(request, "Đã cập nhật điểm thi.")
-    return redirect('student_detail', id=student_id)
+    # BỔ SUNG THÊM students: VÀO ĐÂY
+    return redirect('students:student_detail', id=student_id) 
+
+# Hãy chắc chắn bạn đã có dòng này ở tít trên cùng của file views.py nhé:
+from django.db import IntegrityError
 
 @login_required
 def quick_add_chung_chi(request, student_id):
     if request.method == 'POST':
         student = get_object_or_404(SinhVien, id=student_id)
         danh_muc = get_object_or_404(DanhMucChungChi, id=request.POST.get('danh_muc_id'))
-        ChungChi.objects.create(
-            sinh_vien=student, danh_muc=danh_muc,
-            so_hieu=request.POST.get('so_hieu'), ngay_cap=request.POST.get('ngay_cap'),
-            file_minh_chung=request.FILES.get('file_minh_chung'), trang_thai='CHO'
-        )
-        messages.success(request, "Đã tải lên chứng chỉ mới.")
-    return redirect('student_detail', id=student_id)
+        so_hieu_nhap = request.POST.get('so_hieu').strip() # Xóa khoảng trắng thừa
+        
+        try:
+            ChungChi.objects.create(
+                sinh_vien=student, danh_muc=danh_muc,
+                so_hieu=so_hieu_nhap, ngay_cap=request.POST.get('ngay_cap'),
+                file_minh_chung=request.FILES.get('file_minh_chung'), trang_thai='CHO'
+            )
+            messages.success(request, "Đã tải lên chứng chỉ mới thành công.")
+            
+        except IntegrityError:
+            # BẮT LỖI: Nếu Database báo trùng số hiệu
+            messages.error(request, f"Từ chối: Chứng chỉ mang số hiệu '{so_hieu_nhap}' đã tồn tại trong hồ sơ của sinh viên này!")
+            
+    return redirect('students:student_detail', id=student_id)
 
 @login_required
 def certificate_verification_list(request):

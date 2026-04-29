@@ -94,4 +94,11 @@ urlpatterns = [
     path('quan-tri/dot-thi/sua-diem/<int:lich_thi_id>/', views.mofi_sua_diem_thi, name='mofi_sua_diem_thi'),
     path('quan-tri/dot-thi/xuat-excel/<int:dot_thi_id>/', views.mofi_export_bang_diem, name='mofi_export_bang_diem'),
     path('quan-tri/lop-hoc/import/', views.mofi_import_class_list, name='mofi_import_class_list'),
+
+    # Phân hệ xét duyệt chứng chỉ (Dành cho Admin/Chuyên viên)
+    path('quan-tri/chung-chi/cho-duyet/', views.certificate_verification_list, name='certificate_verification_list'),
+    path('quan-tri/chung-chi/xet-duyet/<int:cert_id>/', views.verify_certificate, name='verify_certificate'),
+    
+    # API Thêm mới chứng chỉ (Dùng chung cho Form của SV và Chuyên viên)
+    path('api/chung-chi/them-moi/<int:student_id>/', views.quick_add_chung_chi, name='quick_add_chung_chi'),
 ]
