@@ -129,7 +129,6 @@ class ChungChi(models.Model):
         ('KHONG_DAT', 'Từ chối (Không đạt)')
     ]
 
-    # --- 1. Nhóm Định danh ---
     sinh_vien = models.ForeignKey('SinhVien', on_delete=models.CASCADE, related_name='cac_chung_chi')
     danh_muc = models.ForeignKey(DanhMucChungChi, on_delete=models.RESTRICT, verbose_name="Loại chứng chỉ")
     
