@@ -1,66 +1,102 @@
 {% load static %}
-<div class="page-header row align-items-center"> 
+<div class="page-header row align-items-center bg-white border-bottom"> 
   
+  <!-- LOGO SECTION -->
   <div class="header-logo-wrapper col-auto pe-1">
     <div class="logo-wrapper">
       <a href="{% url 'students:admin_mofi_dashboard' %}">
-        <img class="img-fluid for-light" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG" style="max-height: 40px; object-fit: contain;"/>
-        <img class="img-fluid for-dark" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG" style="max-height: 40px; object-fit: contain;"/>
+        <img class="img-fluid for-light" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG" style="max-height: 42px; object-fit: contain;"/>
+        <img class="img-fluid for-dark" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG" style="max-height: 42px; object-fit: contain;"/>
       </a>
     </div>
   </div>
 
-  <div class="col-auto page-title ps-2">
-    <h4 class="f-w-700 mb-0">{% block page_title %}Bảng Điều Khiển{% endblock %}</h4>
+  <!-- PAGE TITLE -->
+  <div class="col-auto page-title ps-3 d-none d-md-block">
+    <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: 0.3px;">{% block page_title %}Bảng Điều Khiển{% endblock %}</h4>
   </div>
 
+  <!-- HEADER ACTIONS -->
   <div class="header-wrapper col m-0">
     <div class="row">
+      <!-- Search Input -->
       <form class="form-inline search-full col" action="#" method="get">
         <div class="form-group w-100">
           <div class="Typeahead Typeahead--twitterUsers">
-            <div class="u-posRelative">
-              <input class="demo-input Typeahead-input form-control-plaintext w-100" type="text" placeholder="Tìm kiếm nhanh sinh viên, lớp học..." name="q" title="" autofocus>
+            <div class="u-posRelative bg-light rounded-pill px-3 py-1 border border-light-subtle shadow-sm">
+              <input class="demo-input Typeahead-input form-control-plaintext w-100 bg-transparent text-dark" type="text" placeholder="Tìm kiếm nhanh sinh viên, lớp học..." name="q" title="" autofocus>
               <i class="close-search" data-feather="x"></i>
             </div>
           </div>
         </div>
       </form>
-      <div class="header-logo-wrapper col-auto p-0">
+
+      <!-- Mobile Toggle -->
+      <div class="header-logo-wrapper col-auto p-0 d-md-none">
         <div class="logo-wrapper">
           <a href="{% url 'students:admin_mofi_dashboard' %}">
             <img class="img-fluid" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG" style="max-height: 35px; object-fit: contain;">
           </a>
         </div>
         <div class="toggle-sidebar">
-          <svg class="stroke-icon sidebar-toggle status_toggle middle">
+          <svg class="stroke-icon sidebar-toggle status_toggle middle text-dark">
             <use href="{% static 'mofi/svg/icon-sprite.svg' %}#toggle-icon"></use>
           </svg>
         </div>
       </div>
+
+      <!-- Right Nav Bar -->
       <div class="nav-right col-xxl-8 col-xl-6 col-md-7 col-8 pull-right right-header p-0 ms-auto">
-        <ul class="nav-menus">
-          <li>
+        <ul class="nav-menus d-flex align-items-center justify-content-end">
+          
+          <!-- Nút Search (Mobile) -->
+          <li class="p-2">
             <span class="header-search">
-              <svg><use href="{% static 'mofi/svg/icon-sprite.svg' %}#search"></use></svg>
+              <svg class="text-muted" style="width: 20px; height: 20px;"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#search"></use></svg>
             </span>
           </li>
-          <li>
-            <div class="mode">
-              <svg><use href="{% static 'mofi/svg/icon-sprite.svg' %}#moon"></use></svg>
+          
+          <!-- Chế độ Tối/Sáng -->
+          <li class="p-2">
+            <div class="mode" title="Đổi giao diện">
+              <svg class="text-muted" style="width: 20px; height: 20px;"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#moon"></use></svg>
             </div>
           </li>
-          <li class="profile-nav onhover-dropdown px-0 py-0">
-            <div class="d-flex profile-media align-items-center">
-              <img class="img-30" src="{% static 'mofi/images/dashboard/profile.png' %}" alt="">
-              <div class="flex-grow-1">
-                <span>{{ request.user.username|default:"Admin HUMG" }}</span>
-                <p class="mb-0 font-outfit"><i class="fa fa-angle-down"></i></p>
+          
+          <!-- Profile Dropdown (Phong cách Pill) -->
+          <li class="profile-nav onhover-dropdown ms-3 p-0">
+            <div class="d-flex profile-media align-items-center bg-light-subtle px-2 py-1 rounded-pill border shadow-sm transition-all profile-hover">
+              <img class="img-30 rounded-circle border border-2 border-white shadow-sm" src="{% static 'mofi/images/dashboard/profile.png' %}" alt="Profile">
+              <div class="flex-grow-1 ms-2 d-none d-sm-block pe-3">
+                <span class="fw-bold text-dark d-block" style="font-size: 13px; line-height: 1.2;">{{ request.user.username|default:"Admin HUMG" }}</span>
+                <span class="text-muted small d-block" style="font-size: 11px;">Quản trị viên</span>
               </div>
+              <i class="fa fa-angle-down text-muted pe-2 d-none d-sm-block"></i>
             </div>
-            <ul class="profile-dropdown onhover-show-div">
-              <li><a href="{% url 'admin:index' %}"><i data-feather="database"></i><span>DB Admin</span></a></li>
-              <li><a href="{% url 'students:dang_xuat' %}"><i data-feather="log-out"> </i><span>Đăng xuất</span></a></li>
+            
+            <!-- Menu xổ xuống -->
+            <ul class="profile-dropdown onhover-show-div shadow border-0 rounded-4 mt-2 py-2">
+              <li class="border-bottom pb-2 mb-2 px-3">
+                <div class="d-flex align-items-center py-1">
+                  <div class="bg-primary-subtle text-primary rounded-circle p-2 me-3 d-flex align-items-center justify-content-center">
+                    <i data-feather="user" style="width: 18px; height: 18px;"></i>
+                  </div>
+                  <div>
+                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 14px;">{{ request.user.username|default:"Admin" }}</h6>
+                    <span class="text-muted" style="font-size: 12px;">TT Ngoại ngữ - Tin học</span>
+                  </div>
+                </div>
+              </li>
+              <li class="px-2">
+                <a class="d-flex align-items-center rounded-3 px-3 py-2 text-dark hover-bg-light transition-all" href="{% url 'admin:index' %}">
+                  <i data-feather="database" class="me-2 text-info" style="width: 16px;"></i><span class="fw-medium">Quản trị Hệ thống DB</span>
+                </a>
+              </li>
+              <li class="px-2 mt-1">
+                <a class="d-flex align-items-center rounded-3 px-3 py-2 text-danger hover-bg-danger transition-all" href="{% url 'students:dang_xuat' %}">
+                  <i data-feather="log-out" class="me-2" style="width: 16px;"></i><span class="fw-bold">Đăng xuất</span>
+                </a>
+              </li>
             </ul>
           </li>
         </ul>
@@ -68,3 +104,29 @@
     </div>
   </div>
 </div>
+
+<style>
+  /* Các hiệu ứng Hover tăng trải nghiệm người dùng */
+  .profile-hover:hover {
+    background-color: #f8f9fa !important;
+    cursor: pointer;
+  }
+  .profile-dropdown {
+    min-width: 240px;
+    padding: 10px 0;
+  }
+  .hover-bg-light:hover {
+    background-color: #f1f5f9;
+    color: #0d6efd !important;
+  }
+  .hover-bg-danger:hover {
+    background-color: #fee2e2;
+    color: #dc3545 !important;
+  }
+  .transition-all {
+    transition: all 0.2s ease-in-out;
+  }
+  .bg-primary-subtle {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+  }
+</style>

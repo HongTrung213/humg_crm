@@ -183,7 +183,7 @@ class DotThi(models.Model):
     thoi_gian_bat_dau = models.DateTimeField('Thời gian bắt đầu', default=timezone.now)
     thoi_gian_ket_thuc = models.DateTimeField('Thời gian kết thúc', default=timezone.now)
     file_thong_bao = models.FileField('File thông báo (PDF)', upload_to='announcements/', blank=True, null=True)
-    trang_thai = models.BooleanField('Đang mở đăng ký', default=True)
+    #trang_thai = models.BooleanField('Đang mở đăng ký', default=True)
     
     # Cấu hình điểm
     diem_chuan_ngoai_ngu = models.FloatField('Điểm chuẩn Ngoại ngữ', default=5.0)
@@ -196,6 +196,22 @@ class DotThi(models.Model):
         verbose_name_plural = '5. Cấu hình Đợt thi'
 
     def __str__(self): return self.ten_dot
+    
+    def trang_thai_hien_tai(self):
+        """
+        Logic tính toán trạng thái Real-time:
+        Trả về 1: Đang hoạt động | Trả về 2: Sắp diễn ra | Trả về 0: Đã kết thúc
+        """
+        now = timezone.now()
+        if not self.thoi_gian_bat_dau or not self.thoi_gian_ket_thuc:
+            return 0 # An toàn lỗi dữ liệu
+            
+        if now < self.thoi_gian_bat_dau:
+            return 2 # Sắp tới
+        elif self.thoi_gian_bat_dau <= now <= self.thoi_gian_ket_thuc:
+            return 1 # Đang hoạt động
+        else:
+            return 0 # Đã đóng/Kết thúc
 
 
 class LichSuThi(models.Model):

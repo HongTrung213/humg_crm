@@ -1,42 +1,151 @@
 {% extends 'admin_mofi/base.html' %}
 {% block content %}
-<div class="container-fluid">
-    <div class="page-title">
-        <h4>{% if instance %}Sửa Liên kết{% else %}Thêm Liên kết nhanh{% endif %}</h4>
+
+<!-- KHỐI THÔNG BÁO TOAST (MÀU DARK - TỰ ĐỘNG BIẾN MẤT) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
     </div>
-    <div class="card">
-        <form method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Tên liên kết (VD: Web Đảng Bộ)</label>
-                    {{ form.title }}
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
+<div class="container-fluid">
+    <!-- TIÊU ĐỀ TRANG -->
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-12">
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-link text-muted me-2"></i>{% if instance %}Cập nhật Liên kết{% else %}Thêm Liên kết nhanh{% endif %}
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-6 col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <!-- Header trắng thanh lịch -->
+                <div class="card-header bg-white pt-4 px-4 pb-3 border-bottom">
+                    <h5 class="fw-bold mb-1 text-dark">Thông tin liên kết</h5>
+                    <p class="mb-0 text-muted small">Cấu hình các nút liên kết nhanh hiển thị ngoài trang chủ.</p>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Ảnh Banner (Ô vuông/Chữ nhật nhỏ)</label>
-                    {{ form.image }}
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Đường dẫn trang web (URL)</label>
-                    {{ form.url }}
-                </div>
-                <div class="row">
-                    <div class="col-6">
-                        <label class="form-label fw-bold">Thứ tự</label>
-                        {{ form.order }}
-                    </div>
-                    <div class="col-6">
-                        <div class="form-check form-switch mt-4">
-                            {{ form.is_active }}
-                            <label class="form-check-label ms-2">Hiển thị</label>
+
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="card-body p-4 bg-white">
+                        
+                        <!-- Trường Tên liên kết -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Tên liên kết (VD: Web Đảng Bộ) <span class="text-danger">*</span></label>
+                            {{ form.title }}
+                            {% if form.title.errors %}<div class="text-danger small mt-1 fw-bold">{{ form.title.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <!-- Trường Ảnh Banner -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Ảnh Banner (Biểu tượng liên kết)</label>
+                            <div class="bg-light p-2 rounded border">
+                                {{ form.image }}
+                            </div>
+                            <div class="form-text small text-muted mt-2">Nên sử dụng ảnh vuông hoặc chữ nhật nhỏ để hiển thị đẹp nhất.</div>
+                            {% if instance and instance.image %}
+                                <div class="mt-3 p-2 border rounded bg-white text-center shadow-xs d-inline-block">
+                                    <img src="{{ instance.image.url }}" class="img-fluid rounded" style="max-height: 80px;">
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Trường URL -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Đường dẫn trang web (URL) <span class="text-danger">*</span></label>
+                            {{ form.url }}
+                            {% if form.url.errors %}<div class="text-danger small mt-1 fw-bold">{{ form.url.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <!-- Trường Thứ tự & Hiển thị -->
+                        <div class="row g-4 mb-3">
+                            <div class="col-6 border-end">
+                                <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Thứ tự ưu tiên</label>
+                                {{ form.order }}
+                            </div>
+                            <div class="col-6 d-flex align-items-center ps-4">
+                                <div class="form-check form-switch mt-3 p-0 d-flex justify-content-between align-items-center w-100">
+                                    <label class="form-check-label fw-bold text-success small mb-0">Hiển thị trên Web</label>
+                                    <div style="margin-right: -30px;">{{ form.is_active }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 mt-4 rounded-3 border bg-light d-flex align-items-start shadow-none">
+                            <i class="fa fa-info-circle text-primary fs-5 me-3 mt-1"></i>
+                            <div class="small text-dark">
+                                <b>Mẹo:</b> "Thứ tự" càng thấp (ví dụ: 1) sẽ hiển thị ở vị trí đầu tiên trong danh sách liên kết nhanh.
+                            </div>
                         </div>
                     </div>
-                </div>
+
+                    <div class="card-footer bg-light-subtle border-top py-3 px-4 text-end">
+                        <button type="button" onclick="history.back()" class="btn btn-white fw-bold border shadow-sm rounded-3 me-2 px-3">
+                            Hủy bỏ
+                        </button>
+                        <button class="btn btn-dark fw-bold shadow-sm rounded-3 px-4" type="submit">
+                            <i class="fa fa-save me-2"></i>Lưu lại
+                        </button>
+                    </div>
+                </form>
             </div>
-            <div class="card-footer text-end">
-                <button class="btn btn-primary" type="submit">Lưu lại</button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Chỉnh chữ nhỏ gọn, đen đậm rõ nét chuẩn White Edition */
+    .form-control, .form-select {
+        font-size: 14px !important;
+        color: #333 !important;
+        border: 1px solid #ddd !important;
+        background-color: #fff !important;
+        padding: 10px 15px !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #333 !important;
+        background-color: #fff !important;
+        box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.05) !important;
+    }
+    .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tự động kích hoạt Toast
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+
+        // Chỉnh style cho input file
+        const imageInput = document.querySelector('input[type="file"]');
+        if (imageInput) imageInput.classList.add('small', 'text-muted');
+    });
+</script>
 {% endblock %}

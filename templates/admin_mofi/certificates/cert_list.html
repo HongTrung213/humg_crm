@@ -2,100 +2,145 @@
 {% block content %}
 <div class="container-fluid">
     <div class="page-title">
-        <div class="row">
+        <div class="row align-items-center">
             <div class="col-6">
-                <h4 class="fw-bold">Xét duyệt Văn bằng & Chứng chỉ</h4>
+                <h4 class="fw-bold"><i class="fa fa-shield text-success me-2"></i>Xét duyệt Văn bằng & Chứng chỉ</h4>
             </div>
             <div class="col-6 text-end">
-                <span class="badge bg-warning text-dark p-2">Đang chờ duyệt: {{ total_pending }} hồ sơ</span>
+                <span class="badge bg-warning text-dark p-2 fs-6 shadow-sm"><i class="fa fa-hourglass-half me-1"></i> Đang chờ duyệt: {{ total_pending }} hồ sơ</span>
             </div>
         </div>
     </div>
 
+    <!-- KHỐI TÌM KIẾM -->
     <div class="card mb-4 border-0 shadow-sm">
-        <div class="card-body p-3">
-            <form method="GET" class="row g-2">
+        <div class="card-body p-3 bg-light rounded">
+            <form method="GET" class="row g-2 align-items-center">
                 <div class="col-md-10">
-                    <input type="text" name="q" class="form-control" placeholder="Tìm MSSV, Họ tên hoặc Số hiệu bằng..." value="{{ search_query }}">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="fa fa-search text-muted"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0" placeholder="Tìm MSSV, Họ tên hoặc Số hiệu bằng..." value="{{ search_query }}">
+                    </div>
                 </div>
                 <div class="col-md-2 d-grid">
-                    <button type="submit" class="btn btn-dark">Tìm kiếm</button>
+                    <button type="submit" class="btn btn-dark fw-bold shadow-sm">Tìm kiếm</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm">
+    <!-- DANH SÁCH CHỨNG CHỈ CHỜ DUYỆT -->
+    <div class="card border-0 shadow-sm overflow-hidden">
         <div class="table-responsive">
-            <table class="table table-hover align-middle text-center mb-0">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Sinh viên</th>
+                        <th class="ps-4">Sinh viên nộp</th>
                         <th>Loại chứng chỉ</th>
-                        <th>Số hiệu & Ngày cấp</th>
-                        <th>Minh chứng</th>
-                        <th>Thao tác xét duyệt</th>
+                        <th>Số hiệu & Hiệu lực</th>
+                        <th class="text-center">Minh chứng</th>
+                        <th class="text-end pe-4" style="width: 250px;">Thao tác xét duyệt</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for cert in pending_certs %}
                     <tr>
-                        <td class="text-start">
-                            <div class="fw-bold">{{ cert.sinh_vien.ho_ten }}</div>
-                            <div class="small text-muted">MSSV: {{ cert.sinh_vien.mssv }}</div>
+                        <!-- 1. Cột Sinh viên -->
+                        <td class="ps-4 text-start">
+                            <a href="{% url 'students:student_detail' cert.sinh_vien.id %}" class="fw-bold text-primary text-decoration-none d-block mb-1" target="_blank">
+                                <i class="fa fa-external-link me-1"></i>{{ cert.sinh_vien.ho_ten }}
+                            </a>
+                            <span class="badge bg-light text-dark border">MSSV: {{ cert.sinh_vien.mssv }}</span>
+                            <div class="small text-muted mt-1"><i class="fa fa-clock-o me-1"></i>Nộp: {{ cert.ngay_nop|date:"d/m/Y H:i" }}</div>
                         </td>
+                        
+                        <!-- 2. Cột Phân loại -->
                         <td>
-                            <span class="badge {% if cert.danh_muc.loai == 'NGOAI_NGU' %}bg-primary{% else %}bg-info{% endif %}">
-                                {{ cert.danh_muc.ten_chung_chi }}
+                            <span class="badge {% if cert.danh_muc.loai == 'NGOAI_NGU' %}bg-primary{% else %}bg-info text-dark{% endif %} p-2">
+                                {{ cert.danh_muc.get_loai_display }}
                             </span>
+                            <div class="fw-bold mt-1 text-dark f-14">{{ cert.danh_muc.ten_chung_chi }}</div>
                         </td>
+                        
+                        <!-- 3. Cột Số hiệu & Thời hạn -->
                         <td>
-                            <div class="fw-bold">{{ cert.so_hieu }}</div>
-                            <div class="small {% if not cert.con_han_su_dung %}text-danger fw-bold{% endif %}">
-                                Cấp ngày: {{ cert.ngay_cap|date:"d/m/Y" }}
-                                {% if not cert.con_han_su_dung %}(Quá hạn 5 năm){% endif %}
+                            <div class="fw-bold text-dark f-14 mb-1"><i class="fa fa-barcode me-1"></i>{{ cert.so_hieu }}</div>
+                            <div class="small">
+                                <span class="text-muted">Cấp: {{ cert.ngay_cap|date:"d/m/Y" }}</span><br>
+                                
+                                <!-- Xử lý nhãn cảnh báo thời hạn chuẩn theo BA Logic -->
+                                {% if cert.con_han_su_dung %}
+                                    <span class="text-success fw-bold"><i class="fa fa-check-circle me-1"></i>Hợp lệ (Còn hạn)</span>
+                                {% else %}
+                                    {% if cert.danh_muc.loai == 'NGOAI_NGU' %}
+                                        <span class="text-danger fw-bold"><i class="fa fa-exclamation-triangle me-1"></i>Cảnh báo: Đã quá 2 năm</span>
+                                    {% else %}
+                                        <span class="text-warning text-dark fw-bold"><i class="fa fa-exclamation-triangle me-1"></i>Cảnh báo: Đã quá 5 năm</span>
+                                    {% endif %}
+                                {% endif %}
                             </div>
                         </td>
-                        <td>
-                            <a href="{{ cert.file_minh_chung.url }}" target="_blank">
-                                <img src="{{ cert.file_minh_chung.url }}" class="rounded border" style="height: 60px; width: 80px; object-fit: cover;">
-                            </a>
+                        
+                        <!-- 4. Cột File Minh chứng -->
+                        <td class="text-center">
+                            {% if cert.file_minh_chung %}
+                                <a href="{{ cert.file_minh_chung.url }}" target="_blank" class="d-inline-block position-relative shadow-sm rounded border border-2 border-light hover-zoom">
+                                    {% if ".pdf" in cert.file_minh_chung.url|lower %}
+                                        <div class="bg-light d-flex align-items-center justify-content-center text-danger" style="height: 60px; width: 80px;">
+                                            <i class="fa fa-file-pdf-o fa-2x"></i>
+                                        </div>
+                                    {% else %}
+                                        <img src="{{ cert.file_minh_chung.url }}" style="height: 60px; width: 80px; object-fit: cover;">
+                                    {% endif %}
+                                </a>
+                            {% else %}
+                                <span class="badge bg-secondary">Không có file</span>
+                            {% endif %}
                         </td>
-                        <td>
-                            <form action="{% url 'students:verify_certificate' cert.id %}" method="POST" class="d-inline">
+                        
+                        <!-- 5. Cột Thao tác Form -->
+                        <td class="text-end pe-4">
+                            <form action="{% url 'students:verify_certificate' cert.id %}" method="POST" class="d-flex flex-column align-items-end">
                                 {% csrf_token %}
+                                <div class="input-group input-group-sm mb-2" style="width: 220px;">
+                                    <span class="input-group-text bg-light"><i class="fa fa-comment-o"></i></span>
+                                    <input type="text" name="ghi_chu" class="form-control bg-light" placeholder="Nhập ghi chú (Bắt buộc nếu lỗi)...">
+                                </div>
                                 <div class="btn-group shadow-sm">
-                                    <button type="submit" name="action" value="approve" class="btn btn-success btn-sm fw-bold">
-                                        <i class="fa fa-check me-1"></i> Duyệt
+                                    <button type="submit" name="action" value="approve" class="btn btn-success btn-sm fw-bold px-3">
+                                        <i class="fa fa-check-circle me-1"></i> Duyệt Đạt
                                     </button>
                                     
-                                    <button type="button" class="btn btn-danger btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"></button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                                    <button type="button" class="btn btn-danger btn-sm dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" title="Các tùy chọn Báo lỗi"></button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                        <li><h6 class="dropdown-header text-danger">Tùy chọn Từ chối</h6></li>
                                         <li>
-                                            <button type="submit" name="action" value="reject_home_edition" class="dropdown-item text-danger fw-bold">
-                                                <i class="fa fa-home me-2"></i> Lỗi Home Edition (2025)
+                                            <button type="submit" name="action" value="reject_home_edition" class="dropdown-item fw-bold text-dark">
+                                                <i class="fa fa-laptop text-warning me-2"></i> Lỗi thi Online (Home Edition)
                                             </button>
                                         </li>
                                         <li>
-                                            <button type="submit" name="action" value="reject" class="dropdown-item">
-                                                <i class="fa fa-times-circle me-2"></i> Thông tin sai/mờ
+                                            <button type="submit" name="action" value="reject" class="dropdown-item fw-bold text-dark">
+                                                <i class="fa fa-ban text-danger me-2"></i> Bằng hết hạn / Mờ nhòe
                                             </button>
                                         </li>
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
-                                            <button type="submit" name="action" value="delete" class="dropdown-item text-muted small" onclick="return confirm('Xóa vĩnh viễn hồ sơ này?')">
-                                                <i class="fa fa-trash me-2"></i> Xóa hồ sơ rác
+                                            <button type="submit" name="action" value="delete" class="dropdown-item text-muted small" onclick="return confirm('Xóa vĩnh viễn hồ sơ rác này ra khỏi máy chủ?')">
+                                                <i class="fa fa-trash me-2"></i> Xóa vĩnh viễn hồ sơ
                                             </button>
                                         </li>
                                     </ul>
                                 </div>
-                                <input type="text" name="ghi_chu" class="form-control form-control-sm mt-1" placeholder="Ghi chú thêm (nếu có)...">
                             </form>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="py-5 text-muted italic">Hiện tại không có hồ sơ nào đang chờ xét duyệt.</td>
+                        <td colspan="5" class="py-5 text-center">
+                            <div class="text-muted mb-3"><i class="fa fa-inbox fa-3x"></i></div>
+                            <h6 class="fw-bold text-muted">Hoan hô! Hiện tại không có hồ sơ nào đang chờ xét duyệt.</h6>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -103,18 +148,25 @@
         </div>
     </div>
 
+    <!-- PHÂN TRANG -->
     {% if pending_certs.has_other_pages %}
-    <nav class="mt-4">
-        <ul class="pagination justify-content-center">
+    <nav class="mt-4 mb-5">
+        <ul class="pagination justify-content-center border-0 shadow-sm rounded">
             {% if pending_certs.has_previous %}
-            <li class="page-item"><a class="page-link" href="?page={{ pending_certs.previous_page_number }}&q={{ search_query }}">Trước</a></li>
+            <li class="page-item"><a class="page-link text-dark fw-bold" href="?page={{ pending_certs.previous_page_number }}&q={{ search_query }}"><i class="fa fa-angle-left me-1"></i> Trước</a></li>
             {% endif %}
-            <li class="page-item disabled"><span class="page-link">Trang {{ pending_certs.number }} / {{ pending_certs.paginator.num_pages }}</span></li>
+            <li class="page-item disabled"><span class="page-link bg-light text-muted">Trang {{ pending_certs.number }} / {{ pending_certs.paginator.num_pages }}</span></li>
             {% if pending_certs.has_next %}
-            <li class="page-item"><a class="page-link" href="?page={{ pending_certs.next_page_number }}&q={{ search_query }}">Sau</a></li>
+            <li class="page-item"><a class="page-link text-dark fw-bold" href="?page={{ pending_certs.next_page_number }}&q={{ search_query }}">Sau <i class="fa fa-angle-right ms-1"></i></a></li>
             {% endif %}
         </ul>
     </nav>
     {% endif %}
 </div>
+
+<!-- Thêm một xíu CSS làm hiệu ứng phóng to ảnh khi hover -->
+<style>
+    .hover-zoom { transition: transform .2s; }
+    .hover-zoom:hover { transform: scale(1.1); z-index: 10; }
+</style>
 {% endblock %}

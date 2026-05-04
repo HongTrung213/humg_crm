@@ -10,116 +10,178 @@
 {% endblock %}
 
 {% block content %}
+
+<!-- KHỐI THÔNG BÁO TOAST (TỰ ĐỘNG BIẾN MẤT) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
 <div class="container-fluid">
   
+  <!-- TIÊU ĐỀ TRANG -->
+  <div class="page-title mb-4">
+      <div class="row align-items-center">
+          <div class="col-8">
+              <h4 class="fw-bold mb-0 text-dark">
+                  <i class="fa fa-{% if student %}user-circle-o{% else %}user-plus{% endif %} text-muted me-2"></i>
+                  {% if student %}Cập nhật hồ sơ: {{ student.ho_ten }}{% else %}Thêm Sinh viên mới{% endif %}
+              </h4>
+          </div>
+          <div class="col-4 text-end">
+              <a href="{% url 'students:student_list' %}" class="btn btn-white fw-bold border shadow-sm rounded-3 px-3">
+                  <i class="fa fa-arrow-left me-2"></i>Quay lại
+              </a>
+          </div>
+      </div>
+  </div>
+
   <div class="row">
     <div class="col-xl-12">
-      <form class="card custom-card" method="POST" action="" enctype="multipart/form-data">
+      <form class="card shadow-sm border-0 rounded-4 mb-4" method="POST" action="" enctype="multipart/form-data">
         {% csrf_token %}
-        <div class="card-header pb-0 d-flex justify-content-between align-items-center border-bottom mb-3">
+        <div class="card-header bg-white pt-4 px-4 pb-3 border-bottom d-flex justify-content-between align-items-center">
           <div>
-            <h4><i class="fa fa-{% if student %}edit{% else %}user-plus{% endif %} text-primary"></i> 
-              {% if student %}Cập nhật thông tin: {{ student.ho_ten }}{% else %}Nhập thông tin Sinh viên mới{% endif %}
-            </h4>
+            <h5 class="fw-bold mb-1 text-dark">Thông tin định danh</h5>
+            <p class="mb-0 text-muted small">Vui lòng điền đầy đủ và chính xác các trường bắt buộc (*).</p>
           </div>
           {% if student %}
-            <span class="badge badge-light-primary">Ngày tạo: {{ student.id|default:"-" }}</span>
+            <span class="badge bg-light text-muted border px-3 py-2 fw-medium">ID Hệ thống: #{{ student.id }}</span>
           {% endif %}
         </div>
         
-        <div class="card-body row py-0">
-          <div class="col-xl-3 col-md-4 text-center border-end mb-4">
-            <h6 class="mb-3 text-muted">Ảnh Đại Diện</h6>
-            <div class="avatar-init mb-3">
-              <img id="previewImg" class="img-100 rounded-circle shadow border border-3 border-white" 
-                   src="{% if student and student.anh_dai_dien %}{{ student.anh_dai_dien.url }}{% else %}{% static 'mofi/images/user/7.jpg' %}{% endif %}" 
-                   alt="Avatar" style="width: 130px; height: 130px; object-fit: cover;">
+        <div class="card-body p-4 bg-white">
+          <div class="row">
+            <!-- CỘT TRÁI: AVATAR -->
+            <div class="col-xl-3 col-md-4 text-center border-end mb-4 mb-md-0 d-flex flex-column align-items-center justify-content-center">
+              <h6 class="mb-3 text-secondary small text-uppercase fw-bold">Ảnh Đại Diện</h6>
+              <div class="avatar-init mb-3">
+                <img id="previewImg" class="rounded-circle shadow-sm border" 
+                     src="{% if student and student.anh_dai_dien %}{{ student.anh_dai_dien.url }}{% else %}{% static 'mofi/images/user/7.jpg' %}{% endif %}" 
+                     alt="Avatar" style="width: 140px; height: 140px; object-fit: cover;">
+              </div>
+              <div class="mb-2 w-100 px-3">
+                <input class="form-control custom-input p-2" type="file" name="anh_dai_dien" id="imageInput" accept="image/*">
+                <small class="text-muted mt-2 d-block f-12 f-style-italic">Hỗ trợ JPG, PNG (Tối đa 2MB)</small>
+              </div>
             </div>
-            <div class="mb-3 px-3">
-              <input class="form-control form-control-sm" type="file" name="anh_dai_dien" id="imageInput" accept="image/*">
-              <small class="text-muted mt-2 d-block f-12">Hệ thống chấp nhận JPG, PNG (Tối đa 2MB)</small>
-            </div>
-          </div>
 
-          <div class="col-xl-9 col-md-8">
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label fw-bold">MSSV <span class="text-danger">*</span></label>
-                <div class="input-group">
-                  <span class="input-group-text bg-light"><i class="icofont icofont-id-card"></i></span>
-                  <input class="form-control" type="text" name="mssv" value="{{ student.mssv }}" placeholder="VD: 23103001" required {% if student %}readonly{% endif %}>
+            <!-- CỘT PHẢI: FORM DATA -->
+            <div class="col-xl-9 col-md-8 ps-md-4">
+              <div class="row g-4">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold text-secondary small text-uppercase mb-2">MSSV <span class="text-danger">*</span></label>
+                  <div class="input-group shadow-none">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="icofont icofont-id-card"></i></span>
+                    <input class="form-control custom-input border-start-0 ps-0" type="text" name="mssv" value="{{ student.mssv }}" placeholder="VD: 23103001" required {% if student %}readonly{% endif %}>
+                  </div>
                 </div>
-              </div>
-              <div class="col-md-8">
-                <label class="form-label fw-bold">Họ và Tên <span class="text-danger">*</span></label>
-                <div class="input-group">
-                  <span class="input-group-text bg-light"><i class="icofont icofont-user-alt-3"></i></span>
-                  <input class="form-control" type="text" name="ho_ten" value="{{ student.ho_ten }}" placeholder="VD: Nguyễn Hồng Trung" required>
+                
+                <div class="col-md-8">
+                  <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Họ và Tên <span class="text-danger">*</span></label>
+                  <div class="input-group shadow-none">
+                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="icofont icofont-user-alt-3"></i></span>
+                    <input class="form-control custom-input border-start-0 ps-0" type="text" name="ho_ten" value="{{ student.ho_ten }}" placeholder="VD: Nguyễn Hồng Trung" required>
+                  </div>
                 </div>
-              </div>
-              <div class="col-md-6">
-                  <label class="form-label fw-bold">Khoa</label>
-                  <select name="khoa" class="form-select">
-                      <option value="">-- Chọn Khoa --</option>
-                      {% for k in khoas %}
-                          <option value="{{ k.id }}" {% if student.khoa.id == k.id %}selected{% endif %}>{{ k.ten_khoa }}</option>
-                      {% endfor %}
-                  </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold">Lớp Sinh Hoạt</label>
-                <input class="form-control" type="text" name="lop" value="{{ student.lop|default:'' }}" placeholder="VD: DCCTPM66A">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">Số điện thoại</label>
-                <input class="form-control" type="text" name="so_dien_thoai" value="{{ student.so_dien_thoai|default:'' }}" placeholder="09xxxxxxxx">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">Email Trường</label>
-                <input class="form-control" type="email" name="email_truong" value="{{ student.email_truong|default:'' }}" placeholder="Hệ thống tự động sinh">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold">Email Cá nhân</label>
-                <input class="form-control" type="email" name="email_ca_nhan" value="{{ student.email_ca_nhan|default:'' }}" placeholder="example@gmail.com">
+                
+                <div class="col-md-6">
+                    <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Khoa đào tạo</label>
+                    <select name="khoa" class="form-select custom-input">
+                        <option value="">-- Click để chọn Khoa --</option>
+                        {% for k in khoas %}
+                            <option value="{{ k.id }}" {% if student.khoa.id == k.id %}selected{% endif %}>{{ k.ten_khoa }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-6">
+                  <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Lớp Sinh Hoạt</label>
+                  <input class="form-control custom-input" type="text" name="lop" value="{{ student.lop|default:'' }}" placeholder="VD: DCCTPM66A">
+                </div>
+                
+                <div class="col-md-4">
+                  <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Số điện thoại</label>
+                  <input class="form-control custom-input" type="text" name="so_dien_thoai" value="{{ student.so_dien_thoai|default:'' }}" placeholder="09xxxxxxxx">
+                </div>
+                
+                <div class="col-md-4">
+                  <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Email Trường</label>
+                  <input class="form-control custom-input" type="email" name="email_truong" value="{{ student.email_truong|default:'' }}" placeholder="Sinh tự động nếu để trống">
+                </div>
+                
+                <div class="col-md-4">
+                  <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Email Cá nhân</label>
+                  <input class="form-control custom-input" type="email" name="email_ca_nhan" value="{{ student.email_ca_nhan|default:'' }}" placeholder="example@gmail.com">
+                </div>
               </div>
             </div>
           </div>
         </div>
         
-        <div class="card-footer text-end bg-light mt-3">
-          <a href="{% url 'students:student_list' %}" class="btn btn-light me-2"><i class="fa fa-times"></i> Hủy bỏ</a>
-          <button class="btn btn-primary px-4" type="submit"><i class="fa fa-save"></i> {% if student %}Lưu thay đổi hồ sơ{% else %}Tạo mới Sinh viên{% endif %}</button>
+        <div class="card-footer bg-light-subtle border-top py-3 px-4 text-end">
+          <a href="{% url 'students:student_list' %}" class="btn btn-white fw-bold border shadow-sm rounded-3 me-2 px-3">Hủy bỏ</a>
+          <button class="btn btn-dark fw-bold shadow-sm rounded-3 px-4" type="submit">
+            <i class="fa fa-save me-2"></i> {% if student %}Lưu thay đổi{% else %}Tạo mới Sinh viên{% endif %}
+          </button>
         </div>
       </form>
     </div>
   </div>
 
   {% if student %}
+  <!-- CÁC BẢNG LỊCH SỬ THAO TÁC NHANH DÀNH CHO ADMIN -->
   <div class="row">
+    <!-- CỘT 1: LỊCH SỬ THI -->
     <div class="col-xl-6">
-      <div class="card shadow-sm">
-        <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="fa fa-list-ol text-primary"></i> Lịch sử thi nội bộ</h5>
-          <button class="btn btn-primary btn-xs" data-bs-toggle="modal" data-bs-target="#modalAddDiem"><i class="fa fa-plus"></i> Nhập điểm</button>
+      <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-header bg-white pt-4 px-4 pb-0 border-bottom-0 d-flex justify-content-between align-items-center">
+          <h6 class="mb-0 fw-bold text-dark text-uppercase small"><i class="fa fa-pencil-square-o text-muted me-2"></i> Điểm thi nội bộ</h6>
+          <button class="btn btn-dark btn-sm fw-bold shadow-sm rounded-3" data-bs-toggle="modal" data-bs-target="#modalAddDiem"><i class="fa fa-plus me-1"></i> Nhập điểm</button>
         </div>
-        <div class="card-body p-3">
+        <div class="card-body p-0 mt-3">
           <div class="table-responsive">
-            <table class="table table-sm table-hover table-bordered">
-              <thead class="bg-light f-12">
-                <tr><th>Môn thi</th><th>Đợt</th><th class="text-center">Điểm</th><th class="text-center">KQ</th></tr>
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-light border-top border-bottom">
+                <tr>
+                    <th class="py-3 text-muted small fw-bold">MÔN THI</th>
+                    <th class="py-3 text-muted small fw-bold">ĐỢT THI</th>
+                    <th class="text-center py-3 text-muted small fw-bold">ĐIỂM</th>
+                    <th class="text-center py-3 text-muted small fw-bold">KẾT QUẢ</th>
+                </tr>
               </thead>
               <tbody>
                 {% for diem in student.lich_su_thi.all %}
                 <tr>
-                  <td>{{ diem.get_mon_thi_display }}</td><td>{{ diem.dot_thi.ten_dot }}</td>
-                  <td class="text-center fw-bold text-primary">{{ diem.diem_tong }}</td>
+                  <td class="text-dark fw-medium py-3">{{ diem.get_mon_thi_display }}</td>
+                  <td class="text-muted">{{ diem.dot_thi.ten_dot }}</td>
+                  <td class="text-center fw-bold fs-6">{{ diem.diem_tong }}</td>
                   <td class="text-center">
-                    {% if diem.ket_qua_dat %}<span class="text-success"><i class="fa fa-check-circle"></i></span>
-                    {% else %}<span class="text-danger"><i class="fa fa-times-circle"></i></span>{% endif %}
+                    {% if diem.ket_qua_dat %}<span class="badge bg-success-subtle text-success px-2 py-1">Đạt</span>
+                    {% else %}<span class="badge bg-danger-subtle text-danger px-2 py-1">Trượt</span>{% endif %}
                   </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="4" class="text-center text-muted py-3">Chưa có dữ liệu điểm thi.</td></tr>
+                <tr><td colspan="4" class="text-center text-muted py-4 small">Chưa có dữ liệu điểm thi.</td></tr>
                 {% endfor %}
               </tbody>
             </table>
@@ -128,30 +190,36 @@
       </div>
     </div>
 
+    <!-- CỘT 2: CHỨNG CHỈ QUỐC TẾ -->
     <div class="col-xl-6">
-      <div class="card shadow-sm">
-        <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-          <h5 class="mb-0"><i class="fa fa-certificate text-success"></i> Danh sách Chứng chỉ</h5>
-          <button class="btn btn-success btn-xs" data-bs-toggle="modal" data-bs-target="#modalAddCert"><i class="fa fa-upload"></i> Nộp mới</button>
+      <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-header bg-white pt-4 px-4 pb-0 border-bottom-0 d-flex justify-content-between align-items-center">
+          <h6 class="mb-0 fw-bold text-dark text-uppercase small"><i class="fa fa-shield text-muted me-2"></i> Hồ sơ Chứng chỉ</h6>
+          <button class="btn btn-dark btn-sm fw-bold shadow-sm rounded-3" data-bs-toggle="modal" data-bs-target="#modalAddCert"><i class="fa fa-upload me-1"></i> Nộp mới</button>
         </div>
-        <div class="card-body p-3">
+        <div class="card-body p-0 mt-3">
           <div class="table-responsive">
-            <table class="table table-sm table-hover table-bordered">
-              <thead class="bg-light f-12">
-                <tr><th>Loại</th><th>Tên chứng chỉ</th><th class="text-center">Trạng thái</th></tr>
+            <table class="table table-hover align-middle mb-0">
+              <thead class="bg-light border-top border-bottom">
+                <tr>
+                    <th class="py-3 text-muted small fw-bold">PHÂN LOẠI</th>
+                    <th class="py-3 text-muted small fw-bold">TÊN CHỨNG CHỈ</th>
+                    <th class="text-center py-3 text-muted small fw-bold">TRẠNG THÁI</th>
+                </tr>
               </thead>
               <tbody>
                 {% for cc in student.cac_chung_chi.all %}
                 <tr>
-                  <td>{{ cc.danh_muc.get_loai_display }}</td><td>{{ cc.danh_muc.ten_chung_chi }}</td>
+                  <td class="text-muted py-3">{{ cc.danh_muc.get_loai_display }}</td>
+                  <td class="text-dark fw-medium">{{ cc.danh_muc.ten_chung_chi }}</td>
                   <td class="text-center">
-                    {% if cc.trang_thai == 'DAT' %}<span class="badge badge-success">Đạt</span>
-                    {% elif cc.trang_thai == 'CHO' %}<span class="badge badge-warning text-dark">Chờ</span>
-                    {% else %}<span class="badge badge-danger">Lỗi</span>{% endif %}
+                    {% if cc.trang_thai == 'DAT' %}<span class="badge bg-success-subtle text-success px-2 py-1 border border-success-subtle">Hợp lệ</span>
+                    {% elif cc.trang_thai == 'CHO' %}<span class="badge bg-warning-subtle text-warning px-2 py-1 border border-warning-subtle">Chờ duyệt</span>
+                    {% else %}<span class="badge bg-danger-subtle text-danger px-2 py-1 border border-danger-subtle">Từ chối</span>{% endif %}
                   </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="3" class="text-center text-muted py-3">Chưa có chứng chỉ nào.</td></tr>
+                <tr><td colspan="3" class="text-center text-muted py-4 small">Chưa nộp chứng chỉ nào.</td></tr>
                 {% endfor %}
               </tbody>
             </table>
@@ -161,98 +229,122 @@
     </div>
   </div>
 
+  <!-- MODAL NHẬP ĐIỂM -->
   <div class="modal fade" id="modalAddDiem" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <form class="modal-content" method="POST" action="{% url 'students:quick_add_diem' student.id %}">
+      <form class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" method="POST" action="{% url 'students:quick_add_diem' student.id %}">
         {% csrf_token %}
-        <div class="modal-header bg-primary py-3">
-          <h5 class="modal-title text-white">Nhập điểm thi: {{ student.ho_ten }}</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-header bg-white border-bottom py-3 px-4">
+          <h5 class="modal-title text-dark fw-bold"><i class="fa fa-pencil-square-o text-muted me-2"></i>Nhập điểm: {{ student.ho_ten }}</h5>
+          <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body row g-3">
+        <div class="modal-body p-4 row g-3 bg-white">
           <div class="col-md-12">
-            <label class="form-label fw-bold">Đợt thi <span class="text-danger">*</span></label>
-            <input type="number" name="dot_thi" class="form-control" placeholder="Nhập ID Đợt thi (VD: 1)" required>
+            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">ID Đợt thi <span class="text-danger">*</span></label>
+            <input type="number" name="dot_thi" class="form-control custom-input" placeholder="Nhập ID Đợt thi (VD: 1)" required>
           </div>
           <div class="col-md-12">
-            <label class="form-label fw-bold">Môn thi</label>
-            <select name="mon_thi" class="form-select" required>
+            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Môn thi <span class="text-danger">*</span></label>
+            <select name="mon_thi" class="form-select custom-input" required>
               <option value="TA_DAU_VAO">Tiếng Anh đầu vào</option>
               <option value="CDR_NGOAI_NGU">CĐR Ngoại ngữ</option>
               <option value="CDR_TIN_HOC">CĐR Tin học</option>
             </select>
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-bold">Điểm TP 1 (Nghe/LT)</label>
-            <input type="number" step="0.1" name="diem_tp1" class="form-control">
+            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Điểm TP 1 (Nghe/LT)</label>
+            <input type="number" step="0.1" name="diem_tp1" class="form-control custom-input" placeholder="0.0">
           </div>
           <div class="col-md-6">
-            <label class="form-label fw-bold">Điểm TP 2 (Nói/TH)</label>
-            <input type="number" step="0.1" name="diem_tp2" class="form-control">
+            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Điểm TP 2 (Nói/TH)</label>
+            <input type="number" step="0.1" name="diem_tp2" class="form-control custom-input" placeholder="0.0">
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary w-100">Lưu điểm thi</button>
+        <div class="modal-footer bg-light-subtle border-top py-3 px-4">
+          <button type="button" class="btn btn-white fw-bold border shadow-sm rounded-3" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-dark fw-bold shadow-sm rounded-3 px-4">Lưu điểm thi</button>
         </div>
       </form>
     </div>
   </div>
 
-<div class="modal fade" id="modalAddCert" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <form class="modal-content" method="POST" action="{% url 'students:quick_add_chung_chi' student.id %}" enctype="multipart/form-data">
-      {% csrf_token %}
-      <div class="modal-header bg-success py-3">
-        <h5 class="modal-title text-white">Nộp chứng chỉ: {{ student.ho_ten }}</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body row g-3">
-        
-        <div class="col-md-12">
-          <label class="form-label fw-bold">Chọn Loại Chứng chỉ <span class="text-danger">*</span></label>
-          <select name="danh_muc_id" class="form-select form-select-lg" required>
-              <option value="">-- Vui lòng chọn chứng chỉ --</option>
-              
-              <optgroup label="🔠 CHUẨN ĐẦU RA NGOẠI NGỮ">
-                  {% for dm in danh_muc_cc %}
-                      {% if dm.loai == 'NGOAI_NGU' %}
-                          <option value="{{ dm.id }}">[{{ dm.get_loai_display }}] {{ dm.ten_chung_chi }}</option>
-                      {% endif %}
-                  {% endfor %}
-              </optgroup>
-              
-              <optgroup label="💻 CHUẨN ĐẦU RA TIN HỌC">
-                  {% for dm in danh_muc_cc %}
-                      {% if dm.loai == 'TIN_HOC' %}
-                          <option value="{{ dm.id }}">[{{ dm.get_loai_display }}] {{ dm.ten_chung_chi }}</option>
-                      {% endif %}
-                  {% endfor %}
-              </optgroup>
-          </select>
+  <!-- MODAL NẠP CHỨNG CHỈ -->
+  <div class="modal fade" id="modalAddCert" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <form class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" method="POST" action="{% url 'students:quick_add_chung_chi' student.id %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-header bg-white border-bottom py-3 px-4">
+          <h5 class="modal-title text-dark fw-bold"><i class="fa fa-cloud-upload text-muted me-2"></i>Nộp chứng chỉ: {{ student.ho_ten }}</h5>
+          <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
         </div>
-        
-        <div class="col-md-12">
-          <label class="form-label fw-bold">Số hiệu / Mã vạch</label>
-          <input type="text" name="so_hieu" class="form-control" required>
+        <div class="modal-body p-4 row g-3 bg-white">
+          <div class="col-md-12">
+            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Chọn Loại Chứng chỉ <span class="text-danger">*</span></label>
+            <select name="danh_muc_id" class="form-select custom-input" required>
+                <option value="">-- Click để chọn --</option>
+                <optgroup label="🔠 CHUẨN NGOẠI NGỮ">
+                    {% for dm in danh_muc_cc %}
+                        {% if dm.loai == 'NGOAI_NGU' %}
+                            <option value="{{ dm.id }}">[{{ dm.get_loai_display }}] {{ dm.ten_chung_chi }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </optgroup>
+                <optgroup label="💻 CHUẨN TIN HỌC">
+                    {% for dm in danh_muc_cc %}
+                        {% if dm.loai == 'TIN_HOC' %}
+                            <option value="{{ dm.id }}">[{{ dm.get_loai_display }}] {{ dm.ten_chung_chi }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </optgroup>
+            </select>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Số hiệu / Mã vạch <span class="text-danger">*</span></label>
+            <input type="text" name="so_hieu" class="form-control custom-input" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Ngày cấp <span class="text-danger">*</span></label>
+            <input type="date" name="ngay_cap" class="form-control custom-input" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Minh chứng (Ảnh/PDF) <span class="text-danger">*</span></label>
+            <input type="file" name="file_minh_chung" class="form-control custom-input p-2" accept="image/*,.pdf" required>
+          </div>
         </div>
-        <div class="col-md-6">
-          <label class="form-label fw-bold">Ngày cấp</label>
-          <input type="date" name="ngay_cap" class="form-control" required>
+        <div class="modal-footer bg-light-subtle border-top py-3 px-4">
+          <button type="button" class="btn btn-white fw-bold border shadow-sm rounded-3" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-dark fw-bold shadow-sm rounded-3 px-4">Tải lên hệ thống</button>
         </div>
-        <div class="col-md-6">
-          <label class="form-label fw-bold">Minh chứng (Ảnh/PDF)</label>
-          <input type="file" name="file_minh_chung" class="form-control" accept="image/*,.pdf" required>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-success w-100">Tải lên hệ thống</button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
-</div>
   {% endif %}
 
 </div>
+
+<style>
+    /* CSS cho White Edition */
+    .table td, .table th { border-color: #f1f1f1 !important; font-size: 14px; }
+    .bg-success-subtle { background-color: rgba(37, 188, 116, 0.1) !important; }
+    .bg-danger-subtle { background-color: rgba(220, 53, 69, 0.1) !important; }
+    .bg-warning-subtle { background-color: rgba(255, 193, 7, 0.15) !important; }
+    
+    .border-success-subtle { border-color: rgba(37, 188, 116, 0.3) !important; }
+    .border-danger-subtle { border-color: rgba(220, 53, 69, 0.3) !important; }
+    .border-warning-subtle { border-color: rgba(255, 193, 7, 0.3) !important; }
+    
+    .custom-input {
+        font-size: 14px !important; color: #333 !important;
+        border: 1px solid #ddd !important; background-color: #fff !important;
+        padding: 10px 15px !important; border-radius: 8px !important;
+    }
+    .custom-input:focus { border-color: #333 !important; box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.05) !important; }
+    
+    input[type="file"]::file-selector-button {
+        background-color: #f8f9fa; color: #333; border: 1px solid #ddd;
+        border-radius: 4px; padding: 0.1rem 0.5rem; margin-right: 10px; cursor: pointer;
+    }
+</style>
 
 <script>
   // Script Preview ảnh đại diện
@@ -263,36 +355,13 @@
     }
   };
 
-  // SCRIPT LỌC CHỨNG CHỈ (Chạy ngay khi giao diện tải xong)
-  document.addEventListener('DOMContentLoaded', function() {
-    const typeFilter = document.getElementById('certTypeFilter');
-    const nameSelect = document.getElementById('certNameSelect');
-    
-    if(typeFilter && nameSelect) {
-        // Lưu lại toàn bộ options gốc từ Database vào bộ nhớ tạm
-        const originalOptions = Array.from(nameSelect.options).filter(opt => opt.value !== "");
-        
-        // Bắt sự kiện khi người dùng chọn "Ngoại ngữ" hoặc "Tin học"
-        typeFilter.addEventListener('change', function() {
-            const selectedType = this.value;
-            
-            // Xóa sạch ô chọn Tên chứng chỉ hiện tại
-            nameSelect.innerHTML = '<option value="">-- Chọn chứng chỉ --</option>';
-            
-            if (selectedType) {
-                nameSelect.disabled = false; // Mở khóa ô
-                // Lọc và nhét các option đúng nhóm vào lại
-                originalOptions.forEach(opt => {
-                    if (opt.getAttribute('data-type') === selectedType) {
-                        nameSelect.appendChild(opt.cloneNode(true));
-                    }
-                });
-            } else {
-                nameSelect.disabled = true; // Khóa lại nếu chưa chọn
-                nameSelect.innerHTML = '<option value="">-- Vui lòng chọn loại trước --</option>';
-            }
-        });
-    }
+  // Tự động kích hoạt Toast
+  document.addEventListener("DOMContentLoaded", function() {
+      const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+      toastElList.map(function (toastEl) {
+          toastEl.classList.add('show');
+          setTimeout(() => { toastEl.remove(); }, 4500);
+      });
   });
 </script>
 {% endblock %}

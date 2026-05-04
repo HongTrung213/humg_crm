@@ -45,11 +45,12 @@ class SinhVienAdmin(admin.ModelAdmin):
 
 @admin.register(DotThi)
 class DotThiAdmin(admin.ModelAdmin):
-    list_display = ('ma_dot', 'ten_dot', 'thoi_gian_bat_dau', 'trang_thai', 'diem_chuan_ngoai_ngu', 'diem_chuan_tin_hoc')
+    list_display = ['ma_dot', 'ten_dot', 'thoi_gian_bat_dau', 'thoi_gian_ket_thuc', 'hien_thi_trang_thai']
     search_fields = ('ma_dot', 'ten_dot')
     fieldsets = (
         ('Thông tin chung', {
-            'fields': ('ma_dot', 'ten_dot', 'thoi_gian_bat_dau', 'thoi_gian_ket_thuc', 'file_thong_bao', 'trang_thai')
+            # CHÚ Ý: Đã xóa 'trang_thai' ra khỏi danh sách fields này
+            'fields': ('ma_dot', 'ten_dot', 'thoi_gian_bat_dau', 'thoi_gian_ket_thuc', 'file_thong_bao')
         }),
         ('Cấu hình Tiêu chuẩn Ngoại ngữ', {
             'fields': ('diem_chuan_ngoai_ngu', 'diem_liet_ngoai_ngu'),
@@ -60,6 +61,15 @@ class DotThiAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+    
+    @admin.display(description='Trạng thái')
+    def hien_thi_trang_thai(self, obj):
+        tt = obj.trang_thai_hien_tai
+        if tt == 1:
+            return format_html('<span style="color: green; font-weight: bold;">Đang hoạt động</span>')
+        elif tt == 2:
+            return format_html('<span style="color: orange; font-weight: bold;">Sắp diễn ra</span>')
+        return format_html('<span style="color: gray;">Đã kết thúc</span>')
 
 @admin.register(LichSuThi)
 class LichSuThiAdmin(admin.ModelAdmin):

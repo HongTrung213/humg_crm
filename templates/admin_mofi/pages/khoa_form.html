@@ -2,35 +2,119 @@
 {% block title %}{% if instance %}Sửa{% else %}Thêm{% endif %} Khoa | HUMG CRM{% endblock %}
 
 {% block content %}
+<!-- KHỐI THÔNG BÁO TOAST (TỰ ĐỘNG BIẾN MẤT) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
 <div class="container-fluid">
-    <div class="page-title">
-        <h4 class="mb-0">{% if instance %}Cập nhật thông tin{% else %}Thêm Khoa mới{% endif %}</h4>
+    <!-- TIÊU ĐỀ TRANG -->
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-12">
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-university text-muted me-2"></i>
+                    {% if instance %}Cập nhật thông tin Khoa{% else %}Thêm Khoa mới{% endif %}
+                </h4>
+            </div>
+        </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <h5>Biểu mẫu nhập liệu</h5>
+    <div class="row justify-content-center">
+        <div class="col-xl-5 col-lg-7 col-md-9">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <!-- Header trắng thanh lịch -->
+                <div class="card-header bg-white pt-4 px-4 pb-3 border-bottom">
+                    <h5 class="fw-bold mb-1 text-dark">Biểu mẫu chi tiết</h5>
+                    <p class="mb-0 text-muted small">Vui lòng nhập đầy đủ thông tin định danh của Khoa/Viện.</p>
                 </div>
+
                 <form class="form theme-form" method="POST">
                     {% csrf_token %}
-                    <div class="card-body py-3">
+                    <div class="card-body p-4 bg-white">
                         {% for field in form %}
                         <div class="mb-3">
-                            <label class="form-label fw-bold">{{ field.label }} <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-2">
+                                {{ field.label }} <span class="text-danger">*</span>
+                            </label>
+                            <!-- Chèn class custom-input cho field Django -->
                             {{ field }}
-                            {% if field.errors %}<div class="text-danger f-12 mt-1">{{ field.errors }}</div>{% endif %}
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1 fw-bold">
+                                    <i class="fa fa-warning me-1"></i> {{ field.errors.0 }}
+                                </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
+                        
+                        <div class="p-3 mt-4 rounded-3 border bg-light d-flex align-items-start">
+                            <i class="fa fa-info-circle text-primary fs-5 me-3 mt-1"></i>
+                            <div class="small text-dark">
+                                <b>Lưu ý:</b> Tên khoa nên được viết đầy đủ để hiển thị chính xác trên các báo cáo thống kê của hệ thống HUMG CRM.
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-footer text-end">
-                        <a href="{% url 'students:mofi_khoa_list' %}" class="btn btn-light me-2">Quay lại</a>
-                        <button class="btn btn-primary" type="submit"><i class="fa fa-save me-1"></i> Lưu thông tin</button>
+
+                    <div class="card-footer bg-light-subtle border-top py-3 px-4 text-end">
+                        <a href="{% url 'students:mofi_khoa_list' %}" class="btn btn-white fw-bold border shadow-sm rounded-3 me-2">
+                            Hủy bỏ
+                        </a>
+                        <button class="btn btn-dark fw-bold shadow-sm rounded-3 px-4" type="submit">
+                            <i class="fa fa-save me-1"></i> Lưu thông tin
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Chỉnh chữ nhỏ gọn, đen đậm rõ nét */
+    .form-control, .form-select {
+        font-size: 14px !important;
+        color: #333 !important;
+        border: 1px solid #ddd !important;
+        background-color: #fff !important;
+        padding: 10px 15px !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #333 !important;
+        background-color: #fff !important;
+        box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.05) !important;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tự động kích hoạt Toast
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+    });
+</script>
 {% endblock %}

@@ -29,6 +29,7 @@
         {% endif %}
 
         <div class="row">
+            <!-- Cột Trái: Profile -->
             <div class="col-xl-4 col-lg-4 col-md-5 mb-4">
                 <div class="card custom-card shadow-sm border-0 overflow-hidden">
                     <div class="bg-primary" style="height: 100px;"></div>
@@ -96,6 +97,7 @@
                 </div>
             </div>
 
+            <!-- Cột Phải: Tiến độ & Chi tiết -->
             <div class="col-xl-8 col-lg-8 col-md-7">
                 
                 <div class="card shadow-sm border-0 mb-4">
@@ -189,35 +191,36 @@
                 </div>
 
                 <div class="card shadow-sm border-0 mb-4">
-    <div class="card-header bg-white border-bottom pb-3 pt-4">
-        <h5 class="fw-bold mb-0"><i class="feather-book-open text-primary me-2"></i> Lớp bồi dưỡng đang tham gia</h5>
-    </div>
-    <div class="card-body">
-        <div class="row g-3">
-            {% for dk in ds_dang_ky %}
-                {% if dk.trang_thai == 'THANH_CONG' %} <div class="col-md-6">
-                    <div class="border rounded p-3 bg-white hover-lift h-100 shadow-sm border-start border-4 border-primary">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <span class="small badge bg-soft-info text-info border-info">{{ dk.lop_hoc.get_loai_display }}</span>
-                            <span class="badge bg-success"><i class="feather-check-circle"></i> Đã xếp lớp</span>
+                    <div class="card-header bg-white border-bottom pb-3 pt-4">
+                        <h5 class="fw-bold mb-0"><i class="feather-book-open text-primary me-2"></i> Lớp bồi dưỡng đang tham gia</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            {% for dk in ds_dang_ky %}
+                                {% if dk.trang_thai == 'THANH_CONG' %} 
+                                <div class="col-md-6">
+                                    <div class="border rounded p-3 bg-white hover-lift h-100 shadow-sm border-start border-4 border-primary">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <span class="small badge bg-soft-info text-info border-info">{{ dk.lop_hoc.get_loai_display }}</span>
+                                            <span class="badge bg-success"><i class="feather-check-circle"></i> Đã xếp lớp</span>
+                                        </div>
+                                        <h6 class="fw-bold text-dark lh-base mt-2 mb-2">{{ dk.lop_hoc.ten_lop }}</h6>
+                                        <ul class="list-unstyled mb-0 f-13 text-muted">
+                                            <li class="mb-1"><i class="feather-calendar me-2"></i>Khai giảng: <strong class="text-dark">{{ dk.lop_hoc.ngay_khai_giang|date:"d/m/Y" }}</strong></li>
+                                            <li class="mb-1"><i class="feather-clock me-2"></i>Lịch học: <strong class="text-dark">{{ dk.lop_hoc.lich_hoc }}</strong></li>
+                                            <li><i class="feather-map-pin me-2"></i>Phòng: <strong class="text-dark">{{ dk.lop_hoc.phong_hoc }}</strong></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% empty %}
+                            <div class="col-12 text-center py-4 text-muted fst-italic border rounded bg-light">
+                                Bạn chưa có tên trong danh sách lớp bồi dưỡng nào.
+                            </div>
+                            {% endfor %}
                         </div>
-                        <h6 class="fw-bold text-dark lh-base mt-2 mb-2">{{ dk.lop_hoc.ten_lop }}</h6>
-                        <ul class="list-unstyled mb-0 f-13 text-muted">
-                            <li class="mb-1"><i class="feather-calendar me-2"></i>Khai giảng: <strong class="text-dark">{{ dk.lop_hoc.ngay_khai_giang|date:"d/m/Y" }}</strong></li>
-                            <li class="mb-1"><i class="feather-clock me-2"></i>Lịch học: <strong class="text-dark">{{ dk.lop_hoc.lich_hoc }}</strong></li>
-                            <li><i class="feather-map-pin me-2"></i>Phòng: <strong class="text-dark">{{ dk.lop_hoc.phong_hoc }}</strong></li>
-                        </ul>
                     </div>
                 </div>
-                {% endif %}
-            {% empty %}
-            <div class="col-12 text-center py-4 text-muted fst-italic border rounded bg-light">
-                Bạn chưa có tên trong danh sách lớp bồi dưỡng nào.
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
 
                 {% if lich_thi_sap_toi %}
                 <div class="alert alert-warning border-0 border-start border-4 border-warning shadow-sm mb-4" role="alert">
@@ -293,10 +296,12 @@
     </div>
 </section>
 
+<!-- Modal Nộp Chứng Chỉ -->
 <div class="modal fade" id="addCertModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-<form method="POST" action="{% url 'students:quick_add_cert_portal' %}" enctype="multipart/form-data">                  {% csrf_token %}
+            <form method="POST" action="{% url 'students:quick_add_cert_portal' %}" enctype="multipart/form-data">                 
+                {% csrf_token %}
                 <div class="modal-header bg-warning py-3">
                     <h5 class="modal-title fw-bold text-dark"><i class="feather-upload me-2"></i>Nộp chứng chỉ xét chuẩn</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -348,46 +353,47 @@
     </div>
 </div>
 
+<!-- Modal Cập Nhật Thông Tin -->
 <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-<form method="POST" action="{% url 'students:cap_nhat_ho_so' %}" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div class="modal-header bg-primary py-3">
-        <h5 class="modal-title fw-bold text-white"><i class="feather-edit-3 me-2"></i>Cập nhật thông tin</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-    </div>
-    <div class="modal-body p-4 bg-light">
-        <div class="mb-3">
-            <label class="form-label fw-bold text-muted">Họ tên & MSSV</label>
-            <input type="text" class="form-control bg-white text-muted" value="{{ sinh_vien.ho_ten }} - {{ sinh_vien.mssv }}" disabled>
-        </div>
-        <div class="mb-3">
-            <label class="form-label fw-bold text-muted">Khoa</label>
-            <input type="text" class="form-control bg-white text-muted" value="{{ sinh_vien.khoa.ten_khoa|default:'Chưa cập nhật' }}" disabled>
-        </div>
-        
-        <hr class="text-muted">
+            <form method="POST" action="{% url 'students:cap_nhat_ho_so' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header bg-primary py-3">
+                    <h5 class="modal-title fw-bold text-white"><i class="feather-edit-3 me-2"></i>Cập nhật thông tin</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted">Họ tên & MSSV</label>
+                        <input type="text" class="form-control bg-white text-muted" value="{{ sinh_vien.ho_ten }} - {{ sinh_vien.mssv }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted">Khoa</label>
+                        <input type="text" class="form-control bg-white text-muted" value="{{ sinh_vien.khoa.ten_khoa|default:'Chưa cập nhật' }}" disabled>
+                    </div>
+                    
+                    <hr class="text-muted">
 
-        <div class="mb-3">
-            <label class="form-label fw-bold">Ảnh đại diện mới</label>
-            <input type="file" name="anh_dai_dien" class="form-control" accept="image/*">
-            <small class="text-muted">Để trống nếu không muốn thay đổi ảnh.</small>
-        </div>
-        <div class="mb-3">
-            <label class="form-label fw-bold">Số điện thoại liên hệ</label>
-            <input type="text" name="so_dien_thoai" class="form-control" value="{{ sinh_vien.so_dien_thoai|default:'' }}" placeholder="Nhập số điện thoại...">
-        </div>
-        <div class="mb-3">
-            <label class="form-label fw-bold">Email cá nhân</label>
-            <input type="email" name="email_ca_nhan" class="form-control" value="{{ sinh_vien.email_ca_nhan|default:'' }}" placeholder="Nhập email dự phòng...">
-        </div>
-    </div>
-    <div class="modal-footer bg-white border-0">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
-        <button type="submit" class="btn btn-primary fw-bold px-4">Lưu thay đổi</button>
-    </div>
-</form>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ảnh đại diện mới</label>
+                        <input type="file" name="anh_dai_dien" class="form-control" accept="image/*">
+                        <small class="text-muted">Để trống nếu không muốn thay đổi ảnh.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số điện thoại liên hệ</label>
+                        <input type="text" name="so_dien_thoai" class="form-control" value="{{ sinh_vien.so_dien_thoai|default:'' }}" placeholder="Nhập số điện thoại...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email cá nhân</label>
+                        <input type="email" name="email_ca_nhan" class="form-control" value="{{ sinh_vien.email_ca_nhan|default:'' }}" placeholder="Nhập email dự phòng...">
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Lưu thay đổi</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

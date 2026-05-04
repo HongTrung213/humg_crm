@@ -1,10 +1,39 @@
-<footer class="footer">
+
+<footer class="footer bg-white border-top">
   <div class="container-fluid">
     <div class="row">
-      <div class="col-md-12 footer-copyright d-flex flex-wrap align-items-center justify-content-between">
-        <p class="mb-0 f-w-600">Copyright 2026 © Trung tâm Ngoại ngữ - Tin học HUMG</p>
-        <p class="mb-0 f-w-600">Hệ thống quản lý và chăm sóc sinh viên Trường Đại học Mỏ - Địa chất về chuẩn ngoại ngữ và công nghệ thông tin</p>
+      <div class="col-md-12 footer-copyright d-flex flex-wrap align-items-center justify-content-between py-3">
+        <!-- Bản quyền Trung tâm -->
+        <p class="mb-0 fw-bold text-dark small" style="letter-spacing: 0.3px;">
+          Copyright 2026 © <span class="text-primary">Trung tâm Ngoại ngữ - Tin học HUMG</span>
+        </p>
+        
+        <!-- Thông tin hệ thống -->
+        <p class="mb-0 text-muted small fw-medium d-none d-md-block">
+          <i class="fa fa-heart text-danger me-1"></i> 
+          Hệ thống quản lý và chăm sóc sinh viên Trường Đại học Mỏ - Địa chất về chuẩn ngoại ngữ và công nghệ thông tin
+        </p>
       </div>
     </div>
   </div>
 </footer>
+
+<style>
+  /* Loại bỏ các khoảng cách thừa và đảm bảo màu sắc đồng bộ */
+  .footer {
+    padding: 0 !important;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    z-index: 10;
+  }
+  .footer-copyright p {
+    font-size: 13px !important;
+  }
+  /* Hiệu ứng màu sắc cho text primary để trông chuyên nghiệp hơn */
+  .text-primary {
+    color: #333 !important; /* Đưa về màu dark để chuẩn White Edition */
+    text-transform: uppercase;
+    font-size: 12px;
+  }
+</style>

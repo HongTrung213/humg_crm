@@ -3,92 +3,177 @@
 {% block title %}Quản lý Danh mục | HUMG CRM{% endblock %}
 
 {% block content %}
+
+<!-- KHỐI THÔNG BÁO TOAST (TỰ ĐỘNG BIẾN MẤT) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
 <div class="container-fluid">
-    <div class="page-title">
+    <!-- TIÊU ĐỀ TRANG -->
+    <div class="page-title mb-4">
         <div class="row align-items-center">
             <div class="col-6">
-                <h4 class="mb-0">Danh mục CMS</h4>
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-folder-open-o text-muted me-2"></i>Quản lý Danh mục CMS
+                </h4>
             </div>
             <div class="col-6">
-                <ol class="breadcrumb justify-content-end mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'students:admin_mofi_dashboard' %}"><i data-feather="home"></i></a></li>
-                    <li class="breadcrumb-item">Nội dung</li>
-                    <li class="breadcrumb-item active">Danh mục</li>
+                <ol class="breadcrumb justify-content-end mb-0 bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'students:admin_mofi_dashboard' %}"><i class="fa fa-home text-muted"></i></a></li>
+                    <li class="breadcrumb-item small text-muted">Nội dung</li>
+                    <li class="breadcrumb-item active small fw-bold">Danh mục</li>
                 </ol>
             </div>
         </div>
     </div>
 
+    <!-- KHỐI DANH SÁCH -->
     <div class="row">
         <div class="col-sm-12">
-            <div class="card">
-                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                    <h6>Tất cả danh mục</h6>
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-white pt-4 px-4 pb-0 border-bottom-0 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold text-secondary mb-0 text-uppercase small" style="letter-spacing: 0.5px;">Phân loại Bài viết & Tin tức</h6>
+                    
                     <div class="d-flex align-items-center gap-3">
+                        <!-- Thanh tìm kiếm tối giản -->
                         <form method="GET" style="width: 250px;">
-                            <div class="input-group input-group-sm">
-                                <input class="form-control" type="text" name="q" value="{{ query }}" placeholder="Tìm tên danh mục...">
-                                <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i></button>
+                            <div class="input-group shadow-none border rounded-3 overflow-hidden bg-light">
+                                <span class="input-group-text bg-transparent border-0 pe-0 text-muted">
+                                    <i class="fa fa-search small"></i>
+                                </span>
+                                <input class="form-control border-0 bg-transparent text-dark py-2" style="font-size: 13px;" type="text" name="q" value="{{ query }}" placeholder="Tìm tên danh mục...">
+                                <button class="btn btn-transparent border-0 text-primary fw-bold" type="submit" style="font-size: 12px;">Lọc</button>
                             </div>
                         </form>
-                        <a href="{% url 'cms:mofi_category_add' %}" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> Thêm mới</a>
+                        <a href="{% url 'cms:mofi_category_add' %}" class="btn btn-dark fw-bold shadow-sm rounded-3">
+                            <i class="fa fa-plus-circle me-1"></i> Thêm mới
+                        </a>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
+
+                <div class="card-body p-0 mt-3">
+                    <div class="table-responsive custom-scrollbar">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light border-top border-bottom">
                                 <tr>
-                                    <th width="80" class="text-center">ID</th>
-                                    <th>Tên danh mục</th>
-                                    <th>Đường dẫn (Slug)</th>
-                                    <th class="text-center">Hiển thị Menu</th>
-                                    <th class="text-center">Kích hoạt</th>
-                                    <th width="120" class="text-center">Thao tác</th>
+                                    <th width="80" class="text-center py-3 text-muted small fw-bold">ID</th>
+                                    <th class="py-3 text-muted small fw-bold">TÊN DANH MỤC</th>
+                                    <th class="py-3 text-muted small fw-bold">ĐƯỜNG DẪN (SLUG)</th>
+                                    <th class="text-center py-3 text-muted small fw-bold">HIỂN THỊ MENU</th>
+                                    <th class="text-center py-3 text-muted small fw-bold">KÍCH HOẠT</th>
+                                    <th width="120" class="text-center py-3 text-muted small fw-bold">THAO TÁC</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for cat in categories %}
-                                <tr>
-                                    <td class="text-center">{{ cat.id }}</td>
-                                    <td class="fw-bold text-dark">{{ cat.name }}</td>
-                                    <td class="text-muted">{{ cat.slug }}</td>
+                                <tr class="transition-all">
+                                    <td class="text-center text-muted small fw-medium">{{ cat.id }}</td>
+                                    <td class="py-3">
+                                        <div class="fw-bold text-dark fs-6">{{ cat.name }}</div>
+                                    </td>
+                                    <td>
+                                        <code class="text-muted bg-light px-2 py-1 rounded" style="font-size: 12px;">/{{ cat.slug }}</code>
+                                    </td>
                                     <td class="text-center">
                                         {% if cat.show_on_navbar %}
-                                        <span class="badge badge-light-success"><i class="fa fa-check"></i></span>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1"><i class="fa fa-check me-1"></i>Có</span>
                                         {% else %}
-                                        <span class="badge badge-light-danger"><i class="fa fa-times"></i></span>
+                                            <span class="badge bg-secondary-subtle text-muted border border-secondary-subtle rounded-pill px-3 py-1"><i class="fa fa-times me-1"></i>Không</span>
                                         {% endif %}
                                     </td>
                                     <td class="text-center">
                                         {% if cat.is_active %}
-                                        <span class="badge badge-light-primary">Bật</span>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1">Đang bật</span>
                                         {% else %}
-                                        <span class="badge badge-light-warning">Tắt</span>
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1">Đang tắt</span>
                                         {% endif %}
                                     </td>
-<td class="text-center align-middle">
-    <div class="d-flex justify-content-center gap-2">
-        <a href="{% url 'cms:mofi_category_edit' cat.pk %}" class="btn btn-warning btn-sm text-dark text-nowrap" title="Sửa danh mục">
-            <i class="fa fa-pencil"></i> Sửa
-        </a>
-        <a href="{% url 'cms:mofi_category_delete' cat.pk %}" class="btn btn-danger btn-sm text-nowrap" title="Xóa danh mục" onclick="return confirm('Bạn có chắc chắn muốn xóa danh mục này? Toàn bộ bài viết thuộc danh mục này có thể bị xóa theo hoặc mất phân loại.');">
-            <i class="fa fa-trash"></i> Xóa
-        </a>
-    </div>
-</td>
+                                    <td class="text-center align-middle">
+                                        <div class="btn-group shadow-sm rounded-3">
+                                            <a href="{% url 'cms:mofi_category_edit' cat.pk %}" class="btn btn-sm btn-white border px-3" title="Sửa danh mục">
+                                                <i class="fa fa-pencil text-dark"></i>
+                                            </a>
+                                            <a href="{% url 'cms:mofi_category_delete' cat.pk %}" class="btn btn-sm btn-white border px-3" title="Xóa danh mục" onclick="return confirm('Bạn có chắc chắn muốn xóa danh mục này? Toàn bộ bài viết thuộc danh mục này có thể bị xóa theo hoặc mất phân loại.');">
+                                                <i class="fa fa-trash text-danger"></i>
+                                            </a>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="6" class="text-center py-4 text-muted">Chưa có dữ liệu danh mục.</td>
+                                    <td colspan="6" class="text-center py-5">
+                                        <div class="text-muted opacity-50">
+                                            <i class="fa fa-folder-open-o fa-3x mb-3 d-block"></i>
+                                            <p class="mb-0 fw-bold">Chưa có danh mục nào được tạo.</p>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
                 </div>
+                
+                <div class="card-footer bg-white border-0 py-3"></div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* CSS chuẩn White Edition: Chữ đen #333, nền trắng sạch */
+    .table td, .table th {
+        border-color: #f1f1f1 !important;
+        font-size: 14px;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #fbfbfb !important;
+    }
+    .transition-all {
+        transition: all 0.2s ease-in-out;
+    }
+    
+    /* Màu Pastel nhẹ nhàng đồng bộ hệ thống */
+    .bg-success-subtle { background-color: rgba(37, 188, 116, 0.1) !important; }
+    .bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.1) !important; }
+    .bg-primary-subtle { background-color: rgba(13, 110, 253, 0.1) !important; }
+    .bg-warning-subtle { background-color: rgba(255, 193, 7, 0.15) !important; }
+    
+    .border-success-subtle { border-color: rgba(37, 188, 116, 0.3) !important; }
+    .border-secondary-subtle { border-color: rgba(108, 117, 125, 0.3) !important; }
+    .border-primary-subtle { border-color: rgba(13, 110, 253, 0.3) !important; }
+    .border-warning-subtle { border-color: rgba(255, 193, 7, 0.3) !important; }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tự động kích hoạt Toast
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+    });
+</script>
 {% endblock %}

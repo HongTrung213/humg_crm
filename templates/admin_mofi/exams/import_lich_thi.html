@@ -1,54 +1,93 @@
 {% extends 'admin_mofi/base.html' %}
 {% block content %}
 <div class="container-fluid">
-    <div class="page-title">
-        <h4><i class="fa fa-cloud-upload text-warning me-2"></i>Cầu nối Dữ liệu Excel (Lịch thi / Điểm thi)</h4>
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-12">
+                <h4 class="fw-bold mb-0">
+                    <i class="fa fa-cloud-upload text-primary me-2"></i>Cầu nối Dữ liệu Excel (Smart-Mapping)
+                </h4>
+            </div>
+        </div>
     </div>
+    
     <div class="row justify-content-center">
-        <div class="col-md-7">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-0">
-                    <h5 class="fw-bold">Nạp dữ liệu từ hệ thống khác</h5>
-                    <p class="text-muted small">Chuyên viên chỉ cần chọn đúng đợt thi và tải file Excel. Hệ thống tự động khớp cột MSSV, Ca, Phòng và Điểm số.</p>
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white pt-4 px-5 pb-4 border-bottom-0">
+                    <h5 class="fw-bold text-white mb-1">Tiến trình Nạp dữ liệu tự động</h5>
+                    <p class="mb-0 text-white-50 small">Hệ thống sẽ tự động tìm kiếm, nhận diện cột và đồng bộ hàng ngàn bản ghi chỉ trong vài giây.</p>
                 </div>
-                <div class="card-body px-4 pb-5">
+                
+                <div class="card-body px-5 py-4 bg-white">
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
+                        
+                        <!-- BƯỚC 1 -->
                         <div class="mb-4">
-                            <label class="form-label fw-bold">1. Chọn đợt thi đích <span class="text-danger">*</span></label>
-                            <select name="dot_thi" class="form-select border-primary shadow-none" required>
-                                <option value="">--- Chọn đợt thi cần nạp dữ liệu ---</option>
+                            <label class="form-label fw-bold text-dark fs-6 mb-2">
+                                <span class="badge bg-primary rounded-circle me-1">1</span> Chọn đợt thi đích <span class="text-danger">*</span>
+                            </label>
+                            <select name="dot_thi" class="form-select form-select-lg border-light shadow-sm bg-light text-dark" required>
+                                <option value="">--- Click để chọn đợt thi cần nạp dữ liệu ---</option>
                                 {% for dt in dot_this %}
-                                    <option value="{{ dt.id }}">{{ dt.ten_dot }} (Ngày thi: {{ dt.thoi_gian_bat_dau|date:"d/m/Y" }})</option>
+                                    <option value="{{ dt.id }}" class="fw-medium">{{ dt.ten_dot }} (Ngày thi: {{ dt.thoi_gian_bat_dau|date:"d/m/Y" }})</option>
                                 {% endfor %}
                             </select>
                         </div>
                         
+                        <!-- BƯỚC 2 -->
                         <div class="mb-4">
-                            <label class="form-label fw-bold">2. Loại dữ liệu nạp <span class="text-danger">*</span></label>
-                            <div class="d-flex gap-4 border p-3 rounded bg-light">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="file_type" id="typeLich" value="LICH" checked>
-                                    <label class="form-check-label fw-bold" for="typeLich">Nạp Lịch thi/Phòng thi</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="file_type" id="typeDiem" value="DIEM">
-                                    <label class="form-check-label fw-bold text-success" for="typeDiem">Nạp Bảng điểm kết quả</label>
-                                </div>
+                            <label class="form-label fw-bold text-dark fs-6 mb-2">
+                                <span class="badge bg-primary rounded-circle me-1">2</span> Loại dữ liệu nạp <span class="text-danger">*</span>
+                            </label>
+                            <div class="d-flex flex-column flex-sm-row gap-3">
+                                <!-- Option 1 -->
+                                <label class="border rounded-3 p-3 flex-fill cursor-pointer shadow-sm position-relative type-radio-label" for="typeLich" style="cursor: pointer;">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input" type="radio" name="file_type" id="typeLich" value="LICH" checked>
+                                        <span class="form-check-label fw-bold text-dark ms-1 d-block">Lịch thi / Phòng thi</span>
+                                        <small class="text-muted ms-1">Cập nhật SBD, Ca thi, Phòng thi</small>
+                                    </div>
+                                </label>
+                                
+                                <!-- Option 2 -->
+                                <label class="border rounded-3 p-3 flex-fill cursor-pointer shadow-sm position-relative type-radio-label border-success" style="cursor: pointer;" for="typeDiem">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input bg-success border-success" type="radio" name="file_type" id="typeDiem" value="DIEM">
+                                        <span class="form-check-label fw-bold text-success ms-1 d-block">Bảng điểm kết quả</span>
+                                        <small class="text-muted ms-1">Cập nhật Điểm thi và Kết quả</small>
+                                    </div>
+                                </label>
                             </div>
                         </div>
 
+                        <!-- BƯỚC 3 -->
                         <div class="mb-4">
-                            <label class="form-label fw-bold">3. Tải lên file Excel (.xlsx, .xls) <span class="text-danger">*</span></label>
-                            <input type="file" name="excel_file" class="form-control" required>
+                            <label class="form-label fw-bold text-dark fs-6 mb-2">
+                                <span class="badge bg-primary rounded-circle me-1">3</span> Tải lên file Excel <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden">
+                                <span class="input-group-text bg-light border-light">
+                                    <i class="fa fa-file-excel-o text-success fs-4"></i>
+                                </span>
+                                <input type="file" name="excel_file" class="form-control border-light bg-light" accept=".xlsx, .xls" required>
+                            </div>
+                            <small class="text-muted mt-2 d-block"><i class="fa fa-info-circle text-primary me-1"></i> Chấp nhận định dạng: <b>.xlsx, .xls</b> (Tối đa 10MB)</small>
                         </div>
 
-                        <div class="alert alert-info border-info small">
-                            <i class="fa fa-info-circle me-1"></i> <b>Lưu ý:</b> Hệ thống sử dụng công nghệ Smart-Mapping. Bạn không cần đổi tên cột của file gốc. Hệ thống tự nhận diện các cột: <i>Mã sinh viên, MSSV, Ca thi, Phòng thi, Trắc nghiệm, Thực hành...</i>
+                        <!-- LƯU Ý -->
+                        <div class="alert alert-light-info border-info border-start border-4 rounded-3 p-3 mb-4 d-flex align-items-start shadow-sm">
+                            <i class="fa fa-magic text-info fs-3 me-3 mt-1"></i>
+                            <div>
+                                <h6 class="fw-bold text-info mb-1">Công nghệ Smart-Mapping</h6>
+                                <p class="text-dark small mb-0">Bạn <b>không cần</b> phải đổi tên cột của file gốc cho khớp với hệ thống. Trí tuệ nhân tạo sẽ tự động nội suy và tìm kiếm các cột có chứa từ khóa: <i>Mã sinh viên, MSSV, Ca, Phòng, Trắc nghiệm, Thực hành, Tổng điểm...</i></p>
+                            </div>
                         </div>
 
-                        <button type="submit" class="btn btn-warning w-100 fw-bold py-2 mt-3 shadow-sm">
-                            <i class="fa fa-refresh me-2"></i> Bắt đầu đồng bộ dữ liệu
+                        <!-- NÚT SUBMIT -->
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow">
+                            <i class="fa fa-rocket me-2"></i> BẮT ĐẦU ĐỒNG BỘ DỮ LIỆU
                         </button>
                     </form>
                 </div>
@@ -56,4 +95,15 @@
         </div>
     </div>
 </div>
+
+<!-- Thêm một xíu CSS làm nổi bật khối Radio Button khi chọn -->
+<style>
+    .type-radio-label { transition: all 0.2s ease; border: 2px solid transparent !important; }
+    .type-radio-label:hover { background-color: #f8f9fa; transform: translateY(-2px); }
+    input[type="radio"]:checked + span { color: #0d6efd !important; }
+    input#typeDiem:checked + span { color: #198754 !important; }
+    /* Đổi màu viền khi label được check (Dùng cú pháp has của CSS mới) */
+    .type-radio-label:has(input[type="radio"]:checked) { border-color: #0d6efd !important; background-color: #f0f8ff; }
+    .type-radio-label.border-success:has(input[type="radio"]:checked) { border-color: #198754 !important; background-color: #f0fff4; }
+</style>
 {% endblock %}

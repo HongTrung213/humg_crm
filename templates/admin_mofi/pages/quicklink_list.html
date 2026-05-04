@@ -1,44 +1,148 @@
 {% extends 'admin_mofi/base.html' %}
 {% block content %}
-<div class="container-fluid">
-  <div class="page-title">
-    <div class="row">
-      <div class="col-6"><h4>Danh sách Liên kết nhanh</h4></div>
-      <div class="col-6 text-end">
-        <a href="{% url 'cms:mofi_quicklink_add' %}" class="btn btn-success"><i class="fa fa-plus"></i> Thêm liên kết</a>
-      </div>
+
+<!-- KHỐI THÔNG BÁO TOAST (MÀU DARK - TỰ ĐỘNG BIẾN MẤT) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
     </div>
-  </div>
-  <div class="card">
-    <div class="table-responsive p-3">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>Banner</th>
-            <th>Tên liên kết</th>
-            <th>Thứ tự</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for q in quicklinks %}
-          <tr>
-            <td><img src="{{ q.image.url }}" style="height: 40px; border-radius: 4px;"></td>
-            <td>{{ q.title }}</td>
-            <td>{{ q.order }}</td>
-            <td>
-              {% if q.is_active %}<span class="badge badge-success">Bật</span>
-              {% else %}<span class="badge badge-danger">Tắt</span>{% endif %}
-            </td>
-            <td>
-              <a href="{% url 'cms:mofi_quicklink_edit' q.pk %}" class="btn btn-warning btn-xs"><i class="fa fa-edit"></i></a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+    {% endfor %}
 </div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
+<div class="container-fluid">
+    <!-- TIÊU ĐỀ TRANG -->
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-external-link text-muted me-2"></i>Danh sách Liên kết nhanh
+                </h4>
+            </div>
+            <div class="col-6 text-end">
+                <a href="{% url 'cms:mofi_quicklink_add' %}" class="btn btn-dark fw-bold shadow-sm rounded-3">
+                    <i class="fa fa-plus-circle me-1"></i> Thêm liên kết
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHỐI DANH SÁCH -->
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-white pt-4 px-4 pb-0 border-bottom-0">
+                    <h6 class="fw-bold text-secondary mb-0 text-uppercase small" style="letter-spacing: 0.5px;">Quản lý lối tắt trang chủ</h6>
+                </div>
+
+                <div class="card-body p-0 mt-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light border-top border-bottom">
+                                <tr>
+                                    <th width="120" class="text-center py-3 text-muted small fw-bold">BANNER</th>
+                                    <th class="py-3 text-muted small fw-bold">TÊN LIÊN KẾT</th>
+                                    <th width="100" class="text-center py-3 text-muted small fw-bold">THỨ TỰ</th>
+                                    <th width="150" class="text-center py-3 text-muted small fw-bold">TRẠNG THÁI</th>
+                                    <th width="120" class="text-center py-3 text-muted small fw-bold">THAO TÁC</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for q in quicklinks %}
+                                <tr class="transition-all">
+                                    <td class="text-center py-2">
+                                        <div class="bg-light rounded p-1 d-inline-block shadow-xs">
+                                            <img src="{{ q.image.url }}" class="rounded" style="height: 40px; width: 60px; object-fit: contain;">
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="fw-bold text-dark fs-6">{{ q.title }}</div>
+                                        <small class="text-muted"><i class="fa fa-link me-1"></i>{{ q.url|truncatechars:50 }}</small>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-white border text-dark px-3 py-1 fw-medium">{{ q.order }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if q.is_active %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                                <i class="fa fa-toggle-on me-1"></i>Đang bật
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary-subtle text-muted border border-secondary-subtle rounded-pill px-3 py-1">
+                                                <i class="fa fa-toggle-off me-1"></i>Đang tắt
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="{% url 'cms:mofi_quicklink_edit' q.pk %}" class="btn btn-sm btn-white border shadow-sm fw-bold px-3 py-1 text-dark" style="font-size: 12px;">
+                                            <i class="fa fa-pencil me-1"></i> Sửa
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="text-muted opacity-50">
+                                            <i class="fa fa-link fa-3x mb-3 d-block"></i>
+                                            <p class="mb-0 fw-bold">Chưa có liên kết nhanh nào được tạo.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0 py-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Chỉnh chữ đen đậm chuẩn White Edition */
+    .table td, .table th {
+        border-color: #f1f1f1 !important;
+        font-size: 14px;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #fbfbfb !important;
+    }
+    .transition-all {
+        transition: all 0.2s ease-in-out;
+    }
+    .shadow-xs {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    /* Màu sắc Pastel nhẹ nhàng */
+    .bg-success-subtle { background-color: rgba(37, 188, 116, 0.1) !important; }
+    .bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.1) !important; }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tự động kích hoạt và xóa Toast
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+    });
+</script>
 {% endblock %}

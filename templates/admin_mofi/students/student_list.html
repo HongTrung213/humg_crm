@@ -5,81 +5,133 @@
 {% block page_title %}Quản lý Hồ sơ Sinh Viên{% endblock %}
 
 {% block content %}
+
+<!-- KHỐI THÔNG BÁO TOAST (TỰ ĐỘNG BIẾN MẤT) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
 <div class="container-fluid">
-  <div class="card shadow-sm border-0">
-    <div class="card-header pb-0 d-flex justify-content-between align-items-center bg-white border-bottom-0">
-      <div>
-        <h4 class="mb-0"><i class="fa fa-users text-primary me-2"></i> Danh sách Sinh viên</h4>
-        <p class="text-muted f-12 mt-1">Quản lý hồ sơ và theo dõi tiến độ chuẩn đầu ra</p>
+  
+  <!-- TIÊU ĐỀ TRANG & NÚT THAO TÁC -->
+  <div class="page-title mb-4">
+      <div class="row align-items-center">
+          <div class="col-6">
+              <h4 class="fw-bold mb-0 text-dark">
+                  <i class="fa fa-users text-muted me-2"></i>Hồ sơ Sinh viên
+              </h4>
+          </div>
+          <div class="col-6 text-end">
+              <div class="btn-group shadow-sm rounded-3">
+                <a href="{% url 'students:import_sinh_vien' %}" class="btn btn-white fw-bold border-end px-3">
+                  <i class="fa fa-file-excel-o text-success me-1"></i> Nhập từ Excel
+                </a>
+                <a href="{% url 'students:student_add' %}" class="btn btn-dark fw-bold px-3">
+                  <i class="fa fa-plus me-1"></i> Thêm thủ công
+                </a>
+              </div>
+          </div>
       </div>
-      <div class="btn-group">
-        <a href="{% url 'students:import_sinh_vien' %}" class="btn btn-outline-success"><i class="fa fa-file-excel-o"></i> Nhập từ Excel</a>
-        <a href="{% url 'students:student_add' %}" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm thủ công</a>
-      </div>
+  </div>
+
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+    <!-- Header trắng sang trọng -->
+    <div class="card-header bg-white pt-4 px-4 pb-0 border-bottom-0">
+      <h6 class="fw-bold text-secondary mb-0 text-uppercase small" style="letter-spacing: 0.5px;">Quản lý thông tin & Chuẩn đầu ra</h6>
     </div>
     
-    <div class="card-body">
-      {% if messages %}
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-            {{ message }}
-            <button class="btn-close" data-bs-dismiss="alert"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-
-      <div class="table-responsive">
-        <table class="display table table-striped table-hover align-middle" id="basic-1">
-          <thead class="table-primary">
+    <div class="card-body p-0 mt-3">
+      <div class="table-responsive px-4 pb-4">
+        <table class="display table table-hover align-middle custom-datatable w-100" id="basic-1">
+          <thead class="bg-light border-top border-bottom">
             <tr>
-              <th>Sinh viên</th>
-              <th>Lớp</th>
-              <th>Liên hệ</th>
-              <th class="text-center">CĐR Ngoại Ngữ</th>
-              <th class="text-center">CĐR Tin Học</th>
-              <th class="text-center">Hành động</th>
+              <th class="py-3 text-muted small fw-bold">SINH VIÊN</th>
+              <th class="py-3 text-muted small fw-bold text-center">LỚP</th>
+              <th class="py-3 text-muted small fw-bold">LIÊN HỆ</th>
+              <th class="text-center py-3 text-muted small fw-bold">NGOẠI NGỮ</th>
+              <th class="text-center py-3 text-muted small fw-bold">TIN HỌC</th>
+              <th class="text-center py-3 text-muted small fw-bold">THAO TÁC</th>
             </tr>
           </thead>
           <tbody>
             {% for sv in sinhviens %}
-            <tr>
-              <td>
+            <tr class="transition-all">
+              <td class="py-3">
                 <div class="d-flex align-items-center">
-                  <img class="img-40 rounded-circle me-3 shadow-sm" src="{% if sv.anh_dai_dien %}{{ sv.anh_dai_dien.url }}{% else %}{% static 'mofi/images/user/7.jpg' %}{% endif %}" alt="Avatar" style="object-fit: cover;">
+                  <img class="rounded-circle me-3 border border-2 shadow-xs bg-white p-1" src="{% if sv.anh_dai_dien %}{{ sv.anh_dai_dien.url }}{% else %}{% static 'mofi/images/user/7.jpg' %}{% endif %}" alt="Avatar" style="width: 45px; height: 45px; object-fit: cover;">
                   <div>
-                    <h6 class="mb-0 fw-bold">{{ sv.ho_ten }}</h6>
-                    <span class="text-primary f-12 fw-bold">{{ sv.mssv }}</span>
+                    <h6 class="mb-1 fw-bold text-dark fs-6 lh-sm">{{ sv.ho_ten }}</h6>
+                    <span class="text-muted fw-medium f-12"><i class="fa fa-id-card-o me-1 opacity-50"></i>{{ sv.mssv }}</span>
                   </div>
                 </div>
               </td>
               
-              <td><span class="badge badge-light-secondary text-dark">{{ sv.lop|default:"Chưa cập nhật" }}</span></td>
-              
-              <td class="f-12 text-muted">
-                {{ sv.email_truong|default:"-" }}
+              <td class="text-center">
+                <span class="badge bg-light border text-dark px-3 py-1 fw-medium shadow-none">{{ sv.lop|default:"-" }}</span>
               </td>
               
+              <td class="text-muted f-13">
+                <i class="fa fa-envelope-o me-1 opacity-50"></i> {{ sv.email_truong|default:"Chưa có Email" }}
+              </td>
+              
+              <!-- Check Chuẩn Đầu Ra (Đã tinh chỉnh icon) -->
               <td class="text-center">
                 {% if sv.check_dat_ngoai_ngu %}
-                  <i class="fa fa-check-circle text-success fs-5" title="Đã đạt chuẩn Ngoại Ngữ"></i>
+                  <div class="bg-success-subtle text-success d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 28px; height: 28px;" title="Đã đạt">
+                    <i class="fa fa-check"></i>
+                  </div>
                 {% else %}
-                  <i class="fa fa-times-circle text-danger fs-5 opacity-50" title="Chưa đạt"></i>
+                  <div class="bg-light text-muted d-inline-flex align-items-center justify-content-center rounded-circle opacity-50" style="width: 28px; height: 28px;" title="Chưa đạt">
+                    <i class="fa fa-minus"></i>
+                  </div>
                 {% endif %}
               </td>
 
               <td class="text-center">
                 {% if sv.check_dat_tin_hoc %}
-                  <i class="fa fa-check-circle text-success fs-5" title="Đã đạt chuẩn Tin Học"></i>
+                  <div class="bg-info-subtle text-info d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 28px; height: 28px;" title="Đã đạt">
+                    <i class="fa fa-check"></i>
+                  </div>
                 {% else %}
-                  <i class="fa fa-times-circle text-danger fs-5 opacity-50" title="Chưa đạt"></i>
+                  <div class="bg-light text-muted d-inline-flex align-items-center justify-content-center rounded-circle opacity-50" style="width: 28px; height: 28px;" title="Chưa đạt">
+                    <i class="fa fa-minus"></i>
+                  </div>
                 {% endif %}
               </td>
               
+              <!-- Thao tác: Gọn gàng, tinh tế -->
               <td class="text-center">
-                <div class="btn-group">
-                  <a href="{% url 'students:student_detail' sv.id %}" class="btn btn-outline-info btn-sm" title="Xem hồ sơ chi tiết"><i class="fa fa-eye"></i></a>
-                  <a href="{% url 'students:student_edit' sv.id %}" class="btn btn-outline-warning btn-sm" title="Cập nhật"><i class="fa fa-pencil"></i></a>
-                  <a href="{% url 'students:student_delete' sv.id %}" class="btn btn-outline-danger btn-sm" title="Xóa" onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ này? Toàn bộ chứng chỉ và điểm thi liên quan sẽ bị xóa theo.');"><i class="fa fa-trash"></i></a>
+                <div class="btn-group shadow-sm rounded-3">
+                  <a href="{% url 'students:student_detail' sv.id %}" class="btn btn-sm btn-white border px-3" title="Xem hồ sơ">
+                    <i class="fa fa-eye text-info"></i>
+                  </a>
+                  <a href="{% url 'students:student_edit' sv.id %}" class="btn btn-sm btn-white border px-3" title="Chỉnh sửa">
+                    <i class="fa fa-pencil text-dark"></i>
+                  </a>
+                  <a href="{% url 'students:student_delete' sv.id %}" class="btn btn-sm btn-white border px-3" title="Xóa" onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn hồ sơ này? Toàn bộ chứng chỉ và điểm thi liên quan sẽ bị xóa theo.');">
+                    <i class="fa fa-trash text-danger"></i>
+                  </a>
+                </div>
               </td>
             </tr>
             {% endfor %}
@@ -93,14 +145,50 @@
 
 {% block extra_css %}
 <style>
-  /* Tối ưu hiển thị nút bấm trong bảng */
-  table.dataTable tbody td { vertical-align: middle; }
-  .btn-group .btn { padding: 0.25rem 0.5rem; }
-  .opacity-50 { opacity: 0.5; }
+  /* CSS chuẩn White Edition: Chữ đen #333, nền trắng sạch */
+  .custom-datatable th {
+      border-color: #f1f1f1 !important;
+  }
+  .custom-datatable td {
+      border-color: #f1f1f1 !important;
+      vertical-align: middle;
+  }
+  .table-hover tbody tr:hover {
+      background-color: #fbfbfb !important;
+  }
+  .transition-all {
+      transition: all 0.2s ease-in-out;
+  }
+  .shadow-xs { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+  
+  /* Màu Pastel nhẹ nhàng đồng bộ hệ thống */
+  .bg-success-subtle { background-color: rgba(37, 188, 116, 0.15) !important; }
+  .bg-info-subtle { background-color: rgba(13, 202, 240, 0.15) !important; }
+  
+  /* Custom DataTables elements (Thanh search, phân trang) */
+  .dataTables_wrapper .dataTables_filter input {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 5px 10px;
+      outline: none;
+  }
+  .dataTables_wrapper .dataTables_filter input:focus {
+      border-color: #333;
+  }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'mofi/js/datatable/datatables/jquery.dataTables.min.js' %}"></script>
 <script src="{% static 'mofi/js/datatable/datatables/datatable.custom.js' %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tự động kích hoạt Toast
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+    });
+</script>
 {% endblock %}

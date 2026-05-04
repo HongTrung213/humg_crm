@@ -4,79 +4,129 @@
 {% block title %}Danh sách Bài viết | HUMG CRM{% endblock %}
 
 {% block content %}
+
+<!-- KHỐI THÔNG BÁO TOAST (TỰ ĐỘNG BIẾN MẤT) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
 <div class="container-fluid">
-    <div class="page-title">
+    <!-- TIÊU ĐỀ TRANG -->
+    <div class="page-title mb-4">
         <div class="row align-items-center">
             <div class="col-6">
-                <h4 class="mb-0">Quản lý Bài viết</h4>
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-newspaper-o text-muted me-2"></i>Quản lý Bài viết CMS
+                </h4>
             </div>
             <div class="col-6">
-                <ol class="breadcrumb justify-content-end mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'students:admin_mofi_dashboard' %}"><i data-feather="home"></i></a></li>
-                    <li class="breadcrumb-item">Nội dung</li>
-                    <li class="breadcrumb-item active">Bài viết</li>
+                <ol class="breadcrumb justify-content-end mb-0 bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'students:admin_mofi_dashboard' %}"><i class="fa fa-home text-muted"></i></a></li>
+                    <li class="breadcrumb-item small text-muted">Nội dung</li>
+                    <li class="breadcrumb-item active small fw-bold">Bài viết</li>
                 </ol>
             </div>
         </div>
     </div>
 
+    <!-- KHỐI DANH SÁCH -->
     <div class="row">
         <div class="col-sm-12">
-            <div class="card">
-                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                    <h6>Tất cả bài viết & thông báo</h6>
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-white pt-4 px-4 pb-0 border-bottom-0 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold text-secondary mb-0 text-uppercase small" style="letter-spacing: 0.5px;">Tất cả bài viết & thông báo</h6>
+                    
                     <div class="d-flex align-items-center gap-3">
-                        <form method="GET" style="width: 250px;">
-                            <div class="input-group input-group-sm">
-                                <input class="form-control" type="text" name="q" value="{{ query }}" placeholder="Tìm tiêu đề...">
-                                <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i></button>
+                        <!-- Thanh tìm kiếm tối giản -->
+                        <form method="GET" style="width: 280px;">
+                            <div class="input-group shadow-none border rounded-3 overflow-hidden bg-light">
+                                <span class="input-group-text bg-transparent border-0 pe-0 text-muted">
+                                    <i class="fa fa-search small"></i>
+                                </span>
+                                <input class="form-control border-0 bg-transparent text-dark py-2" style="font-size: 13px;" type="text" name="q" value="{{ query }}" placeholder="Tìm theo tiêu đề...">
+                                <button class="btn btn-transparent border-0 text-primary fw-bold" type="submit" style="font-size: 12px;">Lọc</button>
                             </div>
                         </form>
-                        <a href="{% url 'cms:mofi_post_add' %}" class="btn btn-primary btn-sm"><i class="fa fa-plus me-2"></i>Viết bài mới</a>
+                        <a href="{% url 'cms:mofi_post_add' %}" class="btn btn-dark fw-bold shadow-sm rounded-3">
+                            <i class="fa fa-plus-circle me-1"></i> Viết bài mới
+                        </a>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive custom-scrollbar">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
+
+                <div class="card-body p-0 mt-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light border-top border-bottom">
                                 <tr>
-                                    <th width="50">ID</th>
-                                    <th width="100">Hình ảnh</th>
-                                    <th>Tiêu đề bài viết</th>
-                                    <th>Danh mục</th>
-                                    <th class="text-center">Trạng thái</th>
-                                    <th>Ngày đăng</th>
-                                    <th class="text-center">Thao tác</th>
+                                    <th width="60" class="text-center py-3 text-muted small fw-bold">ID</th>
+                                    <th width="100" class="py-3 text-muted small fw-bold">HÌNH ẢNH</th>
+                                    <th class="py-3 text-muted small fw-bold">TIÊU ĐỀ & ĐƯỜNG DẪN</th>
+                                    <th class="py-3 text-muted small fw-bold">DANH MỤC</th>
+                                    <th class="text-center py-3 text-muted small fw-bold">TRẠNG THÁI</th>
+                                    <th class="py-3 text-muted small fw-bold">NGÀY ĐĂNG</th>
+                                    <th width="120" class="text-center py-3 text-muted small fw-bold">THAO TÁC</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for post in posts %}
-                                <tr>
-                                    <td>{{ post.id }}</td>
-                                    <td>
-                                        <img src="{% if post.image %}{{ post.image.url }}{% else %}{% static 'mofi/images/blog/blog-5.jpg' %}{% endif %}" 
-                                             class="rounded shadow-sm" style="width: 70px; height: 50px; object-fit: cover;">
+                                <tr class="transition-all">
+                                    <td class="text-center text-muted small fw-medium">{{ post.id }}</td>
+                                    <td class="py-2">
+                                        <div class="bg-light rounded p-1 d-inline-block">
+                                            <img src="{% if post.image %}{{ post.image.url }}{% else %}{% static 'mofi/images/blog/blog-5.jpg' %}{% endif %}" 
+                                                 class="rounded shadow-xs" style="width: 70px; height: 45px; object-fit: cover;">
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="fw-bold text-dark fs-6 lh-sm mb-1">{{ post.title|truncatechars:70 }}</div>
+                                        <code class="text-muted" style="font-size: 11px;">Slug: {{ post.slug }}</code>
                                     </td>
                                     <td>
-                                        <div class="fw-bold text-dark">{{ post.title|truncatechars:60 }}</div>
-                                        <small class="text-muted">Slug: {{ post.slug }}</small>
+                                        <span class="badge bg-white border text-primary rounded-pill px-3 py-2 fw-bold" style="font-size: 11px;">
+                                            <i class="fa fa-tag me-1 text-muted"></i> {{ post.category.name }}
+                                        </span>
                                     </td>
-                                    <td><span class="badge badge-light-primary">{{ post.category.name }}</span></td>
                                     <td class="text-center">
                                         {% if post.is_published %}
-                                            <span class="badge badge-success">Công khai</span>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">
+                                                <i class="fa fa-check-circle me-1"></i>Công khai
+                                            </span>
                                         {% else %}
-                                            <span class="badge badge-warning">Bản nháp</span>
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill px-3 py-1">
+                                                <i class="fa fa-pencil-square me-1"></i>Bản nháp
+                                            </span>
                                         {% endif %}
                                     </td>
-                                    <td class="f-light text-muted">{{ post.created_at|date:"d/m/Y" }}</td>
+                                    <td class="text-muted small">
+                                        <i class="fa fa-calendar-o me-1"></i> {{ post.created_at|date:"d/m/Y" }}
+                                    </td>
                                     <td class="text-center">
-                                        <div class="btn-group">
-                                            <a href="{{ post.get_absolute_url }}" target="_blank" class="btn btn-xs btn-outline-info me-1" title="Xem trên web">
-                                                <i class="fa fa-eye"></i>
+                                        <div class="btn-group shadow-sm rounded-3">
+                                            <a href="{{ post.get_absolute_url }}" target="_blank" class="btn btn-sm btn-white border-end px-3" title="Xem trên web">
+                                                <i class="fa fa-eye text-info"></i>
                                             </a>
-                                            <a href="{% url 'cms:mofi_post_edit' post.id %}" class="btn btn-xs btn-warning" title="Chỉnh sửa">
-                                                <i class="fa fa-pencil"></i>
+                                            <a href="{% url 'cms:mofi_post_edit' post.id %}" class="btn btn-sm btn-white px-3" title="Chỉnh sửa">
+                                                <i class="fa fa-pencil text-dark"></i>
                                             </a>
                                         </div>
                                     </td>
@@ -84,7 +134,10 @@
                                 {% empty %}
                                 <tr>
                                     <td colspan="7" class="text-center py-5">
-                                        <p class="text-muted mb-0">Chưa có bài viết nào phù hợp.</p>
+                                        <div class="text-muted opacity-50">
+                                            <i class="fa fa-newspaper-o fa-3x mb-3 d-block"></i>
+                                            <p class="mb-0 fw-bold">Kho bài viết hiện đang trống.</p>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -92,8 +145,40 @@
                         </table>
                     </div>
                 </div>
+                
+                <div class="card-footer bg-white border-0 py-3"></div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Chỉnh chữ đen đậm chuẩn White Edition */
+    .table td, .table th {
+        border-color: #f1f1f1 !important;
+        font-size: 14px;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #fbfbfb !important;
+    }
+    .transition-all {
+        transition: all 0.2s ease-in-out;
+    }
+    .shadow-xs {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .bg-success-subtle { background-color: rgba(37, 188, 116, 0.1) !important; }
+    .bg-warning-subtle { background-color: rgba(255, 193, 7, 0.1) !important; }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tự động kích hoạt và xóa Toast
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+    });
+</script>
 {% endblock %}

@@ -3,34 +3,89 @@
 
 {% block content %}
 <div class="container-fluid">
-    <div class="page-title">
-        <h4 class="mb-0">{% if instance %}Cập nhật Chứng chỉ{% else %}Thêm Chứng chỉ mới{% endif %}</h4>
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="fw-bold mb-0">
+                    <i class="fa fa-certificate text-primary me-2"></i>
+                    {% if instance %}Cập nhật Danh mục: <span class="text-secondary">{{ instance.ten_chung_chi }}</span>{% else %}Thêm Chứng chỉ mới{% endif %}
+                </h4>
+            </div>
+            <div class="col-6">
+                <ol class="breadcrumb justify-content-end mb-0 bg-transparent">
+                    <li class="breadcrumb-item"><a href="{% url 'students:admin_mofi_dashboard' %}"><i data-feather="home"></i></a></li>
+                    <li class="breadcrumb-item text-muted">Hệ thống Master Data</li>
+                    <li class="breadcrumb-item active fw-bold">Chứng chỉ</li>
+                </ol>
+            </div>
+        </div>
     </div>
 
     <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <h5>Biểu mẫu thông tin</h5>
+        <!-- Chỉnh lại grid để Form nhìn cân đối hơn trên các màn hình lớn -->
+        <div class="col-lg-6 offset-lg-3 col-md-8 offset-md-2">
+            <div class="card shadow border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white pt-4 px-5 pb-3 border-bottom-0">
+                    <h5 class="fw-bold text-white mb-0"><i class="fa fa-info-circle me-2"></i> Biểu mẫu thông tin danh mục</h5>
                 </div>
+                
                 <form class="form theme-form" method="POST">
                     {% csrf_token %}
-                    <div class="card-body py-3">
-                        {% for field in form %}
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">{{ field.label }} <span class="text-danger">*</span></label>
-                            {{ field }}
-                            {% if field.errors %}<div class="text-danger f-12 mt-1">{{ field.errors }}</div>{% endif %}
+                    <div class="card-body px-5 py-4">
+                        <div class="row g-4">
+                            {% for field in form %}
+                            <div class="col-12">
+                                <label class="form-label fw-bold text-dark">
+                                    {{ field.label }} 
+                                    <!-- Django tự động check field này có required trong models.py không để hiện sao đỏ -->
+                                    {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                </label>
+                                
+                                <div class="shadow-sm rounded">
+                                    {{ field }}
+                                </div>
+                                
+                                {% if field.help_text %}
+                                    <small class="text-muted mt-2 d-block"><i class="fa fa-info-circle text-primary me-1"></i>{{ field.help_text }}</small>
+                                {% endif %}
+                                
+                                {% if field.errors %}
+                                    <div class="text-danger fw-bold f-12 mt-2"><i class="fa fa-exclamation-circle me-1"></i>{{ field.errors|striptags }}</div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
-                    <div class="card-footer text-end">
-                        <a href="{% url 'students:mofi_chungchi_list' %}" class="btn btn-light me-2">Quay lại</a>
-                        <button class="btn btn-primary" type="submit"><i class="fa fa-save me-1"></i> Lưu thông tin</button>
+                    
+                    <div class="card-footer text-end bg-white border-top px-5 py-3">
+                        <a href="{% url 'students:mofi_chungchi_list' %}" class="btn btn-light border fw-bold me-2 shadow-sm">
+                            <i class="fa fa-arrow-left me-1"></i> Quay lại
+                        </a>
+                        <button class="btn btn-primary fw-bold shadow-sm px-4" type="submit">
+                            <i class="fa fa-save me-2"></i> {% if instance %}Lưu Thay Đổi{% else %}Tạo Chứng Chỉ{% endif %}
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<!-- ĐOẠN JAVASCRIPT MA THUẬT: TỰ ĐỘNG THÊM CLASS BOOTSTRAP CHO VÒNG LẶP DJANGO -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tự động mặc áo form-control cho input và select
+        const inputs = document.querySelectorAll('input[type="text"], input[type="number"], input[type="email"], textarea, select');
+        inputs.forEach(input => {
+            if (!input.classList.contains('form-check-input')) {
+                // Nếu là thẻ select thì dùng form-select, ngược lại dùng form-control
+                if(input.tagName.toLowerCase() === 'select') {
+                    input.classList.add('form-select', 'border-light', 'bg-light');
+                } else {
+                    input.classList.add('form-control', 'border-light', 'bg-light');
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}

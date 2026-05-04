@@ -1,54 +1,153 @@
-{% extends 'base.html' %}
+{% extends 'admin_mofi/base.html' %}
 {% load static %}
 
+{% block title %}Nhập dữ liệu Sinh viên | HUMG CRM{% endblock %}
+
 {% block content %}
-<div class="breadcrumb-bar">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12 col-12">
-                <div class="breadcrumb-list">
-                    <nav aria-label="breadcrumb" class="page-breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
-                            <li class="breadcrumb-item">Quản lý Sinh viên</li>
-                            <li class="breadcrumb-item active" aria-current="page">Nhập dữ liệu Excel</li>
-                        </ol>
-                    </nav>
+
+<!-- KHỐI THÔNG BÁO TOAST (TỰ ĐỘNG BIẾN MẤT) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
+<div class="container-fluid">
+    <!-- TIÊU ĐỀ TRANG -->
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-file-excel-o text-muted me-2"></i>Nhập danh sách Sinh viên
+                </h4>
+            </div>
+            <div class="col-6 text-end">
+                <button type="button" onclick="history.back()" class="btn btn-white fw-bold border shadow-sm rounded-3 px-3">
+                    <i class="fa fa-arrow-left me-2"></i>Quay lại
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHỐI FORM IMPORT -->
+    <div class="row justify-content-center">
+        <div class="col-xl-6 col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <!-- Header trắng sang trọng -->
+                <div class="card-header bg-white pt-4 px-4 pb-3 border-bottom">
+                    <h5 class="fw-bold mb-1 text-dark">Đồng bộ từ hệ thống Đào tạo</h5>
+                    <p class="mb-0 text-muted small">Tải lên danh sách sinh viên chuẩn bằng file Excel (.xlsx).</p>
+                </div>
+                
+                <div class="card-body p-4 bg-white">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Chọn File -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-2">1. Chọn file Excel nguồn</label>
+                            <input type="file" name="excel_file" class="form-control custom-input" accept=".xlsx, .xls" required>
+                        </div>
+
+                        <!-- Ghi chú nghiệp vụ -->
+                        <div class="p-3 mb-4 rounded-3 border bg-light d-flex align-items-start shadow-none">
+                            <i class="fa fa-info-circle text-primary fs-5 me-3 mt-1"></i>
+                            <div class="small text-dark">
+                                <b>Yêu cầu định dạng:</b> Hệ thống đọc các cột cơ bản như: <b>Mã SV, Họ tên, Ngày sinh, Lớp, Mã Khoa</b>. <br>
+                                Tài khoản mới sẽ được tự động cấp với mật khẩu mặc định là: <b>cfihumg</b>
+                            </div>
+                        </div>
+
+                        <!-- Nút Submit có Loading -->
+                        <button type="submit" class="btn btn-dark btn-lg w-100 fw-bold shadow-sm py-3 btn-submit-import">
+                            <i class="fa fa-cloud-upload me-2"></i> BẮT ĐẦU XỬ LÝ DỮ LIỆU
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<section class="page-content course-sec">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card">
-                    <div class="card-body">
-                        <h4 class="card-title">Tải lên danh sách Sinh viên (.xlsx)</h4>
-                        
-                        {% if messages %}
-                            {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
+<style>
+    /* CSS tùy chỉnh chuẩn White Edition */
+    .custom-input {
+        font-size: 14px !important;
+        color: #333 !important;
+        border: 1px solid #ddd !important;
+        background-color: #fff !important;
+        padding: 10px 15px !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease;
+    }
+    .custom-input:focus {
+        border-color: #222 !important;
+        box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.05) !important;
+    }
+    /* Chỉnh nút chọn file đẹp hơn */
+    input[type="file"]::file-selector-button {
+        background-color: #f8f9fa;
+        color: #333;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0.3rem 0.8rem;
+        margin-right: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+    }
+</style>
 
-                        <form method="POST" enctype="multipart/form-data" class="mt-4">
-                            {% csrf_token %}
-                            <div class="form-group mb-3">
-                                <label>Chọn file Excel từ phòng Đào tạo:</label>
-                                <input type="file" name="excel_file" class="form-control" accept=".xlsx, .xls" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">Xử lý dữ liệu</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Kích hoạt Toast
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+
+        // Xử lý chống click 2 lần và hiển thị Loading
+        const uploadForms = document.querySelectorAll("form");
+        uploadForms.forEach(form => {
+            form.addEventListener("submit", function() {
+                const btn = this.querySelector('.btn-submit-import');
+                if(btn) {
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang đồng bộ danh sách...';
+                    btn.classList.add("disabled");
+                    btn.style.pointerEvents = "none";
+                }
+            });
+        });
+
+        // Validate đuôi file ngay tại trình duyệt
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.addEventListener('change', function(e) {
+                const fileName = this.value.toLowerCase();
+                if(fileName && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+                    alert('❌ LỖI ĐỊNH DẠNG: Chỉ chấp nhận định dạng Excel (.xlsx, .xls)!');
+                    this.value = '';
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

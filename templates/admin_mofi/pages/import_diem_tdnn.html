@@ -1,82 +1,141 @@
 {% extends 'admin_mofi/base.html' %}
 {% block content %}
+
+<!-- KHỐI THÔNG BÁO TOAST (TỰ ĐỘNG BIẾN MẤT) -->
 {% if messages %}
-<div class="row justify-content-center mb-3">
-    <div class="col-md-7">
-        {% for message in messages %}
-        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show shadow-sm border-0 border-start border-4 {% if message.tags == 'error' %}border-danger{% else %}border-success{% endif %}" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fa fs-4 me-3 {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %}"></i>
-                <div>
-                    <h6 class="alert-heading fw-bold mb-1">{% if message.tags == 'error' %}Lỗi xử lý!{% else %}Thành công!{% endif %}</h6>
-                    <span class="small">{{ message }}</span>
-                </div>
-            </div>
-            <button type="button" class="btn-close shadow-none" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
         </div>
-        {% endfor %}
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
     </div>
+    {% endfor %}
 </div>
 {% endif %}
+
 <div class="container-fluid">
-    <div class="page-title">
-        <h4 class="fw-bold"><i class="fa fa-language text-primary me-2"></i>Nhập điểm Tiếng Anh Đầu Vào</h4>
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-language text-muted me-2"></i>Nhập điểm Tiếng Anh Đầu Vào
+                </h4>
+            </div>
+            <div class="col-6 text-end">
+                <button type="button" onclick="history.back()" class="btn btn-white fw-bold border shadow-sm rounded-3 px-3">
+                    <i class="fa fa-arrow-left me-2"></i>Quay lại
+                </button>
+            </div>
+        </div>
     </div>
+
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4">
+        <div class="col-xl-6 col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <!-- Header màu trắng sang trọng -->
+                <div class="card-header bg-white pt-4 px-4 pb-3 border-bottom">
+                    <h5 class="fw-bold mb-1 text-dark">Cầu nối dữ liệu Excel</h5>
+                    <p class="mb-0 text-muted small">Đồng bộ kết quả phân loại tiếng anh đầu khóa.</p>
+                </div>
+                
+                <div class="card-body p-4 bg-white">
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
+                        
+                        <!-- BƯỚC 1 -->
                         <div class="mb-4">
-                            <label class="form-label fw-bold">1. Chọn Đợt thi</label>
-                            <select name="dot_thi" class="form-select border-primary" required>
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-2">1. Chọn Đợt thi tương ứng</label>
+                            <select name="dot_thi" class="form-select custom-input" required>
+                                <option value="">--- Click để chọn đợt thi ---</option>
                                 {% for dt in dot_this %}
-                                    <option value="{{ dt.id }}">{{ dt.ten_dot }} ({{ dt.thoi_gian_bat_dau|date:"d/m/Y" }})</option>
+                                    <option value="{{ dt.id }}">{{ dt.ten_dot }} (Ngày thi: {{ dt.thoi_gian_bat_dau|date:"d/m/Y" }})</option>
                                 {% endfor %}
                             </select>
                         </div>
+                        
+                        <!-- BƯỚC 2 -->
                         <div class="mb-4">
-                            <label class="form-label fw-bold">2. Tải file Excel (.xlsx)</label>
-                            <input type="file" name="excel_file" class="form-control" required>
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-2">2. Chọn file bảng điểm (.xlsx, .csv)</label>
+                            <input type="file" name="excel_file" class="form-control custom-input" accept=".xlsx, .xls, .csv" required>
                         </div>
-                        <div class="alert alert-info small">
-                            Hệ thống sẽ tự động tạo tài khoản cho MSSV mới với mật khẩu: <strong>cfihumg</strong>
+
+                        <!-- GHI CHÚ NGHIỆP VỤ -->
+                        <div class="p-3 mb-4 rounded-3 border bg-light d-flex align-items-start shadow-none">
+                            <i class="fa fa-info-circle text-primary fs-5 me-3 mt-1"></i>
+                            <div class="small text-dark">
+                                <b>Lưu ý:</b> Hệ thống sẽ tự động tạo tài khoản cho MSSV mới chưa tồn tại với mật khẩu mặc định là: <b>cfihumg</b>
+                            </div>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100 fw-bold">Bắt đầu đồng bộ</button>
+
+                        <button type="submit" class="btn btn-dark btn-lg w-100 fw-bold shadow-sm py-3 btn-submit-import">
+                            <i class="fa fa-cloud-upload me-2"></i> BẮT ĐẦU ĐỒNG BỘ
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* CSS tùy chỉnh cho text input và select để chữ rõ và không bị to quá */
+    .custom-input {
+        font-size: 14px !important;
+        color: #333 !important; /* Chữ màu xám đậm rõ nét */
+        border: 1px solid #ddd !important;
+        background-color: #fff !important;
+        padding: 10px 15px !important;
+        border-radius: 8px !important;
+    }
+    .custom-input:focus {
+        border-color: #222 !important;
+        box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.05) !important;
+    }
+
+    /* Toast Animation */
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const uploadForms = document.querySelectorAll("form");
-        
-        uploadForms.forEach(form => {
-            form.addEventListener("submit", function(e) {
-                // Tìm nút submit trong form này
-                const btn = this.querySelector('button[type="submit"]');
+        // Tự động kích hoạt và xóa Toast sau khi hiện
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+
+        // Xử lý nút Loading khi bấm Import
+        document.querySelectorAll("form").forEach(form => {
+            form.addEventListener("submit", function() {
+                const btn = this.querySelector('.btn-submit-import');
                 if(btn) {
-                    // Đổi giao diện nút thành Loading
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Đang xử lý, vui lòng chờ...';
-                    btn.classList.add("disabled"); // Khóa nút
-                    btn.style.pointerEvents = "none";
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang nạp dữ liệu...';
+                    btn.classList.add("disabled");
+                }
+            });
+        });
+
+        // Kiểm tra định dạng file ngay khi chọn
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.addEventListener('change', function(e) {
+                const fileName = this.value.toLowerCase();
+                if(fileName && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls') && !fileName.endsWith('.csv')) {
+                    alert('❌ LỖI ĐỊNH DẠNG: Vui lòng chỉ chọn file Excel (.xlsx, .xls) hoặc file CSV!');
+                    this.value = '';
                 }
             });
         });
     });
-    // Thêm đoạn này vào chung thẻ <script> ở Bước 2
-const fileInputs = document.querySelectorAll('input[type="file"]');
-fileInputs.forEach(input => {
-    input.addEventListener('change', function(e) {
-        const fileName = this.value;
-        if(fileName && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls') && !fileName.endsWith('.csv')) {
-            alert('❌ LỖI ĐỊNH DẠNG: Vui lòng chỉ chọn file Excel (.xlsx, .xls) hoặc CSV!');
-            this.value = ''; // Xóa file vừa chọn
-        }
-    });
-});
 </script>
 {% endblock %}

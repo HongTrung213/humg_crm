@@ -1,59 +1,99 @@
 {% extends 'admin_mofi/base.html' %}
+{% load static %}
 {% block title %}Danh mục Chứng chỉ | HUMG CRM{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <div class="page-title">
+    <div class="page-title mb-4">
         <div class="row align-items-center">
             <div class="col-6">
-                <h4 class="mb-0">Danh mục Chứng chỉ</h4>
+                <h4 class="fw-bold mb-0">
+                    <i class="fa fa-certificate text-primary me-2"></i>Quản lý Danh mục Chứng chỉ
+                </h4>
             </div>
-            <div class="col-6 text-end">
-                <a href="{% url 'students:mofi_chungchi_add' %}" class="btn btn-primary"><i class="fa fa-plus me-2"></i>Thêm Chứng chỉ</a>
+            <div class="col-6">
+                <ol class="breadcrumb justify-content-end mb-0 bg-transparent">
+                    <li class="breadcrumb-item"><a href="{% url 'students:admin_mofi_dashboard' %}"><i data-feather="home"></i></a></li>
+                    <li class="breadcrumb-item text-muted">Master Data</li>
+                    <li class="breadcrumb-item active fw-bold">Chứng chỉ</li>
+                </ol>
             </div>
         </div>
     </div>
 
     <div class="row">
         <div class="col-sm-12">
-            <div class="card">
-                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-                    <h6>Tất cả chứng chỉ hệ thống hỗ trợ</h6>
-                    <form method="GET" style="width: 250px;">
-                        <div class="input-group input-group-sm">
-                            <input class="form-control" type="text" name="q" value="{{ query }}" placeholder="Tìm tên chứng chỉ...">
-                            <button class="btn btn-primary" type="submit"><i class="fa fa-search"></i></button>
-                        </div>
-                    </form>
+            <div class="card shadow border-0 rounded-4 overflow-hidden">
+                <!-- Header Card & Công cụ tìm kiếm -->
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-list-ul me-2 text-secondary"></i>Tất cả chứng chỉ hệ thống hỗ trợ</h5>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <form method="GET" class="d-flex" style="width: 300px;">
+                            <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                                <span class="input-group-text bg-light border-0"><i class="fa fa-search text-muted"></i></span>
+                                <input class="form-control border-0 bg-light" type="text" name="q" value="{{ query }}" placeholder="Tìm tên chứng chỉ...">
+                                <button class="btn btn-dark fw-bold px-3" type="submit">Tìm</button>
+                            </div>
+                        </form>
+                        <a href="{% url 'students:mofi_chungchi_add' %}" class="btn btn-primary fw-bold shadow-sm rounded-3">
+                            <i class="fa fa-plus-circle me-1"></i> Thêm mới
+                        </a>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive custom-scrollbar">
-                        <table class="table table-hover align-middle">
+
+                <!-- Bảng Dữ liệu -->
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th width="60" class="text-center">ID</th>
-                                    <th>Tên Chứng chỉ</th>
-                                    <th>Loại (Tin học/Ngoại ngữ)</th>
-                                    <th>Mô tả chi tiết</th>
-                                    <th width="100" class="text-center">Thao tác</th>
+                                    <th width="80" class="text-center text-secondary">ID</th>
+                                    <th class="text-secondary">Tên Chứng chỉ</th>
+                                    <th class="text-secondary">Phân loại CĐR</th>
+                                    <th class="text-secondary">Mô tả chi tiết</th>
+                                    <th width="150" class="text-center text-secondary">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for item in danh_sach %}
                                 <tr>
-                                    <td class="text-center fw-bold">{{ item.id }}</td>
-                                    <td class="fw-bold text-primary">{{ item.ten_chung_chi }}</td>
-                                    <td><span class="badge badge-light-info">{{ item.get_loai_display|default:item.loai }}</span></td>
-                                    <td class="text-muted f-14">{{ item.mo_ta|truncatechars:50 }}</td>
+                                    <td class="text-center fw-bold text-muted">{{ item.id }}</td>
+                                    <td>
+                                        <div class="fw-bold text-dark fs-6">{{ item.ten_chung_chi }}</div>
+                                    </td>
+                                    <td>
+                                        <!-- Thay đổi màu nhãn tùy theo phân loại (Ngoại ngữ / Tin học) -->
+                                        {% if item.loai == 'NGOAI_NGU' %}
+                                            <span class="badge bg-primary px-3 py-2 rounded-pill shadow-sm"><i class="fa fa-language me-1"></i>Chuẩn Ngoại ngữ</span>
+                                        {% elif item.loai == 'TIN_HOC' %}
+                                            <span class="badge bg-success px-3 py-2 rounded-pill shadow-sm"><i class="fa fa-laptop me-1"></i>Chuẩn Tin học</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm">{{ item.get_loai_display|default:item.loai }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-muted f-14">
+                                        {{ item.mo_ta|default:"<i class='text-light-muted'>Không có mô tả</i>"|safe|truncatechars:60 }}
+                                    </td>
                                     <td class="text-center">
-                                        <a href="{% url 'students:mofi_chungchi_edit' item.id %}" class="btn btn-xs btn-warning" title="Chỉnh sửa">
-                                            <i class="fa fa-edit"></i> Sửa
-                                        </a>
+                                        <div class="btn-group shadow-sm">
+                                            <a href="{% url 'students:mofi_chungchi_edit' item.id %}" class="btn btn-outline-primary btn-sm fw-bold" title="Chỉnh sửa">
+                                                <i class="fa fa-pencil"></i> Sửa
+                                            </a>
+                                            <!-- Nếu bạn có view Delete thì dùng dòng này, nếu chưa có thì có thể ẩn đi -->
+                                            <a href="{% url 'students:mofi_chungchi_danhmuc_delete' item.id %}" class="btn btn-outline-danger btn-sm fw-bold" title="Xóa chứng chỉ" onclick="return confirm('CẢNH BÁO: Xóa chứng chỉ này có thể làm mất dữ liệu các Sinh viên đã nộp chứng chỉ này! Bạn có chắc chắn?');">
+                                                <i class="fa fa-trash"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="5" class="text-center py-5 text-muted">Chưa có dữ liệu danh mục chứng chỉ.</td>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="text-muted mb-3"><i class="fa fa-certificate fa-3x"></i></div>
+                                        <h6 class="fw-bold text-muted">Chưa có danh mục chứng chỉ nào.</h6>
+                                        <a href="{% url 'students:mofi_chungchi_add' %}" class="btn btn-outline-primary btn-sm mt-2 fw-bold"><i class="fa fa-plus me-1"></i> Định nghĩa chứng chỉ đầu tiên</a>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

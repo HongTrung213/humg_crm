@@ -3,10 +3,37 @@
 
 {% block object-tools-items %}
     <li>
-        <a href="/students/import/" class="addlink" style="background-color: #28a745; color: white;">
-            <i class="fas fa-file-excel"></i> Nhập từ Excel
+        <a href="/students/import/" class="addlink custom-import-btn">
+            <i class="fas fa-file-excel" style="margin-right: 4px;"></i> Nhập từ Excel
         </a>
     </li>
     
     {{ block.super }}
+    
+    <!-- Nhúng CSS trực tiếp để đè lại style mặc định của Django Admin -->
+    <style>
+        .custom-import-btn {
+            background-color: #212529 !important; /* Tông đen Dark chuẩn White Edition */
+            color: #ffffff !important;
+            border-radius: 6px !important;
+            padding: 5px 15px 5px 12px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            border: 1px solid #212529 !important;
+            transition: all 0.2s ease-in-out !important;
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+        
+        .custom-import-btn:hover {
+            background-color: #ffffff !important; /* Hover lật sang nền trắng */
+            color: #212529 !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+        }
+        
+        /* Chỉnh lại icon khi hover */
+        .custom-import-btn:hover i {
+            color: #198754 !important; /* Điểm xuyết lại màu xanh Excel khi hover */
+        }
+    </style>
 {% endblock %}

@@ -1,51 +1,124 @@
 {% extends 'admin_mofi/base.html' %}
+{% load static %}
+{% block title %}Quản lý Lớp Bồi dưỡng | HUMG CRM{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
-    <div class="page-title">
-        <div class="row">
-            <div class="col-6"><h4>Quản lý Lớp Bồi dưỡng</h4></div>
-            <div class="col-6 text-end">
-                <a href="#" class="btn btn-primary"><i class="fa fa-plus me-2"></i>Mở lớp mới</a>
+    <!-- Tiêu đề & Breadcrumb -->
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="fw-bold mb-0">
+                    <i class="fa fa-graduation-cap text-primary me-2"></i>Quản lý Lớp Bồi dưỡng
+                </h4>
+            </div>
+            <div class="col-6">
+                <ol class="breadcrumb justify-content-end mb-0 bg-transparent">
+                    <li class="breadcrumb-item"><a href="{% url 'students:admin_mofi_dashboard' %}"><i data-feather="home"></i></a></li>
+                    <li class="breadcrumb-item text-muted">Quản lý Đào tạo</li>
+                    <li class="breadcrumb-item active fw-bold">Lớp học</li>
+                </ol>
             </div>
         </div>
     </div>
+
     <div class="row">
         <div class="col-sm-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
+            <div class="card shadow border-0 rounded-4 overflow-hidden">
+                <!-- Header Card & Nút chức năng -->
+                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-list-alt me-2 text-secondary"></i>Danh sách Lớp học</h5>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <form method="GET" class="d-flex" style="width: 250px;">
+                            <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                                <span class="input-group-text bg-light border-0"><i class="fa fa-search text-muted"></i></span>
+                                <input class="form-control border-0 bg-light" type="text" name="q" placeholder="Tìm tên lớp...">
+                            </div>
+                        </form>
+                        <a href="#" class="btn btn-primary fw-bold shadow-sm rounded-3">
+                            <i class="fa fa-plus-circle me-1"></i> Mở lớp mới
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Bảng Dữ liệu Lớp học -->
+                <div class="card-body p-0">
+                    <div class="table-responsive custom-scrollbar">
+                        <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Tên lớp</th>
-                                    <th>Loại</th>
-                                    <th>Học phí</th>
-                                    <th class="text-center">Sĩ số</th>
-                                    <th>Khai giảng</th>
-                                    <th>Trạng thái</th>
-                                    <th class="text-center">Thao tác</th>
+                                    <th class="ps-4 text-secondary">Tên lớp & Lịch học</th>
+                                    <th class="text-secondary">Loại</th>
+                                    <th class="text-secondary text-end">Học phí</th>
+                                    <th class="text-center text-secondary">Sĩ số</th>
+                                    <th class="text-secondary">Khai giảng</th>
+                                    <th class="text-center text-secondary">Trạng thái</th>
+                                    <th class="text-center text-secondary pe-4" width="120">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for lop in classes %}
                                 <tr>
-                                    <td><div class="fw-bold">{{ lop.ten_lop }}</div><small>{{ lop.lich_hoc }}</small></td>
-                                    <td><span class="badge badge-light-info">{{ lop.get_loai_display }}</span></td>
-                                    <td class="text-danger fw-bold">{{ lop.hoc_phi }} ₫</td>
-                                    <td class="text-center">{{ lop.sinh_vien.count }}</td>
-                                    <td>{{ lop.ngay_khai_giang|date:"d/m/Y" }}</td>
+                                    <!-- Tên lớp -->
+                                    <td class="ps-4">
+                                        <div class="fw-bold text-dark fs-6">{{ lop.ten_lop }}</div>
+                                        <div class="small text-muted mt-1"><i class="fa fa-calendar-check-o me-1"></i>{{ lop.lich_hoc }}</div>
+                                    </td>
+                                    
+                                    <!-- Phân loại -->
                                     <td>
-                                        {% if lop.trang_thai %}
-                                            <span class="badge badge-success">Đang mở</span>
+                                        {% if lop.loai == 'NGOAI_NGU' %}
+                                            <span class="badge bg-light-primary text-primary border px-2 py-1"><i class="fa fa-language me-1"></i>{{ lop.get_loai_display }}</span>
                                         {% else %}
-                                            <span class="badge badge-secondary">Đã đóng</span>
+                                            <span class="badge bg-light-success text-success border px-2 py-1"><i class="fa fa-laptop me-1"></i>{{ lop.get_loai_display }}</span>
                                         {% endif %}
                                     </td>
+                                    
+                                    <!-- Học phí -->
+                                    <td class="text-danger fw-bold text-end fs-6">
+                                        {{ lop.hoc_phi }} ₫
+                                    </td>
+                                    
+                                    <!-- Sĩ số -->
                                     <td class="text-center">
-                                        <div class="btn-group">
-                                            <a href="#" class="btn btn-xs btn-outline-primary"><i class="fa fa-users"></i></a>
-                                            <a href="#" class="btn btn-xs btn-outline-warning"><i class="fa fa-pencil"></i></a>
+                                        <span class="badge bg-light text-dark border px-3 py-2 fs-6 shadow-sm">
+                                            <i class="fa fa-users text-muted me-1"></i> {{ lop.sinh_vien.count }}
+                                        </span>
+                                    </td>
+                                    
+                                    <!-- Khai giảng -->
+                                    <td>
+                                        <div class="text-dark fw-medium">{{ lop.ngay_khai_giang|date:"d/m/Y" }}</div>
+                                    </td>
+                                    
+                                    <!-- Trạng thái -->
+                                    <td class="text-center">
+                                        {% if lop.trang_thai %}
+                                            <span class="badge rounded-pill bg-success px-3 py-2 shadow-sm"><i class="fa fa-circle-o-notch fa-spin me-1"></i>Đang mở</span>
+                                        {% else %}
+                                            <span class="badge rounded-pill bg-secondary px-3 py-2 shadow-sm"><i class="fa fa-lock me-1"></i>Đã đóng</span>
+                                        {% endif %}
+                                    </td>
+                                    
+                                    <!-- Thao tác -->
+                                    <td class="text-center pe-4">
+                                        <div class="btn-group shadow-sm">
+                                            <a href="#" class="btn btn-outline-info btn-sm fw-bold" title="Xem danh sách học viên">
+                                                <i class="fa fa-list-ol"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-outline-primary btn-sm fw-bold" title="Chỉnh sửa lớp">
+                                                <i class="fa fa-pencil"></i>
+                                            </a>
                                         </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-5">
+                                        <div class="text-muted mb-3"><i class="fa fa-calendar-times-o fa-3x"></i></div>
+                                        <h6 class="fw-bold text-muted">Chưa có lớp bồi dưỡng nào được mở.</h6>
+                                        <a href="#" class="btn btn-outline-primary btn-sm mt-2 fw-bold"><i class="fa fa-plus me-1"></i> Mở lớp đầu tiên</a>
                                     </td>
                                 </tr>
                                 {% endfor %}

@@ -5,69 +5,107 @@
 {% block page_title %}Chi Tiết Hồ Sơ Sinh Viên{% endblock %}
 
 {% block content %}
+
+<!-- KHỐI THÔNG BÁO TOAST (TỰ ĐỘNG BIẾN MẤT) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
 <div class="container-fluid">
   <div class="row">
     
+    <!-- CỘT TRÁI: THÔNG TIN CÁ NHÂN -->
     <div class="col-xl-4 col-md-5">
-      <div class="card custom-card shadow-sm">
-        <div class="card-header pb-0">
-          <img class="img-fluid" src="{% static 'mofi/images/user-card/1.jpg' %}" alt="cover">
-        </div>
-        <div class="card-profile">
-          <img class="rounded-circle shadow-sm" src="{% if student.anh_dai_dien %}{{ student.anh_dai_dien.url }}{% else %}{% static 'mofi/images/user/7.jpg' %}{% endif %}" alt="Avatar">
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+        <!-- Đã sửa: Thay ảnh cover bị lỗi bằng Gradient nhẹ nhàng -->
+        <div class="card-header p-0" style="height: 120px; background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%); border-bottom: 1px solid #f1f1f1;">
         </div>
         
-        <div class="text-center profile-details mt-3">
-          <h4>{{ student.ho_ten }}</h4>
-          <h6 class="text-primary">{{ student.mssv }}</h6>
-          <span class="badge badge-light-primary mb-3">{{ student.khoa.ten_khoa|default:"Chưa cập nhật Khoa" }}</span>
+        <div class="card-profile position-relative text-center" style="margin-top: -50px;">
+          <!-- Đã sửa: Dùng UI Avatars tự tạo ảnh từ tên nếu không có ảnh đại diện -->
+          <img class="rounded-circle shadow-sm bg-white p-1" 
+               src="{% if student.anh_dai_dien %}{{ student.anh_dai_dien.url }}{% else %}https://ui-avatars.com/api/?name={{ student.ho_ten|urlencode }}&background=random&color=fff&size=128{% endif %}" 
+               alt="Avatar" style="width: 100px; height: 100px; object-fit: cover;">
         </div>
         
-        <div class="card-footer row border-top-0 pt-0">
-          <div class="col-12">
-            <h6 class="text-start fw-bold mb-3"><i class="fa fa-info-circle text-primary"></i> Thông tin liên hệ</h6>
-            <ul class="list-group list-group-flush text-start">
-              <li class="list-group-item px-0 border-0 py-1"><i class="icofont icofont-users-alt-2 me-2"></i> Lớp: <b>{{ student.lop|default:"-" }}</b></li>
-              <li class="list-group-item px-0 border-0 py-1"><i class="icofont icofont-smart-phone me-2"></i> SĐT: <b>{{ student.so_dien_thoai|default:"-" }}</b></li>
-              <li class="list-group-item px-0 border-0 py-1"><i class="icofont icofont-envelope me-2"></i> Email (Trường): <b>{{ student.email_truong|default:"-" }}</b></li>
-              <li class="list-group-item px-0 border-0 py-1"><i class="icofont icofont-ui-email me-2"></i> Email (Cá nhân): <b>{{ student.email_ca_nhan|default:"-" }}</b></li>
-            </ul>
-          </div>
+        <div class="text-center profile-details mt-3 px-3">
+          <h5 class="fw-bold text-dark mb-1">{{ student.ho_ten }}</h5>
+          <h6 class="text-muted small mb-2"><i class="fa fa-id-card-o me-1"></i>{{ student.mssv }}</h6>
+          <span class="badge bg-light text-primary border px-3 py-1 mb-3">{{ student.khoa.ten_khoa|default:"Chưa cập nhật Khoa" }}</span>
         </div>
         
-        <div class="card-footer d-flex justify-content-between p-3 bg-light">
-          <a href="{% url 'students:student_list' %}" class="btn btn-outline-secondary btn-sm"><i class="fa fa-arrow-left"></i> Quay lại</a>
-          <a href="{% url 'students:student_edit' student.id %}" class="btn btn-warning btn-sm"><i class="fa fa-pencil"></i> Chỉnh sửa</a>
+        <div class="card-body border-top pt-3">
+          <h6 class="text-start fw-bold text-dark small text-uppercase mb-3"><i class="fa fa-info-circle text-muted me-1"></i> Thông tin liên hệ</h6>
+          <ul class="list-group list-group-flush text-start small">
+            <!-- Đã sửa: Đồng bộ sang FontAwesome (fa) -->
+            <li class="list-group-item px-0 border-0 py-2 text-muted"><i class="fa fa-users me-2" style="width: 16px;"></i> Lớp: <b class="text-dark">{{ student.lop|default:"-" }}</b></li>
+            <li class="list-group-item px-0 border-0 py-2 text-muted"><i class="fa fa-phone me-2" style="width: 16px;"></i> SĐT: <b class="text-dark">{{ student.so_dien_thoai|default:"-" }}</b></li>
+            <li class="list-group-item px-0 border-0 py-2 text-muted"><i class="fa fa-envelope-o me-2" style="width: 16px;"></i> Email Trường: <b class="text-dark">{{ student.email_truong|default:"-" }}</b></li>
+            <li class="list-group-item px-0 border-0 py-2 text-muted"><i class="fa fa-envelope me-2" style="width: 16px;"></i> Email Cá nhân: <b class="text-dark">{{ student.email_ca_nhan|default:"-" }}</b></li>
+          </ul>
+        </div>
+        
+        <div class="card-footer d-flex justify-content-between p-3 bg-light-subtle border-top">
+          <a href="{% url 'students:student_list' %}" class="btn btn-white border shadow-sm btn-sm fw-bold px-3 text-dark"><i class="fa fa-arrow-left me-1"></i> Trở về</a>
+          <a href="{% url 'students:student_edit' student.id %}" class="btn btn-dark shadow-sm btn-sm fw-bold px-3"><i class="fa fa-pencil me-1"></i> Chỉnh sửa</a>
         </div>
       </div>
     </div>
 
+    <!-- CỘT PHẢI: KẾT QUẢ & LỊCH SỬ -->
     <div class="col-xl-8 col-md-7">
       
-      <div class="card shadow-sm border-0">
-        <div class="card-header pb-0 bg-transparent">
-          <h4 class="fw-bold"><i class="fa fa-graduation-cap text-success"></i> Kết quả Xét Chuẩn Đầu Ra</h4>
-          <p class="f-m-light mt-1">Dữ liệu tổng hợp từ Chứng chỉ Quốc tế và Điểm thi nội bộ.</p>
+      <!-- Box 1: Xét chuẩn đầu ra -->
+      <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-header bg-white pt-4 px-4 pb-0 border-0">
+          <h5 class="fw-bold text-dark mb-1"><i class="fa fa-graduation-cap text-muted me-2"></i> Kết quả Xét Chuẩn Đầu Ra</h5>
+          <p class="small text-muted mb-0">Dữ liệu tổng hợp từ Chứng chỉ Quốc tế và Điểm thi nội bộ.</p>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
           <div class="row g-3">
             <div class="col-sm-6">
-              <div class="alert alert-light-primary border-primary h-100 mb-0">
-                <h6 class="fw-bold text-primary mb-2">Chuẩn Ngoại Ngữ</h6>
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="f-14 text-dark">Điểm cao nhất: <b>{{ student.max_diem_ngoai_ngu }}</b></span>
-                  {% if student.check_dat_ngoai_ngu %}<span class="badge bg-success">ĐÃ ĐẠT</span>
-                  {% else %}<span class="badge bg-danger">CHƯA ĐẠT</span>{% endif %}
+              <div class="p-3 border rounded-3 bg-light-subtle h-100 border-primary-subtle">
+                <h6 class="fw-bold text-dark mb-2 small text-uppercase">Ngoại Ngữ (Tiếng Anh)</h6>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                  <span class="small text-muted">Điểm Max: <b class="text-dark f-14">{{ student.max_diem_ngoai_ngu }}</b></span>
+                  {% if student.check_dat_ngoai_ngu %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1"><i class="fa fa-check-circle me-1"></i>ĐÃ ĐẠT</span>
+                  {% else %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1"><i class="fa fa-times-circle me-1"></i>CHƯA ĐẠT</span>
+                  {% endif %}
                 </div>
               </div>
             </div>
             <div class="col-sm-6">
-              <div class="alert alert-light-info border-info h-100 mb-0">
-                <h6 class="fw-bold text-info mb-2">Chuẩn Tin Học</h6>
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="f-14 text-dark">Điểm cao nhất: <b>{{ student.max_diem_tin_hoc }}</b></span>
-                  {% if student.check_dat_tin_hoc %}<span class="badge bg-success">ĐÃ ĐẠT</span>
-                  {% else %}<span class="badge bg-danger">CHƯA ĐẠT</span>{% endif %}
+              <div class="p-3 border rounded-3 bg-light-subtle h-100 border-info-subtle">
+                <h6 class="fw-bold text-dark mb-2 small text-uppercase">Công nghệ Thông tin</h6>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                  <span class="small text-muted">Điểm Max: <b class="text-dark f-14">{{ student.max_diem_tin_hoc }}</b></span>
+                  {% if student.check_dat_tin_hoc %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1"><i class="fa fa-check-circle me-1"></i>ĐÃ ĐẠT</span>
+                  {% else %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-1"><i class="fa fa-times-circle me-1"></i>CHƯA ĐẠT</span>
+                  {% endif %}
                 </div>
               </div>
             </div>
@@ -75,130 +113,154 @@
         </div>
       </div>
 
-      <div class="card shadow-sm border-0">
-        <div class="card-body">
-          <ul class="nav nav-tabs border-tab nav-primary" id="info-tab" role="tablist">
-            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#exam" role="tab"><i class="fa fa-pencil-square-o"></i> Điểm thi</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#class" role="tab"><i class="fa fa-book"></i> Lớp học</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#cert" role="tab"><i class="fa fa-shield"></i> Xác minh Chứng chỉ</a></li>
+      <!-- Box 2: Tab Dữ liệu chi tiết -->
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-0">
+          <ul class="nav nav-tabs border-bottom pt-3 px-4" id="info-tab" role="tablist">
+            <li class="nav-item"><a class="nav-link active fw-bold text-dark" data-bs-toggle="tab" href="#exam" role="tab"><i class="fa fa-pencil-square-o text-muted me-1"></i> Điểm thi nội bộ</a></li>
+            <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#class" role="tab"><i class="fa fa-book text-muted me-1"></i> Lớp học bồi dưỡng</a></li>
+            <li class="nav-item"><a class="nav-link fw-bold text-dark" data-bs-toggle="tab" href="#cert" role="tab"><i class="fa fa-shield text-muted me-1"></i> Hồ sơ Chứng chỉ</a></li>
           </ul>
           
-          <div class="tab-content" id="info-tabContent">
+          <div class="tab-content p-4" id="info-tabContent">
             
+            <!-- Tab 1: Điểm thi -->
             <div class="tab-pane fade show active" id="exam" role="tabpanel">
-              <div class="table-responsive mt-3">
-                <table class="table table-hover align-middle">
-                  <thead class="table-light">
-                    <tr><th>Kỳ thi</th><th>Môn</th><th class="text-center">Điểm</th><th class="text-center">Kết quả</th></tr>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="bg-light">
+                    <tr>
+                        <th class="small fw-bold text-muted py-3">KỲ THI</th>
+                        <th class="small fw-bold text-muted py-3">MÔN THI</th>
+                        <th class="text-center small fw-bold text-muted py-3">ĐIỂM SỐ</th>
+                        <th class="text-center small fw-bold text-muted py-3">KẾT QUẢ</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {% for diem in lich_su_thi %}
                     <tr>
-                      <td>{{ diem.dot_thi.ten_dot }}</td>
-                      <td>{{ diem.get_mon_thi_display }}</td>
-                      <td class="text-center fw-bold text-primary">{{ diem.diem_tong }}</td>
+                      <td class="text-dark fw-medium py-3">{{ diem.dot_thi.ten_dot }}</td>
+                      <td class="text-muted">{{ diem.get_mon_thi_display }}</td>
+                      <td class="text-center fw-bold fs-6">{{ diem.diem_tong }}</td>
                       <td class="text-center">
-                        {% if diem.ket_qua_dat %}<span class="badge bg-light-success text-success">Đạt</span>
-                        {% else %}<span class="badge bg-light-danger text-danger">Trượt</span>{% endif %}
+                        {% if diem.ket_qua_dat %}
+                            <span class="badge bg-success-subtle text-success px-2 py-1">Đạt</span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger px-2 py-1">Trượt</span>
+                        {% endif %}
                       </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="4" class="text-center py-4 text-muted">Chưa có dữ liệu điểm thi nội bộ.</td></tr>
+                    <tr><td colspan="4" class="text-center py-5 text-muted"><i class="fa fa-folder-open-o fs-3 mb-2 d-block opacity-50"></i>Chưa có dữ liệu điểm thi nội bộ.</td></tr>
                     {% endfor %}
                   </tbody>
                 </table>
               </div>
             </div>
 
+            <!-- Tab 2: Lớp học -->
             <div class="tab-pane fade" id="class" role="tabpanel">
-              <div class="table-responsive mt-3">
-                <table class="table table-hover align-middle">
-                  <thead class="table-light">
-                    <tr><th>Tên lớp bồi dưỡng</th><th>Loại</th><th class="text-center">Trạng thái</th></tr>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead class="bg-light">
+                    <tr>
+                        <th class="small fw-bold text-muted py-3">TÊN LỚP BỒI DƯỠNG</th>
+                        <th class="small fw-bold text-muted py-3">LOẠI HÌNH</th>
+                        <th class="text-center small fw-bold text-muted py-3">TRẠNG THÁI</th>
+                    </tr>
                   </thead>
                   <tbody>
                     {% for dk in ds_dang_ky %}
                     <tr>
-                      <td class="fw-bold">{{ dk.lop_hoc.ten_lop }}</td>
-                      <td>{{ dk.lop_hoc.get_loai_display }}</td>
+                      <td class="fw-bold text-dark py-3">{{ dk.lop_hoc.ten_lop }}</td>
+                      <td class="text-muted">{{ dk.lop_hoc.get_loai_display }}</td>
                       <td class="text-center">
-                        {% if dk.trang_thai == 'THANH_CONG' %}<span class="badge bg-success">Thành công</span>
-                        {% elif dk.trang_thai == 'CHO_DUYET' %}<span class="badge bg-warning text-dark">Chờ duyệt</span>
-                        {% else %}<span class="badge bg-danger">Đã hủy</span>{% endif %}
+                        {% if dk.trang_thai == 'THANH_CONG' %}<span class="badge bg-success-subtle text-success px-3 py-1">Đang học</span>
+                        {% elif dk.trang_thai == 'CHO_DUYET' %}<span class="badge bg-warning-subtle text-warning px-3 py-1">Chờ duyệt</span>
+                        {% else %}<span class="badge bg-secondary-subtle text-muted px-3 py-1">Đã hủy</span>{% endif %}
                       </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="3" class="text-center py-4 text-muted">Chưa tham gia lớp bồi dưỡng nào.</td></tr>
+                    <tr><td colspan="3" class="text-center py-5 text-muted"><i class="fa fa-calendar-times-o fs-3 mb-2 d-block opacity-50"></i>Sinh viên chưa tham gia lớp bồi dưỡng nào.</td></tr>
                     {% endfor %}
                   </tbody>
                 </table>
               </div>
             </div>
 
+            <!-- Tab 3: Chứng chỉ -->
             <div class="tab-pane fade" id="cert" role="tabpanel">
-              <div class="d-flex justify-content-between align-items-center mt-3 mb-3 pb-2 border-bottom">
-                <h6 class="mb-0 fw-bold">Danh sách Hồ sơ Chứng chỉ nộp trực tuyến</h6>
-                <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddCert">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h6 class="mb-0 fw-bold text-dark small text-uppercase">Danh sách Hồ sơ Chứng chỉ tự nộp</h6>
+                <button type="button" class="btn btn-dark btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddCert">
                   <i class="fa fa-plus-circle me-1"></i> Nạp chứng chỉ hộ
                 </button>
               </div>
 
-              <div class="row">
-                <div class="col-md-4 border-end">
-                  <div class="list-group list-group-flush shadow-sm" id="certTabList" role="tablist">
+              <div class="row border rounded-3 overflow-hidden">
+                <!-- Danh sách chứng chỉ (Trái) -->
+                <div class="col-md-4 border-end p-0 bg-light">
+                  <div class="list-group list-group-flush custom-scrollbar" id="certTabList" role="tablist" style="max-height: 500px; overflow-y: auto;">
                     {% for cc in student.cac_chung_chi.all %}
-                    <a class="list-group-item list-group-item-action {% if forloop.first %}active{% endif %} p-2 border-bottom" data-bs-toggle="list" href="#cc-{{ cc.id }}">
+                    <a class="list-group-item list-group-item-action {% if forloop.first %}active bg-white border-start border-4 border-dark{% else %}bg-transparent{% endif %} p-3 border-bottom" data-bs-toggle="list" href="#cc-{{ cc.id }}">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-truncate fw-bold text-dark fs-6" style="max-width: 140px;" title="{{ cc.danh_muc.ten_chung_chi }}">{{ cc.danh_muc.ten_chung_chi }}</span>
+                      </div>
                       <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-truncate fw-bold f-12" style="max-width: 120px;">{{ cc.danh_muc.ten_chung_chi }}</span>
-                        {% if cc.trang_thai == 'CHO' %}<span class="badge bg-warning text-dark">Staging</span>
-                        {% elif cc.trang_thai == 'DAT' %}<span class="badge bg-success">Final</span>
-                        {% else %}<span class="badge bg-danger">Reject</span>{% endif %}
+                          <small class="text-muted f-10">{{ cc.ngay_cap|date:"d/m/Y" }}</small>
+                          {% if cc.trang_thai == 'CHO' %}<span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size: 10px;">Chờ duyệt</span>
+                          {% elif cc.trang_thai == 'DAT' %}<span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 10px;">Hợp lệ</span>
+                          {% else %}<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 10px;">Từ chối</span>{% endif %}
                       </div>
                     </a>
                     {% empty %}
-                    <div class="text-center py-5 text-muted">Trống</div>
+                    <div class="text-center py-5 text-muted small">Chưa có chứng chỉ nào.</div>
                     {% endfor %}
                   </div>
                 </div>
 
-                <div class="col-md-8">
+                <!-- Chi tiết & Ảnh (Phải) -->
+                <div class="col-md-8 p-4 bg-white">
                   <div class="tab-content">
                     {% for cc in student.cac_chung_chi.all %}
                     <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="cc-{{ cc.id }}">
-                      <div class="d-flex justify-content-between mb-2 align-items-center">
-                        <h6 class="mb-0 text-primary">ID: <b>{{ cc.so_hieu }}</b> <small class="text-muted f-10">({{ cc.ngay_cap|date:"d/m/Y" }})</small></h6>
-                        <div class="btn-group">
-                            <a href="{{ cc.file_minh_chung.url }}" target="_blank" class="btn btn-xs btn-outline-info" title="Xem ảnh gốc"><i class="fa fa-eye"></i></a>
+                      <div class="d-flex justify-content-between mb-3 align-items-center">
+                        <div>
+                            <h6 class="mb-0 text-dark fw-bold">Mã số: <b>{{ cc.so_hieu }}</b></h6>
+                            <p class="small text-muted mb-0">Cập nhật lúc: {{ cc.ngay_tao|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div class="btn-group shadow-sm">
+                            <a href="{{ cc.file_minh_chung.url }}" target="_blank" class="btn btn-sm btn-white border px-3" title="Mở tab mới để xem rõ hơn"><i class="fa fa-external-link text-info"></i></a>
                             <form method="POST" action="{% url 'students:verify_certificate' cc.id %}" class="d-inline">
                                 {% csrf_token %}
-                                <button type="submit" name="action" value="delete" class="btn btn-xs btn-outline-danger" onclick="return confirm('Xác nhận xóa vĩnh viễn?')" title="Xóa hồ sơ"><i class="fa fa-trash"></i></button>
+                                <button type="submit" name="action" value="delete" class="btn btn-sm btn-white border text-danger px-3" onclick="return confirm('Xác nhận xóa vĩnh viễn hồ sơ này?')" title="Xóa hồ sơ"><i class="fa fa-trash"></i></button>
                             </form>
                         </div>
                       </div>
                       
-                      <div class="bg-dark rounded overflow-hidden shadow-sm" style="height: 400px;">
+                      <div class="bg-light border rounded overflow-hidden shadow-sm position-relative d-flex justify-content-center align-items-center" style="height: 380px;">
                         {% if ".pdf" in cc.file_minh_chung.url|lower %}
                           <embed src="{{ cc.file_minh_chung.url }}#toolbar=0" width="100%" height="100%">
                         {% else %}
-                          <div class="d-flex align-items-center justify-content-center h-100 bg-white">
-                            <img src="{{ cc.file_minh_chung.url }}" class="img-fluid" style="max-height: 100%; object-fit: contain;">
-                          </div>
+                          <img src="{{ cc.file_minh_chung.url }}" class="img-fluid" style="max-height: 100%; object-fit: contain;">
                         {% endif %}
                       </div>
                       
+                      <!-- Box duyệt chứng chỉ dành cho Quản trị viên -->
                       {% if request.user.is_staff and cc.trang_thai == 'CHO' %}
-                      <form method="POST" action="{% url 'students:verify_certificate' cc.id %}" class="mt-3 p-3 bg-light border rounded">
+                      <form method="POST" action="{% url 'students:verify_certificate' cc.id %}" class="mt-4 p-3 bg-light border border-warning-subtle rounded-3">
                         {% csrf_token %}
-                        <div class="input-group">
-                          <input type="text" name="ghi_chu" class="form-control" placeholder="Ghi chú xác minh..." required>
-                          <button type="submit" name="action" value="approve" class="btn btn-success fw-bold px-3">Duyệt Đạt</button>
+                        <p class="small fw-bold text-dark mb-2"><i class="fa fa-shield text-warning me-1"></i> Quyết định xét duyệt:</p>
+                        <div class="input-group shadow-sm">
+                          <input type="text" name="ghi_chu" class="form-control border-end-0" placeholder="Ghi chú (nếu từ chối)..." required>
+                          <button type="submit" name="action" value="approve" class="btn btn-success fw-bold px-3">Duyệt Hợp lệ</button>
                           <button type="submit" name="action" value="reject" class="btn btn-danger fw-bold px-3">Từ chối</button>
                         </div>
                       </form>
                       {% else %}
-                      <div class="mt-3 p-2 bg-light border rounded shadow-sm">
-                        <span class="fw-bold small text-dark">Lịch sử xác minh:</span> 
-                        <p class="text-muted mb-0 f-12">{{ cc.ghi_chu_xac_minh|default:"Chứng chỉ đang chờ kiểm tra." }}</p>
+                      <div class="mt-4 p-3 bg-light border rounded-3">
+                        <span class="fw-bold small text-dark d-block mb-1"><i class="fa fa-history text-muted me-1"></i> Phản hồi xác minh:</span> 
+                        <p class="text-muted mb-0 small f-13">{{ cc.ghi_chu_xac_minh|default:"Đang trong quá trình chờ Cán bộ kiểm tra và đối chiếu trên trang chủ của tổ chức cấp bằng." }}</p>
                       </div>
                       {% endif %}
                     </div>
@@ -207,6 +269,7 @@
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -214,29 +277,29 @@
   </div>
 </div>
 
+<!-- MODAL NẠP CHỨNG CHỈ (WHITE EDITION) -->
 <div class="modal fade" id="modalAddCert" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <form class="modal-content border-0 shadow-lg" method="POST" action="{% url 'students:quick_add_chung_chi' student.id %}" enctype="multipart/form-data">
+    <form class="modal-content border-0 shadow-lg rounded-4 overflow-hidden" method="POST" action="{% url 'students:quick_add_chung_chi' student.id %}" enctype="multipart/form-data">
       {% csrf_token %}
-      <div class="modal-header bg-success py-3">
-        <h5 class="modal-title text-white fw-bold"><i class="fa fa-upload me-2"></i> Nạp chứng chỉ: {{ student.ho_ten }}</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      <div class="modal-header bg-white border-bottom py-3 px-4">
+        <h5 class="modal-title text-dark fw-bold"><i class="fa fa-cloud-upload text-muted me-2"></i>Nạp chứng chỉ hộ Sinh viên</h5>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body p-4 row g-3">
+      <div class="modal-body p-4 row g-3 bg-white">
+        
         <div class="col-md-12">
-          <label class="form-label fw-bold">Chọn Loại Chứng chỉ <span class="text-danger">*</span></label>
-          <select name="danh_muc_id" class="form-select form-select-lg" required>
-              <option value="">-- Chọn chứng chỉ --</option>
-              
-              <optgroup label="🔠 CHUẨN ĐẦU RA NGOẠI NGỮ">
+          <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Loại Chứng chỉ <span class="text-danger">*</span></label>
+          <select name="danh_muc_id" class="form-select custom-input" required>
+              <option value="">-- Click để chọn --</option>
+              <optgroup label="🔠 CHUẨN NGOẠI NGỮ">
                   {% for dm in danh_muc_cc %}
                       {% if dm.loai == 'NGOAI_NGU' %}
                           <option value="{{ dm.id }}">{{ dm.ten_chung_chi }}</option>
                       {% endif %}
                   {% endfor %}
               </optgroup>
-              
-              <optgroup label="💻 CHUẨN ĐẦU RA TIN HỌC">
+              <optgroup label="💻 CHUẨN TIN HỌC">
                   {% for dm in danh_muc_cc %}
                       {% if dm.loai == 'TIN_HOC' %}
                           <option value="{{ dm.id }}">{{ dm.ten_chung_chi }}</option>
@@ -247,23 +310,69 @@
         </div>
         
         <div class="col-md-12">
-          <label class="form-label fw-bold">Số hiệu / Mã vạch</label>
-          <input type="text" name="so_hieu" class="form-control" placeholder="Nhập số trên bằng để đối chiếu" required>
+          <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Số hiệu / Mã vạch <span class="text-danger">*</span></label>
+          <input type="text" name="so_hieu" class="form-control custom-input" placeholder="Ví dụ: B12345678" required>
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold">Ngày cấp</label>
-          <input type="date" name="ngay_cap" class="form-control" required>
+          <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Ngày cấp <span class="text-danger">*</span></label>
+          <input type="date" name="ngay_cap" class="form-control custom-input" required>
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold">Minh chứng (Ảnh/PDF)</label>
-          <input type="file" name="file_minh_chung" class="form-control" accept="image/*,.pdf" required>
+          <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Ảnh chụp bản gốc <span class="text-danger">*</span></label>
+          <input type="file" name="file_minh_chung" class="form-control custom-input p-2" accept="image/*,.pdf" required>
+        </div>
+        
+        <div class="col-12 mt-2">
+            <div class="alert alert-light-info border-info-subtle small mb-0 p-2 text-dark">
+                <i class="fa fa-info-circle text-info me-1"></i> Chứng chỉ nạp qua form này sẽ được hệ thống <b>tự động chuyển sang trạng thái "Hợp lệ"</b>.
+            </div>
         </div>
       </div>
-      <div class="modal-footer bg-light">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
-        <button type="submit" class="btn btn-success fw-bold px-4 shadow">Tải lên & Tự động duyệt</button>
+      <div class="modal-footer bg-light-subtle border-top py-3 px-4">
+        <button type="button" class="btn btn-white fw-bold border shadow-sm rounded-3" data-bs-dismiss="modal">Đóng</button>
+        <button type="submit" class="btn btn-dark fw-bold shadow-sm rounded-3 px-4"><i class="fa fa-check me-1"></i> Nạp & Tự động duyệt</button>
       </div>
     </form>
   </div>
 </div>
+
+<style>
+    /* CSS cho White Edition */
+    .table td, .table th { border-color: #f1f1f1 !important; font-size: 14px; }
+    .nav-tabs .nav-link { color: #6c757d; border: none; padding: 10px 20px; font-size: 14px; }
+    .nav-tabs .nav-link.active { border-bottom: 3px solid #212529 !important; color: #212529 !important; background: transparent !important; }
+    .bg-success-subtle { background-color: rgba(37, 188, 116, 0.1) !important; }
+    .bg-danger-subtle { background-color: rgba(220, 53, 69, 0.1) !important; }
+    .bg-warning-subtle { background-color: rgba(255, 193, 7, 0.15) !important; }
+    .bg-info-subtle { background-color: rgba(13, 202, 240, 0.1) !important; }
+    .border-success-subtle { border-color: rgba(37, 188, 116, 0.3) !important; }
+    .border-danger-subtle { border-color: rgba(220, 53, 69, 0.3) !important; }
+    .border-warning-subtle { border-color: rgba(255, 193, 7, 0.3) !important; }
+    .border-primary-subtle { border-color: rgba(13, 110, 253, 0.3) !important; }
+    .border-info-subtle { border-color: rgba(13, 202, 240, 0.3) !important; }
+    
+    .custom-input {
+        font-size: 14px !important; color: #333 !important;
+        border: 1px solid #ddd !important; background-color: #fff !important;
+        padding: 10px 15px !important; border-radius: 8px !important;
+    }
+    .custom-input:focus { border-color: #333 !important; box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.05) !important; }
+    .list-group-item.active { border-color: #dee2e6 !important; }
+    
+    /* Chỉnh nút File trong Modal */
+    input[type="file"]::file-selector-button {
+        background-color: #f8f9fa; color: #333; border: 1px solid #ddd;
+        border-radius: 4px; padding: 0.1rem 0.5rem; margin-right: 10px; cursor: pointer;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+    });
+</script>
 {% endblock %}
