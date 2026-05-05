@@ -6,13 +6,13 @@
 
 {% block content %}
 
-<!-- KHỐI THÔNG BÁO TOAST (TỰ ĐỘNG BIẾN MẤT) -->
+<!-- KHỐI THÔNG BÁO TOAST HIỆN ĐẠI (GÓC TRÊN BÊN PHẢI) -->
 {% if messages %}
 <div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
     {% for message in messages %}
     <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
-        <div class="toast-body fw-bold py-3 px-4 small">
-            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+        <div class="toast-body fw-bold py-3 px-4 small" style="font-size: 14px;">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2 fa-lg"></i>
             {{ message }}
         </div>
         <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
@@ -21,6 +21,7 @@
 </div>
 
 <style>
+    /* CSS hiệu ứng mờ dần và trượt sang phải */
     .toast.hide-after-delay {
         animation: fadeOut 0.5s ease-in-out 4s forwards;
     }
@@ -29,6 +30,17 @@
         100% { opacity: 0; transform: translateX(100%); display: none; }
     }
 </style>
+
+<script>
+    /* JS kích hoạt hiển thị và dọn dẹp thẻ HTML sau khi ẩn */
+    document.addEventListener("DOMContentLoaded", function() {
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+    });
+</script>
 {% endif %}
 
 <div class="container-fluid">

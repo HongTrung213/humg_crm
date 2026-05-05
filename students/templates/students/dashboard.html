@@ -19,13 +19,40 @@
 
 <section class="page-content course-sec mt-4">
     <div class="container">
+        
+        <!-- KHỐI THÔNG BÁO TOAST HIỆN ĐẠI (GÓC TRÊN BÊN PHẢI) -->
         {% if messages %}
+        <div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+            <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+                <div class="toast-body fw-bold py-3 px-4 small" style="font-size: 14px;">
+                    <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2 fa-lg"></i>
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+                <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+            </div>
             {% endfor %}
+        </div>
+
+        <style>
+            .toast.hide-after-delay {
+                animation: fadeOut 0.5s ease-in-out 4s forwards;
+            }
+            @keyframes fadeOut {
+                0% { opacity: 1; transform: translateX(0); }
+                100% { opacity: 0; transform: translateX(100%); display: none; }
+            }
+        </style>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+                toastElList.map(function (toastEl) {
+                    toastEl.classList.add('show');
+                    setTimeout(() => { toastEl.remove(); }, 4500);
+                });
+            });
+        </script>
         {% endif %}
 
         <div class="row">
@@ -172,7 +199,13 @@
                                         </td>
                                         <td class="text-center pe-4">
                                             <div class="btn-group">
-                                                <a href="{{ cc.file_minh_chung.url }}" target="_blank" class="btn btn-sm btn-light border" title="Xem file"><i class="feather-eye text-info"></i></a>
+                                                <!-- BỌC LỆNH AN TOÀN CHỐNG SẬP KHI KHÔNG CÓ FILE -->
+                                                {% if cc.file_minh_chung %}
+                                                    <a href="{{ cc.file_minh_chung.url }}" target="_blank" class="btn btn-sm btn-light border" title="Xem file"><i class="feather-eye text-info"></i></a>
+                                                {% else %}
+                                                    <button class="btn btn-sm btn-light border" disabled title="Không có file đính kèm"><i class="feather-eye-off text-muted"></i></button>
+                                                {% endif %}
+                                                
                                                 {% if cc.trang_thai == 'CHO' %}
                                                     <a href="{% url 'students:student_delete_cert' cc.id %}" class="btn btn-sm btn-light border" onclick="return confirm('Bạn có chắc chắn muốn hủy nộp chứng chỉ này?');" title="Hủy nộp"><i class="feather-trash-2 text-danger"></i></a>
                                                 {% else %}

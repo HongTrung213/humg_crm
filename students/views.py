@@ -74,11 +74,15 @@ def home(request):
                 'posts': posts
             })
 
+    # THÊM DÒNG NÀY: Lấy 7 bài viết mới nhất toàn hệ thống đã xuất bản
+    latest_posts = Post.objects.filter(is_published=True).order_by('-created_at')[:7]
+
     # Đóng gói dữ liệu và gửi ra HTML
     context = {
         'slider_posts': slider_posts,
         'quick_links': quick_links,
         'home_blocks': home_blocks,
+        'latest_posts': latest_posts, # <--- Nhớ thêm biến này vào context
     }
     
     return render(request, 'students/home.html', context)
@@ -1543,3 +1547,68 @@ def mofi_dot_thi_detail(request, dot_thi_id):
         'sort_by': sort_by            # Truyền ra để xử lý highlight nút Sắp xếp
     }
     return render(request, 'admin_mofi/pages/dot_thi_detail.html', context)
+
+# ==========================================
+# CÁC TRANG TIỆN ÍCH SINH VIÊN
+# ==========================================
+
+def lich_thi(request):
+    """Trang xem lịch thi và phòng thi"""
+    return render(request, 'students/lich_thi.html')
+@login_required
+
+
+@login_required
+def nop_chung_chi(request):
+    # 1. Truy vấn toàn bộ Danh mục chứng chỉ (để hiển thị ra thẻ <select>)
+    danh_muc_cc = DanhMucChungChi.objects.all()
+
+    if request.method == 'POST':
+        # Hứng dữ liệu từ Form gửi lên
+        danh_muc_id = request.POST.get('danh_muc_id')
+        so_hieu = request.POST.get('so_hieu')
+        ngay_cap = request.POST.get('ngay_cap')
+        file_minh_chung = request.FILES.get('file_minh_chung')
+
+        # Kiểm tra an toàn dữ liệu cơ bản
+        if not danh_muc_id or not so_hieu or not ngay_cap or not file_minh_chung:
+            messages.error(request, "Vui lòng điền đầy đủ thông tin và đính kèm file minh chứng!")
+            return redirect('students:nop_chung_chi')
+
+        try:
+            # SỬ DỤNG CÂU LỆNH CHUẨN LẤY SINH VIÊN GIỐNG HÀM DASHBOARD
+            sinh_vien_hien_tai = SinhVien.objects.get(mssv=request.user.username)
+            
+            danh_muc = DanhMucChungChi.objects.get(id=danh_muc_id)
+
+            # Sử dụng đúng tên Model là ChungChi
+            ChungChi.objects.create(
+                sinh_vien=sinh_vien_hien_tai,
+                danh_muc=danh_muc,
+                so_hieu=so_hieu,
+                ngay_cap=ngay_cap,
+                file_minh_chung=file_minh_chung,
+                trang_thai='CHO' 
+            )
+            
+            messages.success(request, "Tuyệt vời! Đã gửi yêu cầu xét duyệt chứng chỉ thành công.")
+            return redirect('students:nop_chung_chi')
+            
+        except SinhVien.DoesNotExist:
+            messages.error(request, "Tài khoản của bạn chưa được liên kết với hồ sơ Sinh viên!")
+            return redirect('students:nop_chung_chi')
+        except Exception as e:
+            messages.error(request, f"Có lỗi xảy ra trong quá trình lưu: {str(e)}")
+            return redirect('students:nop_chung_chi')
+
+    # ĐÓNG GÓI DỮ LIỆU VÀ GỬI RA HTML TRONG TRẠNG THÁI GET
+    context = {
+        'danh_muc_cc': danh_muc_cc,
+    }
+    
+    return render(request, 'students/nop_chung_chi.html', context)
+
+
+def quy_che(request):
+    """Trang xem quy định và văn bản biểu mẫu"""
+    return render(request, 'students/quy_che.html')

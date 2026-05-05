@@ -134,6 +134,12 @@ class SinhVien(models.Model):
     @property
     def check_dat_tin_hoc(self): return self.has_valid_cert_tin_hoc or self._has_passed_exam('CDR_TIN_HOC')
 
+    # THÊM ĐOẠN NÀY VÀO DƯỚI CÙNG CLASS SINH VIÊN:
+    @property
+    def ds_chung_chi(self):
+        """Bí danh (Alias) giúp Frontend lấy danh sách chứng chỉ mà không cần sửa HTML"""
+        return self.cac_chung_chi
+
 
 # ==============================================================================
 # 2. BẢNG TRANSACTION: HỒ SƠ CHỨNG CHỈ CỦA SINH VIÊN

@@ -3,114 +3,184 @@
 
 {% block content %}
 
-<!-- STYLE NHẬN DIỆN THƯƠNG HIỆU HUMG -->
+<!-- STYLE GIAO DIỆN TẠP CHÍ & APP SINH VIÊN -->
 <style>
     :root {
         --humg-blue: #004b87;
         --humg-red: #cc0000;
-        --text-dark: #333333;
+        --mag-text: #1a1a1a;
+        --text-color: #1f2121;
     }
 
-    /* Tiện ích text */
+    body {
+        font-size: 14px; /* Chữ nhỏ gọn, chuyên nghiệp */
+        color: var(--text-color);
+        background-color: #f9fafb;
+    }
+
     .text-humg-blue { color: var(--humg-blue) !important; }
-    .bg-humg-blue { background-color: var(--humg-blue) !important; }
     .text-humg-red { color: var(--humg-red) !important; }
     .hover-humg-blue:hover { color: var(--humg-blue) !important; text-decoration: none; }
-    
-    .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .text-truncate-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    
-    /* Hiệu ứng Hover */
-    .hover-up { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-    .hover-up:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
-    .hover-zoom img { transition: transform 0.4s ease; }
-    .hover-zoom:hover img { transform: scale(1.05); }
 
-    /* Tiêu đề Danh mục (Headbox) chuẩn Portal */
-    .category-title-box {
-        position: relative;
-        border-bottom: 2px solid #eaeaea;
-        padding-bottom: 12px;
-        margin-bottom: 24px;
+    /* Rút gọn text */
+    .t-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .t-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    
+    .hover-up { transition: all 0.3s ease; }
+    .hover-up:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important; }
+
+    /* ========================================================
+       QUICK SERVICES (CÁC THẺ TIỆN ÍCH VUÔNG VẮN)
+       ======================================================== */
+    .service-card {
+        background: #fff;
+        border: 1px solid #eaeaea;
+        border-radius: 8px;
+        height: 100%;
         display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
+        flex-direction: column;
+        transition: border-color 0.3s ease;
     }
-    .category-title {
-        color: var(--humg-blue);
+    .service-card:hover { border-color: var(--humg-blue); }
+    .service-card__icon {
+        width: 100%;
+        height: 110px;
+        background-color: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px 8px 0 0;
+    }
+    .service-card__content {
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+    .service-card__title {
         font-weight: 700;
-        font-size: 1.25rem;
-        margin: 0;
-        text-transform: uppercase;
-    }
-    .category-title::after {
-        content: "";
-        position: absolute;
-        bottom: -2px;
-        left: 0;
-        width: 80px;
-        height: 2px;
-        background-color: var(--humg-red); /* Đường gạch chân đỏ đặc trưng */
+        font-size: 1.1rem;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
     }
 
-    /* Căn chỉnh ảnh Thumbnail */
-    .news-thumb-large { height: 340px; object-fit: cover; border-radius: 8px; }
-    .news-thumb-small { width: 140px; height: 95px; object-fit: cover; border-radius: 6px; }
-    .news-list-right li:last-child { border-bottom: none !important; margin-bottom: 0 !important; padding-bottom: 0 !important; }
+    /* ========================================================
+       MAGAZINE STYLE (ẢNH & TIN TỨC)
+       ======================================================== */
+    .img-wrapper {
+        background-color: #fff;
+        border: 1px solid #f0f0f0;
+        overflow: hidden;
+        display: block;
+        position: relative;
+    }
+    .img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* Phủ kín nhưng không mất góc */
+        transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+    .img-wrapper:hover img { transform: scale(1.05); }
+    
+    .ratio-16-9 { aspect-ratio: 16 / 9; }
+    .ratio-3-2 { aspect-ratio: 3 / 2; }
+    .fallback-logo { object-fit: contain !important; padding: 22%; opacity: 0.25; }
+
+    .mag-card { border: none; background: transparent; }
+    .mag-meta { 
+        font-size: 0.75rem; 
+        color: #777; 
+        text-transform: uppercase; 
+        letter-spacing: 1px; 
+        font-weight: 600; 
+        margin-bottom: 8px; 
+    }
+    .mag-title { font-weight: 700; line-height: 1.4; margin-top: 12px; margin-bottom: 10px; }
+    .mag-title a { color: var(--mag-text); text-decoration: none; transition: color 0.2s ease; }
+    .mag-title a:hover { color: var(--humg-blue); }
+
+    /* DANH SÁCH BÊN PHẢI */
+    .sidebar-list { list-style: none; padding: 0; margin: 0; }
+    .sidebar-list li { 
+        border-bottom: 1px solid #e5e5e5; 
+        padding: 16px 0; 
+        display: flex; 
+        align-items: flex-start; 
+    }
+    .sidebar-list li:last-child { border-bottom: none; padding-bottom: 0; }
+    .sidebar-num { 
+        font-size: 2.2rem; 
+        font-weight: 900; 
+        color: #e0e0e0; 
+        line-height: 0.8; 
+        margin-right: 18px; 
+        font-family: "Times New Roman", Times, serif; 
+    }
+
+    /* Tiêu đề Chuyên mục con */
+    .cat-heading {
+        border-bottom: 2px solid #222;
+        padding-bottom: 8px;
+        margin-bottom: 20px;
+    }
 
     /* Quicklink Banners */
-    .quicklink-banner { border: 1px solid #e0e0e0; background: #fff; border-radius: 8px; }
-    .quicklink-banner img { filter: grayscale(10%); transition: 0.3s; border-radius: 8px; }
+    .quicklink-banner { border: 1px solid #e0e0e0; background: #fff; border-radius: 4px; }
+    .quicklink-banner img { filter: grayscale(10%); transition: 0.3s; }
     .quicklink-banner:hover img { filter: grayscale(0%); }
 </style>
 
-<!-- SLIDER BANNER -->
+
+<!-- ==========================================
+     1. SLIDER BANNER (FULL ẢNH)
+     ========================================== -->
 {% if slider_posts %}
-<div class="container-fluid px-0 mb-5 shadow-sm">
+<div class="container-fluid px-0 mb-5 border-bottom bg-white shadow-sm">
     <div id="homeSlider" class="carousel slide carousel-fade" data-bs-ride="carousel">
         <div class="carousel-indicators">
             {% for slider in slider_posts %}
                 <button type="button" data-bs-target="#homeSlider" data-bs-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active"{% endif %}></button>
             {% endfor %}
         </div>
-        <div class="carousel-inner">
+        <div class="carousel-inner" style="height: 480px; background: #fff;">
             {% for slider in slider_posts %}
-            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                <a href="{{ slider.link_url|default:'javascript:void(0)' }}" class="d-block bg-dark">
+            <div class="carousel-item h-100 {% if forloop.first %}active{% endif %}">
+                <a href="{{ slider.link_url|default:'#' }}" class="d-block h-100">
                     {% if slider.image %}
-                        <img src="{{ slider.image.url }}" class="d-block w-100" alt="{{ slider.title }}" style="height: 480px; object-fit: cover; opacity: 0.95;">
+                        <img src="{{ slider.image.url }}" class="d-block h-100 mx-auto" style="max-width: 100%; object-fit: contain;" alt="{{ slider.title }}">
                     {% else %}
-                        <img src="{% static 'mofi/images/blog/blog-5.jpg' %}" class="d-block w-100" style="height: 480px; object-fit: cover; opacity: 0.95;" alt="Banner">
+                        <div class="d-flex align-items-center justify-content-center h-100 bg-light text-muted">
+                            <i class="fa fa-picture-o fa-3x opacity-25"></i>
+                        </div>
                     {% endif %}
                 </a>
             </div>
             {% endfor %}
         </div>
         <button class="carousel-control-prev" type="button" data-bs-target="#homeSlider" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Trước</span>
+            <span class="carousel-control-prev-icon" style="filter: invert(1);" aria-hidden="true"></span>
         </button>
         <button class="carousel-control-next" type="button" data-bs-target="#homeSlider" data-bs-slide="next">
-            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Sau</span>
+            <span class="carousel-control-next-icon" style="filter: invert(1);" aria-hidden="true"></span>
         </button>
     </div>
 </div>
 {% endif %}
 
-<div class="container">
+
+<div class="container mb-5 pb-4">
     
-    <!-- QUICK LINKS (Đối tác / Liên kết nhanh) -->
+    <!-- QUICK LINKS TỪ DATABASE -->
     {% if quick_links %}
-    <div class="row mb-5 g-3 justify-content-center">
+    <div class="row mb-5 pb-3 g-3 justify-content-center">
         {% for link in quick_links %}
         <div class="col-xl-2 col-lg-3 col-md-4 col-6">
-            <a href="{{ link.url }}" target="_blank" class="d-block quicklink-banner hover-up overflow-hidden">
+            <a href="{{ link.url }}" target="_blank" class="d-block quicklink-banner overflow-hidden shadow-sm hover-up">
                 {% if link.image %}
-                    <img src="{{ link.image.url }}" alt="{{ link.title }}" class="img-fluid w-100 p-1" style="height: 70px; object-fit: contain;">
+                    <img src="{{ link.image.url }}" alt="{{ link.title }}" class="img-fluid w-100 p-1" style="height: 65px; object-fit: contain;">
                 {% else %}
-                    <div class="bg-humg-blue text-white d-flex align-items-center justify-content-center text-center p-2" style="height: 70px; border-radius: 8px;">
-                        <span class="fw-bold f-13">{{ link.title }}</span>
+                    <div class="bg-humg-blue text-white d-flex align-items-center justify-content-center text-center p-2" style="height: 65px;">
+                        <span class="fw-bold" style="font-size: 13px;">{{ link.title }}</span>
                     </div>
                 {% endif %}
             </a>
@@ -119,85 +189,208 @@
     </div>
     {% endif %}
 
-    <!-- DANH MỤC TIN TỨC (HOME BLOCKS) -->
-    {% for block in home_blocks %}
-        {% if block.posts %}
-        <div class="row mb-5">
-            <!-- Header Danh mục -->
-            <div class="col-12">
-                <div class="category-title-box">
-                    <h3 class="category-title">
-                        <i class="fa fa-newspaper-o me-2 text-humg-red"></i>{{ block.category.name }}
-                    </h3>
-                    <a href="{% url 'cms:post_list_by_category' block.category.slug %}" class="text-decoration-none text-muted f-14 hover-humg-blue fw-medium">
-                        Xem tất cả <i class="fa fa-angle-double-right ms-1"></i>
-                    </a>
-                </div>
-            </div>
 
+    <!-- ==========================================
+         2. TIỆN ÍCH SINH VIÊN (ĐÃ CẬP NHẬT LINK CHUẨN)
+         ========================================== -->
+    <div class="mb-5 pb-4 border-bottom">
+        <div class="row mb-4">
             <div class="col-12">
-                <div class="row g-4">
-                    
-                    <!-- BÀI VIẾT NỔI BẬT (BÊN TRÁI) -->
-                    {% with featured_post=block.posts|first %}
-                    <div class="col-lg-6 col-md-12">
-                        <div class="featured-news hover-zoom">
-                            <a href="{% url 'cms:post_detail' featured_post.slug %}" class="d-block overflow-hidden shadow-sm mb-3 rounded-3 position-relative">
-                                {% if featured_post.image %}
-                                    <img src="{{ featured_post.image.url }}" class="img-fluid w-100 news-thumb-large" alt="{{ featured_post.title }}">
-                                {% else %}
-                                    <img src="{% static 'mofi/images/blog/blog-5.jpg' %}" class="img-fluid w-100 news-thumb-large" alt="News">
-                                {% endif %}
-                            </a>
-                            <h4 class="fw-bold mb-2" style="line-height: 1.4;">
-                                <a href="{% url 'cms:post_detail' featured_post.slug %}" class="text-dark hover-humg-blue">{{ featured_post.title }}</a>
-                            </h4>
-                            <p class="text-muted small mb-2">
-                                <i class="fa fa-calendar text-humg-blue me-1"></i> {{ featured_post.created_at|date:"d/m/Y" }} 
-                                <span class="mx-2 text-light">|</span> 
-                                <i class="fa fa-eye text-humg-blue me-1"></i> {{ featured_post.view_count|default:"0" }} lượt xem
-                            </p>
-                            <p class="text-muted text-truncate-3 mb-0" style="font-size: 15px;">{{ featured_post.summary|default:"" }}</p>
+                <h3 class="fw-bold text-uppercase m-0" style="color: var(--humg-red); font-size: 1.5rem; letter-spacing: 0.5px;">
+                    <i class="fa fa-th-large me-2"></i>Tiện ích Sinh viên
+                </h3>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Khối 1: Tra cứu -->
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <a href="{% url 'students:tra_cuu' %}" class="text-decoration-none">
+                    <div class="service-card hover-up shadow-sm">
+                        <div class="service-card__icon text-primary">
+                            <i class="fa fa-search fa-3x"></i>
+                        </div>
+                        <div class="service-card__content">
+                            <h4 class="service-card__title">Tra cứu kết quả</h4>
+                            <p class="text-muted small m-0 t-2">Tra cứu điểm thi, tiến độ chuẩn đầu ra ngoại ngữ và tin học.</p>
                         </div>
                     </div>
-                    {% endwith %}
+                </a>
+            </div>
 
-                    <!-- DANH SÁCH BÀI VIẾT NHỎ (BÊN PHẢI) -->
-                    <div class="col-lg-6 col-md-12">
-                        <ul class="list-unstyled news-list-right m-0 h-100 d-flex flex-column justify-content-between">
-                            {% for post in block.posts|slice:"1:5" %}
-                            <li class="mb-3 pb-3 border-bottom d-flex align-items-start hover-zoom">
-                                <a href="{% url 'cms:post_detail' post.slug %}" class="flex-shrink-0 me-3 overflow-hidden shadow-sm rounded-2">
-                                    {% if post.image %}
-                                        <img src="{{ post.image.url }}" class="news-thumb-small" alt="{{ post.title }}">
-                                    {% else %}
-                                        <img src="{% static 'mofi/images/blog/blog-5.jpg' %}" class="news-thumb-small">
-                                    {% endif %}
-                                </a>
-                                <div class="flex-grow-1">
-                                    <h6 class="fw-bold mb-1 text-truncate-2" style="line-height: 1.4;">
-                                        <a href="{% url 'cms:post_detail' post.slug %}" class="text-dark hover-humg-blue" style="font-size: 16px;">{{ post.title }}</a>
-                                    </h6>
-                                    <div class="text-muted small mt-2">
-                                        <i class="fa fa-calendar-o text-humg-red me-1"></i> {{ post.created_at|date:"d/m/Y" }}
-                                    </div>
-                                </div>
-                            </li>
-                            {% endfor %}
-                        </ul>
+            <!-- Khối 2: Lịch thi -->
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <a href="{% url 'students:lich_thi' %}" class="text-decoration-none">
+                    <div class="service-card hover-up shadow-sm">
+                        <div class="service-card__icon text-success">
+                            <i class="fa fa-calendar-check-o fa-3x"></i>
+                        </div>
+                        <div class="service-card__content">
+                            <h4 class="service-card__title">Lịch thi - Kiểm tra</h4>
+                            <p class="text-muted small m-0 t-2">Xem danh sách phòng thi và số báo danh các đợt sắp tới.</p>
+                        </div>
                     </div>
-                    
+                </a>
+            </div>
+
+            <!-- Khối 3: Nộp chứng chỉ -->
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <a href="{% url 'students:nop_chung_chi' %}" class="text-decoration-none">
+                    <div class="service-card hover-up shadow-sm">
+                        <div class="service-card__icon text-warning">
+                            <i class="fa fa-certificate fa-3x"></i>
+                        </div>
+                        <div class="service-card__content">
+                            <h4 class="service-card__title">Nộp chứng chỉ</h4>
+                            <p class="text-muted small m-0 t-2">Đăng ký quy đổi chứng chỉ quốc tế sang chuẩn đầu ra.</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Khối 4: Quy chế -->
+            <div class="col-lg-3 col-md-6 col-sm-6">
+                <a href="{% url 'students:quy_che' %}" class="text-decoration-none">
+                    <div class="service-card hover-up shadow-sm">
+                        <div class="service-card__icon text-danger">
+                            <i class="fa fa-file-text-o fa-3x"></i>
+                        </div>
+                        <div class="service-card__content">
+                            <h4 class="service-card__title">Quy chế & Văn bản</h4>
+                            <p class="text-muted small m-0 t-2">Các quy định hiện hành về đào tạo và đánh giá năng lực.</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ==========================================
+         3. TIN TIÊU ĐIỂM / MỚI NHẤT (TOÀN HỆ THỐNG)
+         ========================================== -->
+    {% if latest_posts %}
+    <div class="mb-5 pb-5 border-bottom">
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3 class="fw-bold text-uppercase m-0" style="color: var(--humg-blue); font-size: 1.5rem; letter-spacing: 0.5px;">
+                    <i class="fa fa-newspaper-o me-2 text-humg-red"></i>Tiêu điểm & Mới nhất
+                </h3>
+            </div>
+        </div>
+
+        <div class="row g-5">
+            <!-- Bài viết Cực lớn (Bên trái) -->
+            {% with featured=latest_posts|first %}
+            <div class="col-lg-8">
+                <article class="mag-card h-100">
+                    <a href="{% url 'cms:post_detail' featured.slug %}" class="img-wrapper ratio-16-9 rounded-2 shadow-sm">
+                        {% if featured.image %}
+                            <img src="{{ featured.image.url }}" alt="{{ featured.title }}">
+                        {% else %}
+                            <img src="{% static 'img/logo/logo.jpg' %}" class="fallback-logo" alt="Logo">
+                        {% endif %}
+                    </a>
+                    <div class="mag-meta mt-4 d-flex align-items-center">
+                        <span class="badge bg-danger me-3" style="font-size: 0.8rem; padding: 6px 10px;">{{ featured.category.name }}</span>
+                        <span><i class="fa fa-calendar-o me-1"></i> {{ featured.created_at|date:"d/m/Y" }}</span>
+                    </div>
+                    <h2 class="mag-title" style="font-size: 2rem; letter-spacing: -0.5px;">
+                        <a href="{% url 'cms:post_detail' featured.slug %}">{{ featured.title }}</a>
+                    </h2>
+                    <p class="text-muted mt-2" style="font-size: 1.05rem; line-height: 1.6;">{{ featured.summary|default:"" }}</p>
+                </article>
+            </div>
+            {% endwith %}
+            
+            <!-- Cột Tin mới lên sóng (Bên phải) -->
+            <div class="col-lg-4">
+                <div class="bg-light p-4 rounded-2 h-100 border border-light shadow-sm">
+                    <h5 class="fw-bold border-bottom border-dark pb-3 mb-2 text-uppercase text-humg-blue" style="letter-spacing: 1px; font-size: 1.1rem;">
+                        Tin vừa lên sóng
+                    </h5>
+                    <ul class="sidebar-list">
+                        {% for post in latest_posts|slice:"1:6" %}
+                        <li class="hover-up">
+                            <span class="sidebar-num">0{{ forloop.counter }}</span>
+                            <div>
+                                <h6 class="fw-bold mb-2">
+                                    <a href="{% url 'cms:post_detail' post.slug %}" class="text-dark text-decoration-none hover-humg-blue t-3" style="font-size: 1rem; line-height: 1.4;">{{ post.title }}</a>
+                                </h6>
+                                <div class="mag-meta m-0" style="font-size: 0.75rem;">
+                                    <span class="text-danger me-2">{{ post.category.name }}</span>
+                                    <i class="fa fa-clock-o me-1"></i> {{ post.created_at|date:"d/m/Y" }}
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
         </div>
-        {% endif %}
-    {% empty %}
-        <!-- Trạng thái trống (Fallback) -->
-        <div class="col-12 text-center py-5">
-            <i class="fa fa-newspaper-o text-muted mb-3 opacity-25" style="font-size: 5rem;"></i>
-            <h5 class="fw-bold text-muted opacity-50">Nội dung đang được cập nhật...</h5>
+    </div>
+    {% endif %}
+
+
+    <!-- ==========================================
+         4. CHUYÊN MỤC TIN TỨC (CÁC CHUYÊN MỤC CÒN LẠI)
+         ========================================== -->
+    {% if home_blocks %}
+    <!-- Tiêu đề lớn phân cách Khối chuyên mục -->
+    <div class="d-flex align-items-center mb-5">
+        <h2 class="fw-bold text-uppercase m-0" style="color: var(--humg-blue); border-left: 6px solid var(--humg-red); padding-left: 15px; line-height: 1.2;">
+            Chuyên mục tin tức
+        </h2>
+        <div class="flex-grow-1 ms-4" style="height: 2px; background-color: #e0e0e0;"></div>
+    </div>
+
+    <!-- Vòng lặp từng chuyên mục (Hiện đầy đủ) -->
+    {% for block in home_blocks %}
+    <div class="category-section mb-5 pb-3">
+        <!-- Tiêu đề từng chuyên mục con -->
+        <div class="cat-heading d-flex justify-content-between align-items-end">
+            <h4 class="fw-bold m-0 text-uppercase" style="font-size: 1.25rem;">{{ block.category.name }}</h4>
+            <a href="{% url 'cms:post_list_by_category' block.category.slug %}" class="text-muted small fw-bold text-decoration-none hover-humg-blue">Xem tất cả <i class="fa fa-angle-right ms-1"></i></a>
         </div>
+        
+        <!-- Grid 4 bài viết trải đều hàng ngang -->
+        <div class="row g-4">
+            {% for post in block.posts|slice:"0:4" %}
+            <div class="col-lg-3 col-md-6 col-sm-6 mb-3">
+                <article class="mag-card h-100 d-flex flex-column hover-up">
+                    <a href="{% url 'cms:post_detail' post.slug %}" class="img-wrapper ratio-3-2 rounded-2 shadow-sm mb-3">
+                        {% if post.image %}
+                            <img src="{{ post.image.url }}" alt="{{ post.title }}">
+                        {% else %}
+                            <img src="{% static 'img/logo/logo.jpg' %}" class="fallback-logo" alt="Logo">
+                        {% endif %}
+                    </a>
+                    <div class="mag-meta">
+                        <span class="text-humg-red fw-bold"><i class="fa fa-calendar-o me-1"></i> {{ post.created_at|date:"d.m.Y" }}</span>
+                    </div>
+                    <h3 class="mag-title h6 mt-1 mb-0 flex-grow-1">
+                        <a href="{% url 'cms:post_detail' post.slug %}" class="t-3">{{ post.title }}</a>
+                    </h3>
+                </article>
+            </div>
+            {% endfor %}
+
+            <!-- Trạng thái trống nếu chuyên mục chưa có bài -->
+            {% if not block.posts %}
+            <div class="col-12 py-3 text-muted fst-italic">Chưa có bài viết nào trong chuyên mục này.</div>
+            {% endif %}
+        </div>
+    </div>
     {% endfor %}
+
+    {% else %}
+    <!-- Trạng thái khi hệ thống chưa có dữ liệu nào -->
+    <div class="col-12 text-center py-5 my-5">
+        <i class="fa fa-newspaper-o text-muted mb-3 opacity-25" style="font-size: 5rem;"></i>
+        <h5 class="fw-bold text-muted opacity-50">Nội dung đang được cập nhật...</h5>
+    </div>
+    {% endif %}
+
 </div>
 
 {% endblock %}

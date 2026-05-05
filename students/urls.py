@@ -101,4 +101,7 @@ urlpatterns = [
     
     # API Thêm mới chứng chỉ (Dùng chung cho Form của SV và Chuyên viên)
     path('api/chung-chi/them-moi/<int:student_id>/', views.quick_add_chung_chi, name='quick_add_chung_chi'),
+    path('lich-thi/', views.lich_thi, name='lich_thi'),
+    path('nop-chung-chi/', views.nop_chung_chi, name='nop_chung_chi'),
+    path('quy-che/', views.quy_che, name='quy_che'),
 ]

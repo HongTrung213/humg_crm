@@ -138,48 +138,48 @@
                     </div>
                 </div>
 
-                <div class="card content-sec border-0 shadow-sm mb-4">
-                    <div class="card-body">
-                        <h5 class="subs-title"><i class="feather-award"></i> Chứng chỉ đã nộp</h5>
-                        {% if sinh_vien.ds_chung_chi.all %}
-                        <div class="table-responsive">
-                            <table class="table table-bordered">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Loại</th>
-                                        <th>Tên chứng chỉ</th>
-                                        <th>Ngày cấp</th>
-                                        <th>Trạng thái xác minh</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for cc in sinh_vien.ds_chung_chi.all %}
-                                    <tr>
-                                        <td>{{ cc.get_loai_display }}</td>
-                                        <td><strong>{{ cc.ten_chung_chi }}</strong></td>
-                                        <td>{{ cc.ngay_cap|date:"d/m/Y" }}</td>
-                                        <td>
-                                            {% if cc.trang_thai == 'CHO' %}
-                                                <span class="badge bg-warning text-dark"><i class="feather-clock"></i> Đang chờ xác minh</span>
-                                            {% elif cc.trang_thai == 'DAT' %}
-                                                <span class="badge bg-success"><i class="feather-check-circle"></i> Đã duyệt</span>
-                                            {% else %}
-                                                <span class="badge bg-danger"><i class="feather-x-circle"></i> Không hợp lệ</span>
-                                                <br><small class="text-danger">{{ cc.ghi_chu_xac_minh }}</small>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% else %}
-                        <div class="alert alert-secondary text-center mb-0">
-                            <i>Sinh viên chưa nộp chứng chỉ quốc tế thay thế.</i>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light">
+            <tr>
+                <th class="ps-4">Loại & Tên chứng chỉ</th>
+                <th>Số hiệu</th>
+                <th>Ngày cấp</th>
+                <th>Trạng thái xác minh</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Đảm bảo gọi đúng sinh_vien.ds_chung_chi.all -->
+            {% for cc in sinh_vien.ds_chung_chi.all %}
+            <tr>
+                <td class="ps-4 py-3">
+                    <span class="badge bg-light text-muted border mb-1" style="font-size: 11px;">{{ cc.danh_muc.get_loai_display }}</span>
+                    <div class="fw-bold text-dark fs-6">{{ cc.danh_muc.ten_chung_chi }}</div>
+                </td>
+                <td><code class="text-muted">{{ cc.so_hieu }}</code></td>
+                <td>{{ cc.ngay_cap|date:"d/m/Y" }}</td>
+                <td>
+                    {% if cc.trang_thai == 'CHO' %}
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">Đang chờ duyệt</span>
+                    {% elif cc.trang_thai == 'DAT' %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="fa fa-check me-1"></i> Đã duyệt</span>
+                    {% else %}
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Bị từ chối</span>
+                        <div class="small text-danger mt-1 fst-italic"><i class="fa fa-info-circle"></i> {{ cc.ghi_chu_xac_minh }}</div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center py-4 text-muted fst-italic">
+                    <i class="fa fa-folder-open-o opacity-50 fs-3 d-block mb-2"></i>
+                    Không có dữ liệu chứng chỉ nào được nộp.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
                 <div class="card-body p-4">
     <div class="row mb-4 pb-3 border-bottom">

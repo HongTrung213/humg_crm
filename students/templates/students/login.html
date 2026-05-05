@@ -2,58 +2,154 @@
 {% load static %}
 
 {% block content %}
+
+<!-- KHỐI THÔNG BÁO LỖI (NẾU ĐĂNG NHẬP SAI) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-danger border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa fa-exclamation-triangle me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
+<!-- GIAO DIỆN ĐĂNG NHẬP -->
 <section class="login-section py-5 bg-light" style="min-height: 80vh; display: flex; align-items: center;">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-5 col-md-8">
                 <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
-                    <div class="card-header bg-primary text-center py-4 border-0">
-                        <div class="mb-2">
-                            <i class="feather-user-check text-white" style="font-size: 3rem;"></i>
+                    
+                    <!-- Header Card mang màu Xanh HUMG -->
+                    <div class="card-header bg-humg-blue text-center py-4 border-0">
+                        <div class="mb-3 mt-2">
+                            <img src="{% static 'img/logo/logo.jpg' %}" alt="CFI HUMG" class="bg-white p-2 rounded-3 shadow-sm" style="max-height: 70px; object-fit: contain;">
                         </div>
-                        <h4 class="text-white mb-0 fw-bold">CỔNG TRA CỨU HUMG</h4>
-                        <p class="text-white-50 mb-0 small">Hệ thống chuẩn đầu ra & Chứng chỉ</p>
+                        <h4 class="text-white mb-1 fw-bold text-uppercase">Cổng tra cứu Trung tâm Ngoại ngữ - Tin học</h4>
+                        <p class="text-white-50 mb-0 small">Hệ thống quản lý và chăm sóc sinh viên trường Đại học Mỏ - Địa chất về chuẩn ngoại ngữ và công nghệ thông tin.</p>
                     </div>
                     
                     <div class="card-body p-4 p-md-5">
                         
-                        <a href="{% url 'social:begin' 'microsoft-graph' %}" class="btn btn-primary w-100 py-3 fw-bold text-uppercase mb-4 shadow-sm" style="letter-spacing: 1px; border-radius: 8px;">
+                        <!-- ĐĂNG NHẬP SINH VIÊN (MICROSOFT) -->
+                        <a href="{% url 'social:begin' 'microsoft-graph' %}" class="btn btn-humg-blue w-100 py-3 fw-bold text-uppercase mb-4 shadow-sm" style="letter-spacing: 1px; border-radius: 8px;">
                             <i class="fab fa-microsoft me-2"></i> Đăng nhập bằng Email Trường
                         </a>
 
                         <div class="d-flex align-items-center mb-4">
-                            <hr class="flex-grow-1">
-                            <span class="mx-3 text-muted small fw-bold">HOẶC DÀNH CHO THÍ SINH TỰ DO</span>
-                            <hr class="flex-grow-1">
+                            <hr class="flex-grow-1 border-secondary opacity-25">
+                            <span class="mx-3 text-muted small fw-bold text-uppercase" style="font-size: 11px;">Hoặc đăng nhập thủ công </span>
+                            <hr class="flex-grow-1 border-secondary opacity-25">
                         </div>
 
+                        <!-- ĐĂNG NHẬP THỦ CÔNG -->
                         <form method="POST" action="{% url 'students:dang_nhap' %}">
                             {% csrf_token %}
                             <div class="mb-3">
-                                <label class="form-label fw-bold text-dark">Tài khoản (MSSV / CCCD)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="feather-user"></i></span>
-                                    <input type="text" class="form-control border-start-0 ps-0" name="mssv" placeholder="Nhập tài khoản" required>
+                                <label class="form-label fw-bold text-dark small text-uppercase">Tài khoản (MSSV / CCCD) <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-custom">
+                                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="feather-user"></i></span>
+                                    <input type="text" class="form-control border-start-0 ps-0 bg-light" name="mssv" placeholder="Nhập tài khoản..." required>
                                 </div>
                             </div>
                             
                             <div class="mb-4">
-                                <label class="form-label fw-bold text-dark">Mật khẩu</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="feather-lock"></i></span>
-                                    <input type="password" class="form-control border-start-0 ps-0" name="password" placeholder="Nhập mật khẩu" required>
+                                <label class="form-label fw-bold text-dark small text-uppercase">Mật khẩu <span class="text-danger">*</span></label>
+                                <div class="input-group input-group-custom">
+                                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="feather-lock"></i></span>
+                                    <input type="password" class="form-control border-start-0 ps-0 bg-light" name="password" placeholder="Nhập mật khẩu..." required>
                                 </div>
                             </div>
 
-                            <button type="submit" class="btn btn-outline-primary w-100 py-2 fw-bold text-uppercase" style="letter-spacing: 1px; border-radius: 8px;">
-                                Đăng Nhập Hệ Thống
+                            <button type="submit" class="btn btn-outline-humg-blue w-100 py-3 fw-bold text-uppercase hover-up" style="letter-spacing: 1px; border-radius: 8px;">
+                                Đăng Nhập Hệ Thống <i class="feather-arrow-right ms-2"></i>
                             </button>
                         </form>
                         
                     </div>
                 </div>
+                
+                <div class="text-center mt-4 text-muted small">
+                    <p class="mb-0">Bản quyền © 2026 Trường Đại học Mỏ - Địa chất</p>
+                    <p>Phát triển bởi Trung tâm Ngoại ngữ - Tin học</p>
+                </div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- CSS THƯƠNG HIỆU HUMG -->
+<style>
+    :root {
+        --humg-blue: #004b87;
+        --humg-red: #cc0000;
+    }
+    
+    .bg-humg-blue { background-color: var(--humg-blue) !important; }
+    .text-humg-blue { color: var(--humg-blue) !important; }
+    
+    .btn-humg-blue { 
+        background-color: var(--humg-blue); 
+        color: white; 
+        border: none; 
+        transition: all 0.3s ease;
+    }
+    .btn-humg-blue:hover { 
+        background-color: #003366; 
+        color: white; 
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0, 75, 135, 0.3) !important;
+    }
+    
+    .btn-outline-humg-blue { 
+        border: 2px solid var(--humg-blue); 
+        color: var(--humg-blue); 
+        background: transparent; 
+        transition: all 0.3s ease;
+    }
+    .btn-outline-humg-blue:hover { 
+        background-color: var(--humg-blue); 
+        color: white; 
+    }
+    
+    .input-group-custom .form-control,
+    .input-group-custom .input-group-text {
+        border-color: #e9ecef;
+        transition: all 0.3s ease;
+    }
+    .input-group-custom:focus-within .form-control,
+    .input-group-custom:focus-within .input-group-text {
+        border-color: var(--humg-blue) !important;
+        background-color: #fff !important;
+    }
+    .input-group-custom .form-control:focus { box-shadow: none; }
+    
+    .hover-up { transition: transform 0.2s ease; }
+    .hover-up:hover { transform: translateY(-2px); }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+    });
+</script>
 {% endblock %}

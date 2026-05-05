@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<!-- KHỐI THÔNG BÁO TOAST (KẾ THỪA TỪ ADMIN) -->
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-md-10">
+            
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
+                
+                <!-- Card Header giống Admin -->
+                <div class="card-header bg-white pt-4 px-4 pb-3 border-bottom">
+                    <h5 class="fw-bold text-dark mb-1"><i class="fa fa-cloud-upload text-muted me-2"></i>Nộp Chứng chỉ Xét Chuẩn đầu ra</h5>
+                    <p class="small text-muted mb-0">Biểu mẫu khai báo và nộp minh chứng ngoại ngữ / tin học trực tuyến.</p>
+                </div>
+                
+                <!-- Form Body -->
+                <div class="card-body p-4 bg-white">
+                    <form method="POST" action="{% url 'students:nop_chung_chi' %}" enctype="multipart/form-data" class="row g-3">
+                        {% csrf_token %}
+                        
+                        <div class="col-md-12 mb-2">
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Loại Chứng chỉ <span class="text-danger">*</span></label>
+                            <select name="danh_muc_id" class="form-select custom-input" required>
+                                <option value="">-- Click để chọn --</option>
+                                <optgroup label="🔠 CHUẨN NGOẠI NGỮ">
+                                    {% for dm in danh_muc_cc %}
+                                        {% if dm.loai == 'NGOAI_NGU' %}
+                                            <option value="{{ dm.id }}">{{ dm.ten_chung_chi }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                                <optgroup label="💻 CHUẨN TIN HỌC">
+                                    {% for dm in danh_muc_cc %}
+                                        {% if dm.loai == 'TIN_HOC' %}
+                                            <option value="{{ dm.id }}">{{ dm.ten_chung_chi }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </optgroup>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-12 mb-2">
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Số hiệu / Mã vạch <span class="text-danger">*</span></label>
+                            <input type="text" name="so_hieu" class="form-control custom-input" placeholder="Ví dụ: B12345678" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Ngày cấp <span class="text-danger">*</span></label>
+                            <input type="date" name="ngay_cap" class="form-control custom-input" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label fw-bold text-secondary small text-uppercase mb-1">Ảnh chụp bản gốc <span class="text-danger">*</span></label>
+                            <input type="file" name="file_minh_chung" class="form-control custom-input p-2" accept="image/*,.pdf" required>
+                        </div>
+                        
+                        <div class="col-12 mt-3">
+                            <div class="alert alert-light-info border-info-subtle small mb-0 p-3 text-dark rounded-3 bg-light">
+                                <i class="fa fa-info-circle text-info me-2"></i> Sinh viên tải lên bản scan hoặc ảnh chụp rõ nét chứng chỉ gốc. Hệ thống sẽ thẩm định hồ sơ trong vòng 3-5 ngày làm việc.
+                            </div>
+                        </div>
+
+                        <!-- Footer Form -->
+                        <div class="col-12 mt-4 pt-3 border-top d-flex justify-content-end">
+                            <a href="{% url 'students:home' %}" class="btn btn-white fw-bold border shadow-sm rounded-3 px-4 me-2">Quay lại</a>
+                            <button type="submit" class="btn btn-dark fw-bold shadow-sm rounded-3 px-4"><i class="fa fa-paper-plane me-1"></i> Gửi yêu cầu xét duyệt</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* CSS KẾ THỪA WHITE EDITION TỪ ADMIN */
+    .bg-info-subtle { background-color: rgba(13, 202, 240, 0.1) !important; }
+    .border-info-subtle { border-color: rgba(13, 202, 240, 0.3) !important; }
+    
+    .custom-input {
+        font-size: 14px !important; color: #333 !important;
+        border: 1px solid #ddd !important; background-color: #fff !important;
+        padding: 10px 15px !important; border-radius: 8px !important;
+    }
+    .custom-input:focus { border-color: #333 !important; box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.05) !important; }
+    
+    /* Chỉnh nút File Upload */
+    input[type="file"]::file-selector-button {
+        background-color: #f8f9fa; color: #333; border: 1px solid #ddd;
+        border-radius: 4px; padding: 0.1rem 0.5rem; margin-right: 10px; cursor: pointer;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+            setTimeout(() => { toastEl.remove(); }, 4500);
+        });
+    });
+</script>
+{% endblock %}

@@ -14,11 +14,41 @@
         <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
         <link rel="stylesheet" href="{% static 'plugins/bootstrap-tagsinput/css/bootstrap-tagsinput.css' %}">
         <link rel="stylesheet" href="{% static 'css/style.css' %}">
+        
+        <!-- Đưa CSS Footer lên Head để load mượt hơn -->
+        <style>
+            /* Ép Footer luôn nằm dưới đáy trang */
+            body { display: flex; flex-direction: column; min-height: 100vh; }
+            .main-wrapper { display: flex; flex-direction: column; flex-grow: 1; }
+            main { flex-grow: 1; }
+            
+            /* Màu sắc thương hiệu */
+            .bg-humg-blue { background-color: #004b87 !important; }
+            
+            /* Hiệu ứng link footer */
+            .footer-link { transition: all 0.3s ease; }
+            .footer-link:hover { color: #ffffff !important; padding-left: 5px; }
+            
+            /* Nút mạng xã hội - Đã tăng kích thước và làm sáng nền */
+            .social-btn {
+                display: flex; align-items: center; justify-content: center;
+                width: 42px; height: 42px;
+                border-radius: 50%;
+                background-color: rgba(255, 255, 255, 0.15);
+                color: white;
+                font-size: 1.1rem;
+                text-decoration: none;
+                transition: all 0.3s ease;
+            }
+            .social-btn:hover { background-color: #cc0000; color: white; transform: translateY(-3px); }
+        </style>
         {% block extra_css %}{% endblock %}
     </head>
-    <body>
+    
+    <body class="d-flex flex-column min-vh-100">
         <div class="main-wrapper">
         
+            <!-- ================= HEADER ================= -->
             <header class="header header-page">
                 <div class="header-fixed">
                     <nav class="navbar navbar-expand-lg header-nav scroll-sticky">
@@ -113,8 +143,10 @@
                 </div>
             </header>
 
+            <!-- ================= GLOBAL MESSAGES ================= -->
             {% if messages %}
-            <div class="container" style="margin-top: 80px;"> {% for message in messages %}
+            <div class="container" style="margin-top: 80px;"> 
+                {% for message in messages %}
                     <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} alert-dismissible fade show shadow-sm" role="alert">
                         <i class="feather-info me-2"></i> {{ message }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -123,66 +155,71 @@
             </div>
             {% endif %}
 
-            <main style="min-height: 70vh;">
+            <!-- ================= MAIN CONTENT ================= -->
+            <main>
+                <!-- CHỈ CÓ 1 BLOCK CONTENT Ở ĐÂY -->
                 {% block content %}{% endblock %}
             </main>
 
-            <footer class="footer mt-5 border-top">
-                <div class="footer-top py-5">
-                    <div class="container">
-                        <div class="row">
-                            <div class="col-lg-6 col-md-6 mb-4 mb-lg-0">
-                                <div class="footer-widget footer-about">
-                                    <div class="footer-logo mb-3">
-                                        <img src="{% static 'img/logo/logo.jpg' %}" alt="HUMG Logo" style="max-height: 50px; object-fit: contain;">
-                                    </div>
-                                    <div class="footer-about-content">
-                                        <p class="text-muted pe-md-5">Hệ thống quản lý và chăm sóc sinh viên trường Đại học Mỏ - Địa chất về chuẩn ngoại ngữ và công nghệ thông tin.</p>
-                                    </div>
-                                </div>
+            <!-- ================= FOOTER DÀNH CHO SINH VIÊN ================= -->
+            <!-- ================= FOOTER DÀNH CHO SINH VIÊN ================= -->
+            <footer class="bg-humg-blue text-white pt-5 pb-4 mt-auto">
+                <div class="container">
+                    <div class="row">
+                        <!-- Cột 1: Thông tin liên hệ -->
+                        <div class="col-lg-5 col-md-12 mb-4 mb-lg-0 pe-lg-4">
+                            <div class="mb-4">
+                                <img src="{% static 'img/logo/logo.jpg' %}" alt="HUMG Logo" class="bg-white p-2 rounded-3 shadow-sm" style="max-height: 65px; object-fit: contain;">
                             </div>
-                            <div class="col-lg-6 col-md-6">
-                                <div class="footer-widget footer-contact">
-                                    <h5 class="footer-title fw-bold mb-4">Thông tin liên hệ</h5>
-                                    <div class="footer-contact-info text-muted">
-                                        <div class="footer-address d-flex align-items-start mb-3">
-                                            <img src="{% static 'img/icon/icon-20.svg' %}" alt="Address" class="me-3 mt-1" style="width: 20px;">
-                                            <p class="mb-0">Số 18 Phố Viên, phường Đức Thắng<br> quận Bắc Từ Liêm, Hà Nội</p>
-                                        </div>
-                                        <div class="d-flex align-items-center mb-3">
-                                            <img src="{% static 'img/icon/icon-19.svg' %}" alt="Email" class="me-3" style="width: 20px;">
-                                            <p class="mb-0">daotao@humg.edu.vn</p>
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <img src="{% static 'img/icon/icon-21.svg' %}" alt="Phone" class="me-3" style="width: 20px;">
-                                            <p class="mb-0">(+84) 24 3838 9633</p>
-                                        </div>
-                                    </div>
-                                </div>
+                            <h5 class="fw-bold text-uppercase text-white mb-3" style="letter-spacing: 1px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">Trung tâm Ngoại ngữ - Tin học</h5>
+                            <ul class="list-unstyled text-white-50 mb-0" style="line-height: 1.8; font-size: 15px;">
+                                <li class="mb-2"><i class="fas fa-map-marker-alt me-2 text-white" style="width: 20px; text-align: center;"></i>Phòng C403B, nhà C 5 tầng, Khu A, Trường Đại học Mỏ - Địa chất.</li>
+                                <li class="mb-2"><i class="fas fa-map-marker-alt me-2 text-white" style="width: 20px; text-align: center;"></i>Số 18 Phố Viên - P. Đức Thắng - Q. Bắc Từ Liêm - Hà Nội</li>
+                                <li class="mb-2"><i class="fas fa-phone-alt me-2 text-white" style="width: 20px; text-align: center;"></i>024 3752 5831</li>
+                                <li><i class="fas fa-envelope me-2 text-white" style="width: 20px; text-align: center;"></i>cfi@humg.edu.vn</li>
+                            </ul>
+                        </div>
+
+                        <!-- Cột 2: Liên kết nhanh -->
+                        <div class="col-lg-4 col-md-6 mb-4 mb-md-0">
+                            <h5 class="fw-bold text-uppercase text-white mb-4 pb-2 d-inline-block" style="border-bottom: 3px solid #cc0000; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">Liên kết Website</h5>
+                            <ul class="list-unstyled" style="line-height: 2; font-size: 15px;">
+                                <li><a href="http://humg.edu.vn/" target="_blank" class="text-white-50 text-decoration-none footer-link"><i class="fas fa-angle-right me-2 text-white"></i>Trang chủ Đại học Mỏ - Địa chất</a></li>
+                                <li><a href="https://cfi.humg.edu.vn/" target="_blank" class="text-white-50 text-decoration-none footer-link"><i class="fas fa-angle-right me-2 text-white"></i>Trung tâm Ngoại ngữ - Tin học</a></li>
+                                <li><a href="https://hsk.humg.edu.vn/" target="_blank" class="text-white-50 text-decoration-none footer-link"><i class="fas fa-angle-right me-2 text-white"></i>HSK-HUMG</a></li>
+                                <li><a href="http://lic.humg.edu.vn/" target="_blank" class="text-white-50 text-decoration-none footer-link"><i class="fas fa-angle-right me-2 text-white"></i>Trung tâm Thông tin - Thư viện</a></li>
+                                <li><a href="https://ctsv.humg.edu.vn/" target="_blank" class="text-white-50 text-decoration-none footer-link"><i class="fas fa-angle-right me-2 text-white"></i>Phòng Công tác Chính trị- Sinh viên</a></li>
+                                <li><a href="http://khaothi.humg.edu.vn/" target="_blank" class="text-white-50 text-decoration-none footer-link"><i class="fas fa-angle-right me-2 text-white"></i>Khảo thí & Đảm bảo CLGD</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Cột 3: Mạng xã hội -->
+                        <div class="col-lg-3 col-md-6">
+                            <h5 class="fw-bold text-uppercase text-white mb-4 pb-2 d-inline-block" style="border-bottom: 3px solid #cc0000; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">Kết nối với chúng tôi</h5>
+                            <div class="d-flex gap-3 mb-4">
+                                <a href="https://www.facebook.com/cfi.humg/" target="_blank" class="social-btn shadow-sm"><i class="fab fa-facebook-f"></i></a>
+                                <a href="https://www.youtube.com/channel/UCxBPI_5zwm5f1rm0HO1zYUQ" target="_blank" class="social-btn shadow-sm"><i class="fab fa-youtube"></i></a>
+                                <a href="mailto:cfi@humg.edu.vn" class="social-btn shadow-sm"><i class="fas fa-envelope"></i></a>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="footer-bottom bg-light py-3">
-                    <div class="container">
-                        <div class="row align-items-center">
-                            <div class="col-md-6 text-center text-md-start mb-2 mb-md-0">
-                                <div class="privacy-policy">
-                                    <ul class="list-inline mb-0 small">
-                                        <li class="list-inline-item"><a href="#" class="text-decoration-none text-muted">Quy chế Đào tạo</a></li>
-                                        <li class="list-inline-item ms-3"><a href="#" class="text-decoration-none text-muted">Bảo mật thông tin</a></li>
-                                    </ul>
-                                </div>
-                            </div>
-                            <div class="col-md-6 text-center text-md-end">
-                                <p class="mb-0 small text-muted">&copy; 2026 HUMG. All rights reserved.</p>
-                            </div>
+                    
+                    <hr class="border-light opacity-25 mt-3 mb-4">
+                    
+                    <div class="row align-items-center">
+                        <div class="col-md-6 text-white-50 text-center text-md-start mb-2 mb-md-0" style="font-size: 14px;">
+                            Bản quyền © 2026 thuộc về <strong class="text-white opacity-75">Trường Đại học Mỏ - Địa chất</strong>.
+                        </div>
+                        <div class="col-md-6 text-white-50 text-center text-md-end" style="font-size: 14px;">
+                            Phát triển bởi <strong class="text-white opacity-75">Trung tâm Ngoại ngữ - Tin học</strong>
                         </div>
                     </div>
                 </div>
             </footer>
-        </div>
+            
+        </div> <!-- Đóng main-wrapper -->
 
+        <!-- ================= SCRIPTS ================= -->
         <script src="{% static 'js/jquery-3.7.1.min.js' %}"></script>
         <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
         <script src="{% static 'plugins/select2/js/select2.min.js' %}"></script>
