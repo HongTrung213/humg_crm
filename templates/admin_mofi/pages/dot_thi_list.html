@@ -1,52 +1,60 @@
 {% extends 'admin_mofi/base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container-fluid">
-    <!-- TIÊU ĐỀ TRANG -->
+<div class="container-fluid mt-4">
     <div class="page-title mb-4">
         <div class="row align-items-center">
             <div class="col-6">
-                <h4 class="fw-bold mb-0">
+                <h4 class="fw-bold mb-0 text-dark">
                     <i class="fa fa-calendar-check-o text-primary me-2"></i>Quản lý Đợt thi (Khảo thí)
                 </h4>
             </div>
             <div class="col-6 text-end">
-                <button class="btn btn-primary fw-bold shadow-sm rounded-3" data-bs-toggle="modal" data-bs-target="#addDotThiModal">
+                <button class="btn btn-primary fw-bold shadow-sm rounded-3 px-4 py-2" data-bs-toggle="modal" data-bs-target="#addDotThiModal">
                     <i class="fa fa-plus-circle me-1"></i> Tạo Đợt thi mới
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- DANH SÁCH ĐỢT THI (DẠNG LƯỚI CARD) -->
-    <div class="row g-4">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm bg-white" role="alert">
+                <i class="feather-alert-circle me-2"></i> {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row g-4 mb-4">
         {% for dt in dot_this %}
         <div class="col-xl-4 col-md-6">
-            <div class="card shadow-sm border-0 border-start border-4 rounded-4 h-100 transition-hover {% if 'tin' in dt.ten_dot|lower %}border-success{% else %}border-primary{% endif %}">
+            <div class="card shadow-sm border-0 border-start border-4 rounded-4 h-100 transition-hover bg-white {% if 'tin' in dt.ten_dot|lower %}border-info{% else %}border-primary{% endif %}">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <span class="badge bg-light text-dark border px-2 py-1 shadow-sm fw-bold">
                             <i class="fa fa-barcode text-muted me-1"></i>{{ dt.ma_dot }}
                         </span>
                         
-                        <!-- LOGIC TRẠNG THÁI 3 CẤP ĐỘ THEO THỜI GIAN THỰC -->
                         {% if dt.trang_thai_hien_tai == 1 %}
-                            <span class="badge bg-success-subtle text-success px-2 py-1 rounded-pill shadow-sm"><i class="fa fa-circle-o-notch fa-spin me-1"></i>Đang hoạt động</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill shadow-sm"><i class="fa fa-circle-o-notch fa-spin me-1"></i>Đang hoạt động</span>
                         {% elif dt.trang_thai_hien_tai == 2 %}
-                            <span class="badge bg-warning-subtle text-warning px-2 py-1 rounded-pill shadow-sm"><i class="fa fa-clock-o me-1"></i>Sắp diễn ra</span>
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1 rounded-pill shadow-sm"><i class="fa fa-clock-o me-1"></i>Sắp diễn ra</span>
                         {% else %}
-                            <span class="badge bg-secondary-subtle text-secondary px-2 py-1 rounded-pill shadow-sm"><i class="fa fa-lock me-1"></i>Đã kết thúc</span>
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1 rounded-pill shadow-sm"><i class="fa fa-lock me-1"></i>Đã kết thúc</span>
                         {% endif %}
                     </div>
                     
                     <h5 class="fw-bold text-dark mb-3 lh-base">{{ dt.ten_dot }}</h5>
                     
-                    <div class="bg-light p-3 rounded-3 mt-3">
+                    <div class="bg-light p-3 rounded-3 mt-3 border">
                         <div class="d-flex align-items-center mb-2 border-bottom pb-2">
                             <i class="fa fa-play text-success me-2" style="width: 20px;"></i>
                             <span class="text-muted small">Bắt đầu:</span>
                             <span class="ms-auto fw-bold text-dark small">{{ dt.thoi_gian_bat_dau|date:"d/m/Y H:i" }}</span>
                         </div>
-                        <div class="d-flex align-items-center mb-2">
+                        <div class="d-flex align-items-center mb-0">
                             <i class="fa fa-stop text-danger me-2" style="width: 20px;"></i>
                             <span class="text-muted small">Kết thúc:</span>
                             <span class="ms-auto fw-bold text-dark small">{{ dt.thoi_gian_ket_thuc|date:"d/m/Y H:i" }}</span>
@@ -62,29 +70,22 @@
             </div>
         </div>
         {% empty %}
-        <div class="col-12">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body py-5 text-center">
-                    <i class="fa fa-calendar-times-o fa-4x text-light-muted mb-3 d-block"></i>
-                    <h5 class="fw-bold text-muted">Hệ thống chưa có đợt thi nào.</h5>
-                    <p class="text-muted mb-4">Bạn hãy tạo một đợt thi mới để hệ thống bắt đầu chạy Auto-Check trạng thái nhé.</p>
-                    <button class="btn btn-primary fw-bold px-4" data-bs-toggle="modal" data-bs-target="#addDotThiModal">
-                        Tạo Đợt Thi Đầu Tiên
-                    </button>
-                </div>
+        <div class="col-12 text-center py-5">
+            <div class="card border-0 shadow-sm rounded-4 bg-white py-5">
+                <i class="fa fa-calendar-times-o fa-4x text-light-muted mb-3"></i>
+                <h5 class="fw-bold text-muted">Hệ thống chưa có đợt thi nào.</h5>
             </div>
         </div>
         {% endfor %}
     </div>
 </div>
 
-<!-- MODAL: TẠO ĐỢT THI MỚI (Đã gỡ bỏ công tắc thủ công) -->
-<div class="modal fade" id="addDotThiModal" tabindex="-1" aria-labelledby="addDotThiModalLabel" aria-hidden="true">
+<div class="modal fade" id="addDotThiModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="modal-content border-0 shadow-lg rounded-4 bg-white overflow-hidden">
             
             <div class="modal-header bg-primary text-white py-3 px-4">
-                <h5 class="modal-title fw-bold mb-0" id="addDotThiModalLabel">
+                <h5 class="modal-title fw-bold mb-0">
                     <i class="fa fa-calendar-plus-o me-2"></i>Tạo Lịch Khảo Thí Tự Động
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -92,70 +93,51 @@
             
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
-                <div class="modal-body p-4 bg-light">
+                <div class="modal-body p-4 bg-white">
                     
-                    <!-- Khối 1: Thông tin chung -->
-                    <div class="card shadow-sm mb-4 border-0 rounded-3">
+                    <div class="card shadow-none mb-4 border rounded-3 bg-white">
                         <div class="card-body p-4">
-                            <h6 class="fw-bold text-primary mb-3"><i class="fa fa-info-circle me-2"></i>1. Khung thời gian & Thông tin</h6>
+                            <h6 class="fw-bold text-primary mb-3 border-bottom pb-2">1. Khung thời gian & Thông tin</h6>
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="form-label fw-bold small text-muted">Mã đợt thi <span class="text-danger">*</span></label>
-                                    <input type="text" name="ma_dot" class="form-control shadow-none bg-light fw-bold text-uppercase" placeholder="VD: D5_2526_NN" required>
+                                    <label class="form-label fw-bold small text-muted">Mã đợt thi</label>
+                                    <input type="text" name="ma_dot" class="form-control fw-bold text-uppercase" placeholder="D5_2026" required>
                                 </div>
                                 <div class="col-md-8">
-                                    <label class="form-label fw-bold small text-muted">Tên đợt thi <span class="text-danger">*</span></label>
-                                    <input type="text" name="ten_dot" class="form-control shadow-none bg-light" placeholder="VD: CĐR Ngoại ngữ Đợt V năm 2025-2026" required>
+                                    <label class="form-label fw-bold small text-muted">Tên đợt thi</label>
+                                    <input type="text" name="ten_dot" class="form-control" placeholder="VD: CĐR Ngoại ngữ Đợt V..." required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted">Thời gian Bắt đầu <span class="text-danger">*</span></label>
-                                    <input type="datetime-local" name="thoi_gian_bat_dau" class="form-control shadow-none bg-light" required>
+                                    <label class="form-label fw-bold small text-muted">Thời gian Bắt đầu</label>
+                                    <input type="datetime-local" name="thoi_gian_bat_dau" class="form-control" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold small text-muted">Thời gian Kết thúc <span class="text-danger">*</span></label>
-                                    <input type="datetime-local" name="thoi_gian_ket_thuc" class="form-control shadow-none bg-light" required>
-                                </div>
-                                <div class="col-12 mt-2 pt-2 border-top">
-                                    <small class="text-info fw-bold"><i class="fa fa-magic me-1"></i> Hệ thống sẽ tự động Mở/Khóa đợt thi dựa vào Khung thời gian trên.</small>
+                                    <label class="form-label fw-bold small text-muted">Thời gian Kết thúc</label>
+                                    <input type="datetime-local" name="thoi_gian_ket_thuc" class="form-control" required>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Khối 2: Cấu hình Auto-Pass -->
-                    <div class="card shadow-sm border-0 rounded-3 border-top border-warning border-3">
+                    <div class="card shadow-none border rounded-3 border-top border-warning border-3 bg-white">
                         <div class="card-body p-4">
-                            <h6 class="fw-bold text-warning mb-3"><i class="fa fa-cogs me-2"></i>2. Cấu hình Xét Duyệt Tự động</h6>
-                            <p class="small text-muted mb-3">Hệ thống sẽ dựa vào cấu hình điểm này để tự động đánh trượt hoặc chấm đạt cho sinh viên khi Import file Excel.</p>
-                            
+                            <h6 class="fw-bold text-warning mb-3 border-bottom pb-2">2. Cấu hình Xét Duyệt Tự động</h6>
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <label class="form-label small fw-bold text-success">Điểm Chuẩn NN</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.5" name="diem_chuan_ngoai_ngu" class="form-control fw-bold text-success" value="50" required>
-                                        <span class="input-group-text bg-light text-muted">Điểm</span>
-                                    </div>
+                                    <input type="number" step="0.5" name="diem_chuan_ngoai_ngu" class="form-control fw-bold text-success" value="50" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label small fw-bold text-danger">Điểm Liệt NN</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.5" name="diem_liet_ngoai_ngu" class="form-control fw-bold text-danger" value="0" required>
-                                        <span class="input-group-text bg-light text-muted">Điểm</span>
-                                    </div>
+                                    <input type="number" step="0.5" name="diem_liet_ngoai_ngu" class="form-control fw-bold text-danger" value="0" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label small fw-bold text-success">Điểm Chuẩn Tin</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.5" name="diem_chuan_tin_hoc" class="form-control fw-bold text-success" value="50" required>
-                                        <span class="input-group-text bg-light text-muted">Điểm</span>
-                                    </div>
+                                    <input type="number" step="0.5" name="diem_chuan_tin_hoc" class="form-control fw-bold text-success" value="50" required>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label small fw-bold text-danger">Điểm Liệt Tin</label>
-                                    <div class="input-group">
-                                        <input type="number" step="0.5" name="diem_liet_tin_hoc" class="form-control fw-bold text-danger" value="0" required>
-                                        <span class="input-group-text bg-light text-muted">Điểm</span>
-                                    </div>
+                                    <input type="number" step="0.5" name="diem_liet_tin_hoc" class="form-control fw-bold text-danger" value="0" required>
                                 </div>
                             </div>
                         </div>
@@ -163,9 +145,9 @@
 
                 </div>
                 
-                <div class="modal-footer bg-white py-3 px-4">
+                <div class="modal-footer bg-white py-3 px-4 border-top">
                     <button type="button" class="btn btn-light fw-bold border" data-bs-dismiss="modal">Hủy bỏ</button>
-                    <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm"><i class="fa fa-save me-2"></i>Xác nhận Tạo Lịch</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4 shadow-sm">Xác nhận Tạo Lịch</button>
                 </div>
             </form>
         </div>
@@ -173,8 +155,30 @@
 </div>
 
 <style>
-    /* Hiệu ứng mượt mà khi di chuột vào thẻ Đợt thi */
-    .transition-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    /* ÉP MÀU CHỮ ĐEN CHO TẤT CẢ Ô NHẬP LIỆU TRONG MODAL */
+    .modal-body .form-control {
+        color: #000000 !important;
+        background-color: #ffffff !important;
+        border: 1px solid #ced4da !important;
+        font-weight: 500;
+    }
+
+    /* Hiệu ứng khi click vào ô nhập liệu */
+    .modal-body .form-control:focus {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+        background-color: #fff !important;
+        color: #000 !important;
+    }
+
+    /* Hiệu ứng mượt cho Card */
+    .transition-hover { transition: all 0.3s ease; }
     .transition-hover:hover { transform: translateY(-5px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
+    
+    /* Chỉnh biểu tượng lịch của datetime-local cho rõ ràng */
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        filter: invert(0); /* Giữ icon gốc hoặc chỉnh màu nếu cần */
+    }
 </style>
 {% endblock %}

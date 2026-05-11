@@ -144,16 +144,6 @@
             </header>
 
             <!-- ================= GLOBAL MESSAGES ================= -->
-            {% if messages %}
-            <div class="container" style="margin-top: 80px;"> 
-                {% for message in messages %}
-                    <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} alert-dismissible fade show shadow-sm" role="alert">
-                        <i class="feather-info me-2"></i> {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            </div>
-            {% endif %}
 
             <!-- ================= MAIN CONTENT ================= -->
             <main>

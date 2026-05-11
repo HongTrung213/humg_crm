@@ -1,0 +1,174 @@
+{% extends 'admin_mofi/base.html' %}
+{% load static %}
+
+{% block content %}
+
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
+<div class="container-fluid mt-4">
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-language text-muted me-2"></i>Nhập Lịch thi CĐR Ngoại ngữ
+                </h4>
+            </div>
+            <div class="col-6 text-end">
+                {% if request.GET.dot %}
+                    <a href="{% url 'students:mofi_dot_thi_detail' request.GET.dot %}" class="btn btn-white fw-bold border shadow-sm rounded-3 px-3">
+                        <i class="fa fa-arrow-left me-2"></i>Quay lại
+                    </a>
+                {% else %}
+                    <a href="{% url 'students:mofi_dot_thi_list' %}" class="btn btn-white fw-bold border shadow-sm rounded-3 px-3">
+                        <i class="fa fa-list me-2"></i>Danh sách Đợt thi
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-6 col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden bg-white">
+                <div class="card-header bg-white pt-4 px-4 pb-3 border-bottom">
+                    <h5 class="fw-bold mb-1 text-dark">Cấu hình nạp Lịch thi (Ngoại ngữ)</h5>
+                    <p class="mb-0 text-muted small">Tự động nhận diện Ngày thi, Ca thi và Phòng thi từ file Excel.</p>
+                </div>
+                
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small text-uppercase mb-2">1. Xác nhận Đợt thi</label>
+                            <select name="dot_thi" class="form-select custom-input" required>
+                                <option value="">--- Click để chọn đợt thi ---</option>
+                                {% for dt in dot_this %}
+                                    <option value="{{ dt.id }}" {% if request.GET.dot == dt.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ dt.ten_dot }} (Bắt đầu: {{ dt.thoi_gian_bat_dau|date:"d/m/Y" }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small text-uppercase mb-2">2. Chọn file danh sách dự thi (.xlsx, .csv)</label>
+                            <input type="file" name="excel_file" class="form-control custom-input" accept=".xlsx, .xls, .csv" required>
+                            <div class="form-text text-muted mt-2">Hệ thống bóc tách đồng thời <b>Lịch thi Máy</b> và <b>Lịch thi Vấn đáp</b>.</div>
+                        </div>
+
+                        <div class="p-3 mb-4 rounded-3 border bg-light d-flex align-items-start">
+                            <i class="fa fa-info-circle text-warning fs-5 me-3 mt-1"></i>
+                            <div class="small text-dark fw-medium">
+                                <b>Lưu ý thuật toán:</b> <br>
+                                - Hệ thống tự động bỏ qua các dòng ghi chú dài ở đầu file Excel. <br>
+                                - Ưu tiên nhận diện cột <b>Ngày KT</b> (Ngày kiểm tra) để hiển thị lên bảng tra cứu của sinh viên.
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-dark btn-lg w-100 fw-bold shadow-sm py-3 text-white btn-submit-import">
+                            <i class="fa fa-cloud-upload me-2"></i> BẮT ĐẦU ĐỒNG BỘ LỊCH THI
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <small class="text-muted">Trung tâm CNTT-NN & Khảo thí - CFI HUMG</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Ép chữ đen rõ nét trên nền trắng sạch sẽ */
+    .custom-input {
+        font-size: 14px !important;
+        color: #000 !important; 
+        font-weight: 600 !important;
+        border: 1px solid #ced4da !important;
+        background-color: #fff !important;
+        padding: 12px 15px !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease;
+    }
+    .custom-input:focus {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1) !important;
+    }
+    .btn-dark {
+        background-color: #222 !important;
+        border: none !important;
+    }
+    .btn-dark:hover {
+        background-color: #000 !important;
+        transform: translateY(-1px);
+    }
+    .btn-white {
+        background-color: #fff;
+        border-color: #dee2e6;
+        color: #333;
+    }
+    .btn-white:hover {
+        background-color: #f8f9fa;
+        border-color: #bbb;
+        color: #000;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tự động kích hoạt Toast
+        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        toastElList.map(function (toastEl) {
+            toastEl.classList.add('show');
+        });
+
+        // Xử lý nút Loading khi submit
+        const importForm = document.querySelector('form');
+        if(importForm) {
+            importForm.addEventListener("submit", function() {
+                const btn = this.querySelector('.btn-submit-import');
+                if(btn) {
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xử lý file Excel...';
+                    btn.classList.add("disabled");
+                }
+            });
+        }
+
+        // Kiểm tra định dạng file phía client
+        const fileInput = document.querySelector('input[type="file"]');
+        if(fileInput) {
+            fileInput.addEventListener('change', function() {
+                const fileName = this.value.toLowerCase();
+                if(fileName && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls') && !fileName.endsWith('.csv')) {
+                    alert('❌ LỖI: Vui lòng chỉ chọn file Excel (.xlsx, .xls) hoặc CSV!');
+                    this.value = '';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

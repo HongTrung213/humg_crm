@@ -20,7 +20,6 @@
 <section class="page-content course-sec mt-4">
     <div class="container">
         
-        <!-- KHỐI THÔNG BÁO TOAST HIỆN ĐẠI (GÓC TRÊN BÊN PHẢI) -->
         {% if messages %}
         <div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
             {% for message in messages %}
@@ -56,7 +55,6 @@
         {% endif %}
 
         <div class="row">
-            <!-- Cột Trái: Profile -->
             <div class="col-xl-4 col-lg-4 col-md-5 mb-4">
                 <div class="card custom-card shadow-sm border-0 overflow-hidden">
                     <div class="bg-primary" style="height: 100px;"></div>
@@ -124,7 +122,6 @@
                 </div>
             </div>
 
-            <!-- Cột Phải: Tiến độ & Chi tiết -->
             <div class="col-xl-8 col-lg-8 col-md-7">
                 
                 <div class="card shadow-sm border-0 mb-4">
@@ -158,6 +155,102 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {% if lich_thi_sap_toi %}
+                <div class="alert alert-warning border-0 border-start border-4 border-warning shadow-sm mb-4" role="alert">
+                    <h5 class="fw-bold text-dark mb-3">
+                        <i class="feather-bell text-warning me-2 heartbeat-icon"></i> THÔNG BÁO LỊCH THI TỚI ĐÂY
+                    </h5>
+                    <div class="row g-3">
+                        {% for lich in lich_thi_sap_toi %}
+                        <div class="col-md-6">
+                            <div class="bg-white p-3 rounded shadow-sm border border-light">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="badge bg-danger">{{ lich.dot_thi.ten_dot }}</div>
+                                    <div class="fw-bold text-danger">SBD: {{ lich.sbd|default:"Chưa có" }}</div>
+                                </div>
+                                <h6 class="fw-bold mb-3 text-primary border-bottom pb-2">{{ lich.get_mon_thi_display }}</h6>
+                                
+                                {% if lich.mon_thi == 'CDR_TIN_HOC' %}
+                                    <ul class="list-unstyled mb-0 f-13 text-muted">
+                                        <li class="mb-2"><i class="feather-calendar me-2 text-primary"></i> <strong class="text-dark">{{ lich.ngay_thi|default:"Đang xếp lịch" }}</strong></li>
+                                        <li class="mb-2"><i class="feather-clock me-2 text-warning"></i> Ca thi: <strong class="text-dark">{{ lich.ca_thi|default:"-" }}</strong></li>
+                                        <li class="mb-1"><i class="feather-map-pin me-2 text-danger"></i> Phòng: <strong class="text-primary fs-6">{{ lich.phong_thi|default:"-" }}</strong></li>
+                                    </ul>
+                                {% else %}
+                                    <div class="mb-2">
+                                        <span class="badge bg-light-primary text-primary mb-1">Ca Máy</span>
+                                        <div class="f-13 text-dark"><i class="feather-calendar me-1"></i> {{ lich.ngay_thi|default:"-" }} | <i class="feather-clock me-1"></i> {{ lich.ca_thi|default:"-" }} | <span class="fw-bold text-primary">P.{{ lich.phong_thi|default:"-" }}</span></div>
+                                    </div>
+                                    <div class="mt-2 border-top pt-2">
+                                        <span class="badge bg-light-success text-success mb-1">Ca Vấn đáp</span>
+                                        <div class="f-13 text-dark"><i class="feather-calendar me-1"></i> {{ lich.ngay_thi_2|default:"-" }} | <i class="feather-clock me-1"></i> {{ lich.ca_thi_2|default:"-" }} | <span class="fw-bold text-success">P.{{ lich.phong_thi_2|default:"-" }}</span></div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white border-bottom pb-3 pt-4">
+                        <h5 class="fw-bold mb-0"><i class="feather-award text-success me-2"></i> Kết quả thi chi tiết</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if ket_qua_thi %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light text-secondary">
+                                    <tr>
+                                        <th class="ps-4">Đợt thi & Môn thi</th>
+                                        <th class="text-center">Điểm TP</th>
+                                        <th class="text-center">Tổng</th>
+                                        <th class="text-center pe-4">Đánh giá</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for kq in ket_qua_thi %}
+                                    <tr>
+                                        <td class="ps-4 py-3">
+                                            <span class="badge bg-soft-primary text-primary mb-1">{{ kq.dot_thi.ten_dot }}</span>
+                                            <div class="fw-bold text-dark">{{ kq.get_mon_thi_display }}</div>
+                                            <div class="small text-muted mt-1 fst-italic">Ghi chú: {{ kq.ghi_chu|default:"Không" }}</div>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if kq.mon_thi == 'CDR_TIN_HOC' %}
+                                                <div class="small text-muted">Trắc nghiệm | Thực hành</div>
+                                                <div class="fw-bold">{{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }}</div>
+                                            {% else %}
+                                                <div class="small text-muted">Nghe-Đọc-Viết-Nói</div>
+                                                <div class="fw-bold">{{ kq.diem_thanh_phan_1|default:"0" }}-{{ kq.diem_thanh_phan_2|default:"0" }}-{{ kq.diem_thanh_phan_3|default:"0" }}-{{ kq.diem_thanh_phan_4|default:"0" }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center fw-bold fs-5 text-dark">{{ kq.diem_tong|default:"0" }}</td>
+                                        <td class="text-center pe-4">
+                                            {% if kq.ket_qua_dat %}
+                                                <span class="badge bg-success px-3 py-2 rounded-pill"><i class="feather-check-circle"></i> ĐẠT</span>
+                                            {% else %}
+                                                <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="feather-x-circle"></i> TRƯỢT</span>
+                                            {% endif %}
+                                            {% if kq.xep_loai %}
+                                                <div class="small fw-bold text-info mt-1">{{ kq.xep_loai }}</div>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                            <div class="text-center py-5 text-muted fst-italic bg-light">
+                                <i class="feather-inbox fa-3x mb-3 d-block opacity-50"></i>
+                                Bạn chưa có kết quả thi nào trên hệ thống.
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -199,7 +292,6 @@
                                         </td>
                                         <td class="text-center pe-4">
                                             <div class="btn-group">
-                                                <!-- BỌC LỆNH AN TOÀN CHỐNG SẬP KHI KHÔNG CÓ FILE -->
                                                 {% if cc.file_minh_chung %}
                                                     <a href="{{ cc.file_minh_chung.url }}" target="_blank" class="btn btn-sm btn-light border" title="Xem file"><i class="feather-eye text-info"></i></a>
                                                 {% else %}
@@ -255,81 +347,11 @@
                     </div>
                 </div>
 
-                {% if lich_thi_sap_toi %}
-                <div class="alert alert-warning border-0 border-start border-4 border-warning shadow-sm mb-4" role="alert">
-                    <h5 class="fw-bold text-dark mb-3">
-                        <i class="feather-bell text-warning me-2 heartbeat-icon"></i> THÔNG BÁO LỊCH THI MỚI
-                    </h5>
-                    <div class="row g-3">
-                        {% for lich in lich_thi_sap_toi %}
-                        <div class="col-md-6">
-                            <div class="bg-white p-3 rounded shadow-sm">
-                                <div class="badge bg-danger mb-2">{{ lich.dot_thi.ten_dot_thi }}</div>
-                                <h6 class="fw-bold mb-2 text-primary">{{ lich.mon_thi }}</h6>
-                                <ul class="list-unstyled mb-0 f-13 text-muted">
-                                    <li class="mb-1"><i class="feather-calendar me-2"></i> Ngày thi: <strong class="text-dark">{{ lich.dot_thi.ngay_thi|date:"d/m/Y" }}</strong></li>
-                                    <li class="mb-1"><i class="feather-clock me-2"></i> Giờ thi: <strong class="text-dark">{{ lich.ca_thi|default:"Đang xếp ca" }}</strong></li>
-                                    <li class="mb-1"><i class="feather-map-pin me-2"></i> Phòng: <strong class="text-dark">{{ lich.phong_thi|default:"Đang xếp phòng" }}</strong></li>
-                                    <li><i class="feather-user me-2"></i> SBD: <strong class="text-danger">{{ lich.sbd|default:"Chưa có" }}</strong></li>
-                                </ul>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if ket_qua_thi %}
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header bg-white border-bottom pb-3 pt-4">
-                        <h5 class="fw-bold mb-0"><i class="feather-award text-success me-2"></i> Kết quả thi Hệ thống</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Đợt thi & Môn thi</th>
-                                        <th class="text-center">Điểm TP 1</th>
-                                        <th class="text-center">Điểm TP 2</th>
-                                        <th class="text-center pe-4">Trạng thái</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for kq in ket_qua_thi %}
-                                    <tr>
-                                        <td class="ps-4 py-3">
-                                            <span class="badge bg-soft-primary text-primary mb-1">{{ kq.dot_thi.ten_dot_thi }}</span>
-                                            <div class="fw-bold text-dark">{{ kq.mon_thi }}</div>
-                                        </td>
-                                        <td class="text-center fw-bold">{{ kq.diem_thanh_phan_1|default:"-" }}</td>
-                                        <td class="text-center fw-bold">{{ kq.diem_thanh_phan_2|default:"-" }}</td>
-                                        <td class="text-center pe-4">
-                                            {% if kq.diem_thanh_phan_1 >= 5 %} <span class="badge bg-success">Đạt</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">Không đạt</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <style>
-                    @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-                    .heartbeat-icon { animation: heartbeat 1.5s infinite; display: inline-block; }
-                </style>
-
             </div>  
         </div>
     </div>
 </section>
 
-<!-- Modal Nộp Chứng Chỉ -->
 <div class="modal fade" id="addCertModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -386,7 +408,6 @@
     </div>
 </div>
 
-<!-- Modal Cập Nhật Thông Tin -->
 <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
@@ -436,5 +457,7 @@
     .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
     .bg-soft-primary { background-color: rgba(13, 110, 253, 0.1); }
     .bg-soft-info { background-color: rgba(13, 202, 240, 0.1); }
+    @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    .heartbeat-icon { animation: heartbeat 1.5s infinite; display: inline-block; }
 </style>
 {% endblock %}

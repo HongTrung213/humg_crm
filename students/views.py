@@ -86,7 +86,8 @@ def tra_cuu(request):
     if query_mssv:
         try:
             sinh_vien = SinhVien.objects.get(mssv=query_mssv)
-            toan_bo_lich_thi = sinh_vien.lich_su_thi.all().order_by('-dot_thi__ngay_thi')
+            # ĐÃ SỬA: Thay -dot_thi__ngay_thi thành -dot_thi__thoi_gian_bat_dau
+            toan_bo_lich_thi = sinh_vien.lich_su_thi.all().order_by('-dot_thi__thoi_gian_bat_dau')
             lich_thi_sap_toi = toan_bo_lich_thi.filter(diem_thanh_phan_1__isnull=True)
             ket_qua_thi = toan_bo_lich_thi.filter(diem_thanh_phan_1__isnull=False)
         except SinhVien.DoesNotExist:
@@ -127,7 +128,8 @@ def dashboard(request):
         sliders = Slider.objects.filter(is_active=True).order_by('order')
         quick_links = QuickLink.objects.filter(is_active=True).order_by('order')
 
-        toan_bo_lich_thi = sinh_vien.lich_su_thi.all().order_by('-dot_thi__ngay_thi')
+        # ĐÃ SỬA: Thay -dot_thi__ngay_thi thành -dot_thi__thoi_gian_bat_dau
+        toan_bo_lich_thi = sinh_vien.lich_su_thi.all().order_by('-dot_thi__thoi_gian_bat_dau')
         lich_thi_sap_toi = toan_bo_lich_thi.filter(diem_thanh_phan_1__isnull=True)
         ket_qua_thi = toan_bo_lich_thi.filter(diem_thanh_phan_1__isnull=False)
 
@@ -139,6 +141,7 @@ def dashboard(request):
     except SinhVien.DoesNotExist:
         messages.error(request, "Hồ sơ cá nhân chưa được khởi tạo trên hệ thống.")
         return redirect('students:home')
+    
 
 @login_required
 def nop_chung_chi(request):
@@ -660,114 +663,257 @@ def mofi_export_bang_diem(request, dot_thi_id):
 @staff_member_required
 def mofi_import_lich_thi_cntt(request):
     if request.method == 'POST':
-        dot_thi_id, excel_file = request.POST.get('dot_thi'), request.FILES.get('excel_file')
+        dot_thi_id = request.POST.get('dot_thi')
+        excel_file = request.FILES.get('excel_file')
+        
         if not excel_file or not dot_thi_id:
             messages.error(request, "Vui lòng chọn đợt thi và tải lên file.")
-            return redirect('students:mofi_import_lich_thi_cntt')
+            return redirect('students:mofi_dot_thi_list')
             
         dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+        
         try:
-            df_raw = pd.read_excel(excel_file, header=None)
-            header_row = next((i for i, row in df_raw.iterrows() if any('mã sinh viên' in str(v).lower() for v in row.values)), 0)
-            df = pd.read_excel(excel_file, header=header_row)
-            df.columns = [str(c).lower().strip() for c in df.columns]
-
-            count_new = 0
-            with transaction.atomic():
-                for _, row in df.iterrows():
-                    c_mssv = next((c for c in df.columns if 'mssv' in c or 'mã sinh viên' in c), None)
-                    if not c_mssv or pd.isna(row[c_mssv]): continue
-                    mssv = clean_excel_val(row[c_mssv])
-                    if not mssv: continue
-
-                    c_ho = next((c for c in df.columns if 'họ' in c), None)
-                    c_ten = next((c for c in df.columns if 'tên' in c and 'họ' not in c), None)
-                    ho_ten = f"{clean_excel_val(row[c_ho]) if c_ho else ''} {clean_excel_val(row[c_ten]) if c_ten else ''}".strip() or f"SV_{mssv}"
-
-                    user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
-                    if _: user.set_password('cfihumg'); user.save()
-                    sv, _ = SinhVien.objects.get_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': ho_ten})
-
-                    c_ngay = next((c for c in df.columns if 'ngày' in c), None)
-                    c_ca = next((c for c in df.columns if 'ca' in c), None)
-                    c_phong = next((c for c in df.columns if 'phòng' in c), None)
-                    c_sbd = next((c for c in df.columns if 'sbd' in c or 'số báo danh' in c), None)
-
-                    LichSuThi.objects.update_or_create(
-                        sinh_vien=sv, dot_thi=dot_thi, mon_thi='CDR_TIN_HOC',
-                        defaults={
-                            'sbd': clean_excel_val(row[c_sbd]) if c_sbd else '',
-                            'ngay_thi': clean_excel_val(row[c_ngay]) if c_ngay else '',
-                            'ca_thi': clean_excel_val(row[c_ca]) if c_ca else '',
-                            'phong_thi': clean_excel_val(row[c_phong]) if c_phong else '',
-                        }
-                    )
-                    count_new += 1
-            messages.success(request, f"Đã nạp Lịch thi Tin học thành công cho {count_new} sinh viên!")
-            return redirect('students:mofi_dot_thi_detail', dot_thi_id=dot_thi.id)
-        except Exception as e:
-            messages.error(request, f"Lỗi: {e}")
-            return redirect('students:mofi_import_lich_thi_cntt')
+            # 1. Đọc tất cả sheet hiển thị
+            wb = load_workbook(excel_file, read_only=True)
+            visible_sheets = [s.title for s in wb.worksheets if s.sheet_state == 'visible']
+            wb.close()
+            excel_file.seek(0)
+            sheets_dict = pd.read_excel(excel_file, sheet_name=visible_sheets, header=None)
             
+            def clean_col(text):
+                if pd.isna(text): return ""
+                text = str(text).lower()
+                for a, b in zip('àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ', 
+                                'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd'):
+                    text = text.replace(a, b)
+                return re.sub(r'[^a-z0-9]', '', text)
+
+            total_count = 0
+            # Xóa lịch sử cũ của môn Tin học trong đợt này để tránh trùng lặp
+            LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi='CDR_TIN_HOC').delete()
+
+            for sheet_name, df_raw in sheets_dict.items():
+                col_map = {'ngay': [], 'ca': [], 'phong': []}
+                
+                # Quét 15 dòng đầu để tìm tiêu đề cột (Bỏ qua Ghi chú dài > 100 ký tự)
+                for i in range(min(15, len(df_raw))):
+                    for j, val in enumerate(df_raw.iloc[i].values):
+                        if pd.isna(val) or len(str(val)) > 100: continue
+                        
+                        v = clean_col(val)
+                        if v in ['msv', 'masinhvien', 'mssv']: col_map['mssv'] = j
+                        elif v in ['stt', 'sothutu']: col_map['stt'] = j
+                        elif v in ['hodem', 'ho', 'hovatendem']: col_map['ho'] = j
+                        elif v == 'ten': col_map['ten'] = j
+                        elif 'hovaten' in v or 'hoten' in v: col_map['hoten'] = j
+                        elif 'ngaykt' in v or 'ngaythi' in v or v == 'ngay':
+                            if j not in col_map['ngay']: col_map['ngay'].append(j)
+                        elif 'cakt' in v or 'cathi' in v or v == 'ca':
+                            if j not in col_map['ca']: col_map['ca'].append(j)
+                        elif 'phongthi' in v or 'phong' in v:
+                            if j not in col_map['phong']: col_map['phong'].append(j)
+                
+                if 'mssv' not in col_map: continue
+                
+                # Tìm dòng bắt đầu có MSSV thật (dạng số >= 5 ký tự)
+                start_row = None
+                for i in range(len(df_raw)):
+                    val = str(df_raw.iloc[i, col_map['mssv']]).split('.')[0].strip()
+                    if re.sub(r'\D', '', val).isdigit() and len(re.sub(r'\D', '', val)) >= 5:
+                        start_row = i
+                        break
+                
+                if start_row is None: continue
+
+                for i in range(start_row, len(df_raw)):
+                    row = df_raw.iloc[i]
+                    mssv_raw = str(row.iloc[col_map['mssv']]).split('.')[0].strip()
+                    mssv = re.sub(r'\D', '', mssv_raw)
+                    if not mssv or len(mssv) < 5: continue
+                    
+                    # Xử lý Họ tên
+                    if 'hoten' in col_map and pd.notna(row.iloc[col_map['hoten']]):
+                        ho_ten = str(row.iloc[col_map['hoten']]).strip()
+                    else:
+                        ho = str(row.iloc[col_map['ho']]).strip() if 'ho' in col_map and pd.notna(row.iloc[col_map['ho']]) else ""
+                        ten = str(row.iloc[col_map['ten']]).strip() if 'ten' in col_map and pd.notna(row.iloc[col_map['ten']]) else ""
+                        ho_ten = f"{ho} {ten}".strip() or f"SV_{mssv}"
+
+                    def gv(lst, pos):
+                        if len(lst) > pos and pd.notna(row.iloc[lst[pos]]):
+                            val = str(row.iloc[lst[pos]]).strip()
+                            return val if val.lower() != 'nan' else ""
+                        return ""
+
+                    with transaction.atomic():
+                        user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
+                        if _: user.set_password('cfihumg'); user.save()
+                        
+                        sv, _ = SinhVien.objects.get_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': ho_ten})
+                        if sv.ho_ten != ho_ten and len(ho_ten) > len(sv.ho_ten):
+                            sv.ho_ten = ho_ten
+                            sv.save()
+
+                        LichSuThi.objects.update_or_create(
+                            sinh_vien=sv, dot_thi=dot_thi, mon_thi='CDR_TIN_HOC',
+                            defaults={
+                                'sbd': gv([col_map['stt']], 0) if 'stt' in col_map else "",
+                                'ngay_thi': gv(col_map['ngay'], 0),
+                                'ca_thi': gv(col_map['ca'], 0),
+                                'phong_thi': gv(col_map['phong'], 0),
+                            }
+                        )
+                    total_count += 1
+
+            messages.success(request, f"✅ Đã nạp thành công {total_count} lịch thi CNTT đợt này.")
+            return redirect('students:mofi_dot_thi_detail', dot_thi_id=dot_thi.id)
+            
+        except Exception as e:
+            messages.error(request, f"❌ Lỗi: {str(e)}")
+            return redirect('students:mofi_dot_thi_list')
+
     return render(request, 'admin_mofi/pages/import_lich_thi_cntt.html', {'dot_this': DotThi.objects.all().order_by('-id')})
 
+
+import re
+import pandas as pd
+from openpyxl import load_workbook
+from django.db import transaction
+from django.urls import reverse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.models import User
+
+# ==========================================
+# IMPORT LỊCH THI CĐR NGOẠI NGỮ
+# ==========================================
 @staff_member_required
 def mofi_import_lich_thi_nn(request):
     if request.method == 'POST':
-        dot_thi_id, excel_file = request.POST.get('dot_thi'), request.FILES.get('excel_file')
+        dot_thi_id = request.POST.get('dot_thi')
+        excel_file = request.FILES.get('excel_file')
+        
         if not excel_file or not dot_thi_id:
-            messages.error(request, "Vui lòng chọn đợt thi và tải lên file.")
-            return redirect('students:mofi_import_lich_thi_nn')
+            messages.error(request, "Vui lòng chọn đợt thi và file.")
+            return redirect(f"{reverse('students:mofi_import_lich_thi_nn')}?dot={dot_thi_id}")
             
         dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
+        
         try:
-            df_raw = pd.read_excel(excel_file, header=None)
-            header_row = next((i for i, row in df_raw.iterrows() if any('mã sinh viên' in str(v).lower() for v in row.values)), 0)
-            df = pd.read_excel(excel_file, header=header_row)
-            df.columns = [str(c).lower().strip() for c in df.columns]
+            # 1. Đọc file và lọc sheet hiển thị
+            wb = load_workbook(excel_file, read_only=True)
+            visible_sheets = [s.title for s in wb.worksheets if s.sheet_state == 'visible']
+            wb.close()
+            excel_file.seek(0)
+            sheets_dict = pd.read_excel(excel_file, sheet_name=visible_sheets, header=None)
             
-            count_new = 0
-            with transaction.atomic():
-                date_cols = [c for c in df.columns if 'ngày' in str(c)]
-                room_cols = [c for c in df.columns if 'phòng' in str(c)]
-                shift_cols = [c for c in df.columns if 'ca' in str(c)]
-                c_sbd = next((c for c in df.columns if 'sbd' in c or 'báo danh' in c), None)
+            def clean_name(t):
+                if pd.isna(t): return ""
+                t = str(t).lower()
+                for a, b in zip('àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ', 
+                                'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd'):
+                    t = t.replace(a, b)
+                return re.sub(r'[^a-z0-9]', '', t)
 
-                for _, row in df.iterrows():
-                    c_mssv = next((c for c in df.columns if 'mã sinh viên' in c or 'mssv' in c), None)
-                    if not c_mssv or pd.isna(row[c_mssv]): continue
-                    mssv = clean_excel_val(row[c_mssv])
-                    if not mssv: continue
+            total_count = 0
+            
+            # --- BƯỚC QUAN TRỌNG: XÓA RÁC CŨ ---
+            # Xóa sạch lịch thi Ngoại ngữ của đợt này để nạp mới hoàn toàn
+            LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi='CDR_NGOAI_NGU').delete()
 
-                    c_ho = next((c for c in df.columns if 'họ' in c), None)
-                    c_ten = next((c for c in df.columns if 'tên' in c and 'họ' not in c), None)
-                    ho_ten = f"{clean_excel_val(row[c_ho]) if c_ho else ''} {clean_excel_val(row[c_ten]) if c_ten else ''}".strip() or f"SV_{mssv}"
+            for sheet_name, df_raw in sheets_dict.items():
+                col_map = {'ngay': [], 'ca': [], 'phong': []}
+                
+                # BƯỚC 2: Dò tìm tọa độ chuẩn (ĐÃ NÂNG CẤP BẢO VỆ CHỐNG GHI CHÚ)
+                for i in range(min(15, len(df_raw))):
+                    for j, val in enumerate(df_raw.iloc[i].values):
+                        # BỎ QUA NGAY CÁC Ô TRỐNG HOẶC ĐOẠN VĂN GHI CHÚ DÀI (>100 ký tự)
+                        if pd.isna(val) or len(str(val)) > 100: 
+                            continue
+                            
+                        v = clean_name(val)
+                        if v in ['msv', 'masinhvien', 'mssv']: col_map['mssv'] = j
+                        elif v in ['stt', 'sothutu']: col_map['stt'] = j # Lấy STT làm SBD
+                        elif v in ['hodem', 'ho', 'hovatendem']: col_map['ho'] = j
+                        elif v == 'ten': col_map['ten'] = j
+                        
+                        # Cải tiến thuật toán bắt chính xác Ngày, Ca, Phòng
+                        elif 'ngaykt' in v or 'ngaythi' in v or v == 'ngay': 
+                            if j not in col_map['ngay']: col_map['ngay'].append(j)
+                        elif 'cakt' in v or 'cathi' in v or v == 'ca': 
+                            if j not in col_map['ca']: col_map['ca'].append(j)
+                        elif 'phongthi' in v or 'phong' in v: 
+                            if j not in col_map['phong']: col_map['phong'].append(j)
+                
+                if 'mssv' not in col_map: continue
+                
+                # Tìm dòng bắt đầu chứa dữ liệu Sinh viên (Bỏ qua các dòng tiêu đề)
+                start_row = None
+                for i in range(len(df_raw)):
+                    val = str(df_raw.iloc[i, col_map['mssv']]).split('.')[0].strip()
+                    if re.sub(r'\D', '', val).isdigit() and len(re.sub(r'\D', '', val)) >= 5:
+                        start_row = i
+                        break
+                
+                if start_row is None: continue
 
-                    user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
-                    if _: user.set_password('cfihumg'); user.save()
-                    sv, _ = SinhVien.objects.get_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': ho_ten})
+                # Nạp dữ liệu từng dòng
+                for i in range(start_row, len(df_raw)):
+                    row = df_raw.iloc[i]
+                    mssv = re.sub(r'\D', '', str(row.iloc[col_map['mssv']]).split('.')[0].strip())
+                    if not mssv or len(mssv) < 5: continue
                     
-                    defaults = {
-                        'sbd': clean_excel_val(row[c_sbd]) if c_sbd else '',
-                        'ngay_thi': clean_excel_val(row[date_cols[0]]) if len(date_cols) > 0 else '',
-                        'ca_thi': clean_excel_val(row[shift_cols[0]]) if len(shift_cols) > 0 else '',
-                        'phong_thi': clean_excel_val(row[room_cols[0]]) if len(room_cols) > 0 else '',
-                        'ngay_thi_2': clean_excel_val(row[date_cols[1]]) if len(date_cols) > 1 else '',
-                        'ca_thi_2': clean_excel_val(row[shift_cols[1]]) if len(shift_cols) > 1 else '',
-                        'phong_thi_2': clean_excel_val(row[room_cols[1]]) if len(room_cols) > 1 else '',
-                    }
-                    LichSuThi.objects.update_or_create(sinh_vien=sv, dot_thi=dot_thi, mon_thi='CDR_NGOAI_NGU', defaults=defaults)
-                    count_new += 1
+                    # GHÉP HỌ VÀ TÊN ĐẦY ĐỦ
+                    ho = str(row.iloc[col_map['ho']]).strip() if 'ho' in col_map and pd.notna(row.iloc[col_map['ho']]) else ""
+                    ten = str(row.iloc[col_map['ten']]).strip() if 'ten' in col_map and pd.notna(row.iloc[col_map['ten']]) else ""
+                    full_name = f"{ho} {ten}".strip()
                     
-            messages.success(request, f"Đã nạp Lịch thi Ngoại ngữ thành công cho {count_new} sinh viên (Đã bóc tách Máy + Vấn đáp)!")
+                    # Lấy STT để làm SBD cho đẹp
+                    stt_val = str(row.iloc[col_map['stt']]).split('.')[0].strip() if 'stt' in col_map else ""
+
+                    with transaction.atomic():
+                        user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
+                        if _: user.set_password('cfihumg'); user.save()
+                        
+                        sv, _ = SinhVien.objects.get_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': full_name})
+                        
+                        # Cập nhật lại tên nếu tên cũ bị sai
+                        if sv.ho_ten != full_name and len(full_name) > len(sv.ho_ten):
+                            sv.ho_ten = full_name
+                            sv.save()
+
+                        # Bóc tách 2 lịch thi (Máy và Vấn đáp) an toàn
+                        def gv(lst, pos):
+                            if len(lst) > pos and pd.notna(row.iloc[lst[pos]]):
+                                val = str(row.iloc[lst[pos]]).strip()
+                                # Chống lỗi bị đọc thành chữ 'nan'
+                                return val if val.lower() != 'nan' else ""
+                            return ""
+
+                        LichSuThi.objects.update_or_create(
+                            sinh_vien=sv, dot_thi=dot_thi, mon_thi='CDR_NGOAI_NGU',
+                            defaults={
+                                'sbd': stt_val, 
+                                'ngay_thi': gv(col_map['ngay'], 0), 'ca_thi': gv(col_map['ca'], 0), 'phong_thi': gv(col_map['phong'], 0),
+                                'ngay_thi_2': gv(col_map['ngay'], 1), 'ca_thi_2': gv(col_map['ca'], 1), 'phong_thi_2': gv(col_map['phong'], 1),
+                            }
+                        )
+                    total_count += 1
+
+            messages.success(request, f"✅ Đã dọn rác và nạp mới {total_count} sinh viên Ngoại ngữ thành công! (Cập nhật đủ Ngày - Ca - Phòng)")
             return redirect('students:mofi_dot_thi_detail', dot_thi_id=dot_thi.id)
-        except Exception as e: 
-            messages.error(request, f"Lỗi xử lý file Excel: {e}")
-            return redirect('students:mofi_import_lich_thi_nn')
             
+        except Exception as e:
+            messages.error(request, f"❌ Lỗi xử lý file Excel: {str(e)}")
+            return redirect(f"{reverse('students:mofi_import_lich_thi_nn')}?dot={dot_thi_id}")
+
     return render(request, 'admin_mofi/pages/import_lich_thi_nn.html', {'dot_this': DotThi.objects.all().order_by('-id')})
 
-import re # Đảm bảo có thư viện này (nếu đầu file chưa có thì cứ để nó ở đây cũng được)
+
+import re
+import pandas as pd
+from openpyxl import load_workbook
 from django.db import transaction
 
 @staff_member_required
@@ -783,97 +929,113 @@ def mofi_import_diem_cntt(request):
         dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
         
         try:
-            # 1. Đọc thô toàn bộ file
-            df_raw = pd.read_excel(excel_file, header=None)
+            # --- BƯỚC 1: LỌC CHỈ LẤY CÁC SHEET ĐANG HIỂN THỊ (VISIBLE) ---
+            wb = load_workbook(excel_file, read_only=True)
+            visible_sheets = [sheet.title for sheet in wb.worksheets if sheet.sheet_state == 'visible']
+            wb.close()
             
-            # 2. THUẬT TOÁN CHẤM ĐIỂM (TÌM HEADER)
-            header_row_index = None
-            max_score = 0
-            
-            for i, row in df_raw.iterrows():
-                score = 0
-                # Nối toàn bộ ô trong dòng thành 1 chuỗi, sau đó "ủi phẳng" mọi dấu xuống dòng/khoảng trắng thừa
-                row_text = " ".join([str(v).lower() for v in row.values if pd.notna(v)])
-                row_text = re.sub(r'\s+', ' ', row_text) 
-                
-                # Chấm điểm các từ khóa
-                if 'mã' in row_text or 'mssv' in row_text: score += 1
-                if 'họ' in row_text or 'tên' in row_text: score += 1
-                if 'trắc' in row_text or 'lý thuyết' in row_text: score += 1
-                if 'thực' in row_text: score += 1
-                if 'đánh giá' in row_text or 'tổng' in row_text: score += 1
-                
-                if score > max_score:
-                    max_score = score
-                    header_row_index = i
-                    
-                # Nếu 1 dòng đạt từ 3 điểm trở lên -> Chốt luôn đó là Header!
-                if score >= 3:
-                    break
-            
-            if header_row_index is None or max_score < 2:
-                messages.error(request, "❌ Vẫn không nhận ra tiêu đề. Bạn hãy mở file, copy phần bảng điểm (từ chữ STT) dán sang 1 file Excel mới tinh rồi nạp nhé!")
+            if not visible_sheets:
+                messages.error(request, "❌ File Excel không có sheet nào đang hiển thị!")
                 return redirect('students:mofi_import_diem_cntt')
 
-            # 3. Đọc dữ liệu từ dòng đã chốt
-            df = pd.read_excel(excel_file, header=header_row_index)
+            # Đọc dữ liệu từ các sheet hiển thị
+            excel_file.seek(0) # Reset con trỏ file sau khi openpyxl đọc
+            sheets_dict = pd.read_excel(excel_file, sheet_name=visible_sheets, header=None)
             
-            # Chuẩn hóa tên cột: Ép phẳng mọi dấu xuống dòng/khoảng trắng thừa
-            df.columns = [re.sub(r'\s+', ' ', str(c)).strip().lower() for c in df.columns]
+            # --- BƯỚC 2: CÔNG CỤ LÀM SẠCH VÀ CHUẨN HÓA ---
+            def clean_col_name(text):
+                if pd.isna(text): return ""
+                text = str(text).lower()
+                text = re.sub(r'[àáạảãâầấậẩẫăằắặẳẵ]', 'a', text)
+                text = re.sub(r'[èéẹẻẽêềếệểễ]', 'e', text)
+                text = re.sub(r'[ìíịỉĩ]', 'i', text)
+                text = re.sub(r'[òóọỏõôồốộổỗơờớợởỡ]', 'o', text)
+                text = re.sub(r'[ùúụủũưừứựửữ]', 'u', text)
+                text = re.sub(r'[ỳýỵỷỹ]', 'y', text)
+                text = re.sub(r'đ', 'd', text)
+                return re.sub(r'[^a-z0-9]', '', text)
 
-            count_update = 0
+            total_count = 0
+            sheets_processed = []
+
             with transaction.atomic():
-                for _, row in df.iterrows():
-                    # Tìm cột MSSV
-                    mssv_col = next((c for c in df.columns if 'mã' in c or 'mssv' in c), None)
-                    if not mssv_col or pd.isna(row[mssv_col]):
-                        continue
+                # --- BƯỚC 3: XỬ LÝ TỪNG SHEET HIỂN THỊ ---
+                for sheet_name, df_raw in sheets_dict.items():
+                    # Tìm dòng Header
+                    header_row_index = None
+                    for i, row in df_raw.iterrows():
+                        row_str = "".join([clean_col_name(v) for v in row.values])
+                        # Kiểm tra xem dòng này có chứa 'masinhvien' và ('tracnghiem' hoặc 'thuchanh')
+                        if ('masinhvien' in row_str or 'mssv' in row_str) and \
+                           ('tracnghiem' in row_str or 'thuchanh' in row_str):
+                            header_row_index = i
+                            break
+                    
+                    if header_row_index is None:
+                        continue # Sheet rác hoặc sheet thống kê ko có bảng điểm -> Bỏ qua
+
+                    # Cắt dữ liệu từ dòng header trở xuống
+                    raw_columns = df_raw.iloc[header_row_index].values
+                    df_data = df_raw.iloc[header_row_index + 1:].copy()
+                    
+                    # Gán tên cột đã chuẩn hóa
+                    df_data.columns = [clean_col_name(c) or f"col_{j}" for j, c in enumerate(raw_columns)]
+
+                    mssv_col = next((c for c in df_data.columns if 'masinhvien' in c or 'mssv' in c), None)
+                    if not mssv_col: continue
+
+                    # --- BƯỚC 4: NẠP SINH VIÊN VÀ ĐIỂM ---
+                    for _, row in df_data.iterrows():
+                        if pd.isna(row[mssv_col]): continue
                         
-                    # Lấy mã SV, chỉ giữ lại các chữ số để tránh rác (Ví dụ: " 2024011286.0\n" -> "2024011286")
-                    mssv_raw = str(row[mssv_col]).split('.')[0]
-                    mssv = re.sub(r'\D', '', mssv_raw) 
+                        # Lấy MSSV sạch (chỉ lấy số)
+                        mssv_raw = str(row[mssv_col]).split('.')[0].strip()
+                        mssv = re.sub(r'\D', '', mssv_raw)
+                        if not mssv or len(mssv) < 5: continue
+
+                        # Đồng bộ User
+                        user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
+                        if _: user.set_password('cfihumg'); user.save()
+                        
+                        # Lấy Họ tên (vẫn lấy từ cột gốc trong row để ko bị mất dấu)
+                        name_col = next((c for c in df_data.columns if 'hovaten' in c or 'hoten' in c), None)
+                        ho_ten_val = str(row[name_col]).strip() if name_col and pd.notna(row[name_col]) else f"SV_{mssv}"
+                        if ho_ten_val.lower() in ['nan', 'none', '']: ho_ten_val = f"SV_{mssv}"
+                        
+                        sv, _ = SinhVien.objects.get_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': ho_ten_val})
+
+                        # Hàm lấy điểm an toàn
+                        def get_val(keys):
+                            col = next((c for c in df_data.columns if any(k in c for k in keys)), None)
+                            if col and pd.notna(row[col]):
+                                try: return float(row[col])
+                                except: return None
+                            return None
+
+                        defaults = {
+                            'diem_thanh_phan_1': get_val(['tracnghiem', 'lythuyet']),
+                            'diem_thanh_phan_2': get_val(['thuchanh']),
+                            'diem_tong': get_val(['danhgia', 'tong']),
+                        }
+                        
+                        xl_col = next((c for c in df_data.columns if 'xeploai' in c or 'ketqua' in c), None)
+                        if xl_col and pd.notna(row[xl_col]):
+                            val_xl = str(row[xl_col]).strip()
+                            if val_xl.lower() not in ['nan', 'none']: defaults['xep_loai'] = val_xl
+
+                        LichSuThi.objects.update_or_create(
+                            sinh_vien=sv, dot_thi=dot_thi, mon_thi='CDR_TIN_HOC',
+                            defaults=defaults
+                        )
+                        total_count += 1
                     
-                    if not mssv or len(mssv) < 5: # Mã SV chuẩn phải >= 5 số
-                        continue
+                    sheets_processed.append(sheet_name)
 
-                    user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
-                    if _: 
-                        user.set_password('cfihumg')
-                        user.save()
-                    
-                    name_col = next((c for c in df.columns if 'họ' in c or 'tên' in c), None)
-                    ho_ten_val = str(row[name_col]).strip() if name_col and pd.notna(row[name_col]) else f"SV_{mssv}"
-                    
-                    sv, _ = SinhVien.objects.get_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': ho_ten_val})
-
-                    def get_score(keywords):
-                        col = next((c for c in df.columns if any(k in c for k in keywords)), None)
-                        if col and pd.notna(row[col]):
-                            try:
-                                return float(row[col])
-                            except:
-                                return None
-                        return None
-
-                    defaults = {
-                        'diem_thanh_phan_1': get_score(['trắc', 'lý thuyết']),
-                        'diem_thanh_phan_2': get_score(['thực']),
-                        'diem_tong': get_score(['đánh giá', 'tổng']),
-                    }
-                    
-                    xl_col = next((c for c in df.columns if 'xếp loại' in c or 'kết quả' in c), None)
-                    if xl_col and pd.notna(row[xl_col]):
-                        defaults['xep_loai'] = str(row[xl_col]).strip()
-
-                    LichSuThi.objects.update_or_create(
-                        sinh_vien=sv, 
-                        dot_thi=dot_thi, 
-                        mon_thi='CDR_TIN_HOC',
-                        defaults=defaults
-                    )
-                    count_update += 1
-
-            messages.success(request, f"✅ Đã nạp thành công {count_update} sinh viên! (Dòng tiêu đề tự động được chốt ở dòng số {header_row_index + 1})")
+            if total_count > 0:
+                messages.success(request, f"✅ Đã nạp thành công {total_count} sinh viên từ {len(sheets_processed)} sheet hiển thị ({', '.join(sheets_processed)}).")
+            else:
+                messages.warning(request, "⚠ Không tìm thấy dữ liệu hợp lệ trong các sheet đang hiển thị.")
+                
             return redirect('students:mofi_dot_thi_detail', dot_thi_id=dot_thi.id)
 
         except Exception as e:
@@ -1043,7 +1205,15 @@ def mofi_import_diem_tdnn(request):
 # ==========================================
 # IMPORT LỊCH THI TIẾNG ANH ĐẦU VÀO (DÒ 2 LỊCH GIỐNG CĐR NN)
 # ==========================================
-@staff_member_required
+import re
+import pandas as pd
+from openpyxl import load_workbook
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from django.contrib.auth.models import User
+from .models import DotThi, SinhVien, LichSuThi
+
 def mofi_import_lich_thi_tdnn(request):
     if request.method == 'POST':
         dot_thi_id = request.POST.get('dot_thi')
@@ -1056,67 +1226,102 @@ def mofi_import_lich_thi_tdnn(request):
         dot_thi = get_object_or_404(DotThi, id=dot_thi_id)
         
         try:
-            # Dò tìm thông minh dòng Header
-            df_raw = pd.read_excel(excel_file, header=None)
-            header_row = 0
-            for i, row in df_raw.iterrows():
-                row_vals = [str(v).lower().strip() for v in row.values]
-                if any(k in v for v in row_vals for k in ['mã sinh viên', 'mssv']):
-                    header_row = i
-                    break
+            # 1. Đọc tất cả các sheet đang hiển thị
+            wb = load_workbook(excel_file, read_only=True)
+            visible_sheets = [s.title for s in wb.worksheets if s.sheet_state == 'visible']
+            wb.close()
+            excel_file.seek(0)
+            sheets_dict = pd.read_excel(excel_file, sheet_name=visible_sheets, header=None)
             
-            df = pd.read_excel(excel_file, header=header_row)
-            df.columns = [str(c).lower().strip() for c in df.columns]
-            
+            def clean_name(t):
+                if pd.isna(t): return ""
+                t = str(t).lower()
+                for a, b in zip('àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ', 
+                                'aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd'):
+                    t = t.replace(a, b)
+                return re.sub(r'[^a-z0-9]', '', t)
+
             count_new = 0
-            with transaction.atomic():
-                date_cols = [c for c in df.columns if 'ngày' in str(c)]
-                room_cols = [c for c in df.columns if 'phòng' in str(c)]
-                shift_cols = [c for c in df.columns if 'ca' in str(c)]
-                c_sbd = next((c for c in df.columns if 'sbd' in c or 'báo danh' in c), None)
+            # XÓA DỮ LIỆU CŨ ĐỂ NẠP MỚI (TRÁNH TRÙNG LẶP)
+            LichSuThi.objects.filter(dot_thi=dot_thi, mon_thi='TA_DAU_VAO').delete()
 
-                for _, row in df.iterrows():
-                    c_mssv = next((c for c in df.columns if 'mã sinh viên' in c or 'mssv' in c), None)
-                    if not c_mssv or pd.isna(row[c_mssv]): continue
-                    
-                    mssv = clean_excel_val(row[c_mssv])
-                    if not mssv: continue
+            for sheet_name, df_raw in sheets_dict.items():
+                col_map = {'ngay': [], 'ca': [], 'phong': []}
+                
+                # 2. Dò tìm tọa độ cột tiêu đề (Chặn Ghi chú dài)
+                for i in range(min(15, len(df_raw))):
+                    for j, val in enumerate(df_raw.iloc[i].values):
+                        if pd.isna(val) or len(str(val)) > 100: continue
+                        
+                        v = clean_name(val)
+                        if v in ['msv', 'masinhvien', 'mssv']: col_map['mssv'] = j
+                        elif v in ['stt', 'sothutu']: col_map['stt'] = j
+                        elif v in ['hodem', 'ho', 'hovatendem']: col_map['ho'] = j
+                        elif v == 'ten': col_map['ten'] = j
+                        elif 'ngaykt' in v or 'ngaythi' in v or v == 'ngay':
+                            if j not in col_map['ngay']: col_map['ngay'].append(j)
+                        elif 'cakt' in v or 'cathi' in v or v == 'ca':
+                            if j not in col_map['ca']: col_map['ca'].append(j)
+                        elif 'phongthi' in v or 'phong' in v:
+                            if j not in col_map['phong']: col_map['phong'].append(j)
+                
+                if 'mssv' not in col_map: continue
+                
+                # 3. Tìm dòng dữ liệu đầu tiên (Dựa trên MSSV là số)
+                start_row = None
+                for i in range(len(df_raw)):
+                    val = str(df_raw.iloc[i, col_map['mssv']]).split('.')[0].strip()
+                    if re.sub(r'\D', '', val).isdigit() and len(re.sub(r'\D', '', val)) >= 5:
+                        start_row = i
+                        break
+                
+                if start_row is None: continue
 
-                    c_ho = next((c for c in df.columns if 'họ' in c), None)
-                    c_ten = next((c for c in df.columns if 'tên' in c and 'họ' not in c), None)
-                    ho_ten = f"{clean_excel_val(row[c_ho]) if c_ho else ''} {clean_excel_val(row[c_ten]) if c_ten else ''}".strip()
-                    if not ho_ten: ho_ten = f"SV_{mssv}"
+                # 4. Nạp dữ liệu
+                for i in range(start_row, len(df_raw)):
+                    row = df_raw.iloc[i]
+                    mssv_raw = str(row.iloc[col_map['mssv']]).split('.')[0].strip()
+                    mssv = re.sub(r'\D', '', mssv_raw)
+                    if not mssv or len(mssv) < 5: continue
+                    
+                    ho = str(row.iloc[col_map['ho']]).strip() if 'ho' in col_map and pd.notna(row.iloc[col_map['ho']]) else ""
+                    ten = str(row.iloc[col_map['ten']]).strip() if 'ten' in col_map and pd.notna(row.iloc[col_map['ten']]) else ""
+                    full_name = f"{ho} {ten}".strip()
 
-                    user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
-                    if _: 
-                        user.set_password('cfihumg')
-                        user.save()
-                    sv, _ = SinhVien.objects.get_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': ho_ten})
-                    
-                    defaults = {
-                        'sbd': clean_excel_val(row[c_sbd]) if c_sbd else '',
-                        # LỊCH 1 (THI MÁY)
-                        'ngay_thi': clean_excel_val(row[date_cols[0]]) if len(date_cols) > 0 else '',
-                        'ca_thi': clean_excel_val(row[shift_cols[0]]) if len(shift_cols) > 0 else '',
-                        'phong_thi': clean_excel_val(row[room_cols[0]]) if len(room_cols) > 0 else '',
-                        # LỊCH 2 (VẤN ĐÁP)
-                        'ngay_thi_2': clean_excel_val(row[date_cols[1]]) if len(date_cols) > 1 else '',
-                        'ca_thi_2': clean_excel_val(row[shift_cols[1]]) if len(shift_cols) > 1 else '',
-                        'phong_thi_2': clean_excel_val(row[room_cols[1]]) if len(room_cols) > 1 else '',
-                    }
-                    
-                    # QUAN TRỌNG: Lưu dưới mã môn 'TA_DAU_VAO'
-                    LichSuThi.objects.update_or_create(
-                        sinh_vien=sv, dot_thi=dot_thi, mon_thi='TA_DAU_VAO', 
-                        defaults=defaults
-                    )
+                    def gv(lst, pos):
+                        if len(lst) > pos and pd.notna(row.iloc[lst[pos]]):
+                            val = str(row.iloc[lst[pos]]).strip()
+                            return val if val.lower() != 'nan' else ""
+                        return ""
+
+                    with transaction.atomic():
+                        user, _ = User.objects.get_or_create(username=mssv, defaults={'is_active': True})
+                        if _: user.set_password('cfihumg'); user.save()
+                        
+                        sv, _ = SinhVien.objects.get_or_create(mssv=mssv, defaults={'user': user, 'ho_ten': full_name})
+                        if sv.ho_ten != full_name and len(full_name) > len(sv.ho_ten):
+                            sv.ho_ten = full_name
+                            sv.save()
+
+                        LichSuThi.objects.update_or_create(
+                            sinh_vien=sv, dot_thi=dot_thi, mon_thi='TA_DAU_VAO',
+                            defaults={
+                                'sbd': gv([col_map['stt']], 0) if 'stt' in col_map else "",
+                                'ngay_thi': gv(col_map['ngay'], 0), 
+                                'ca_thi': gv(col_map['ca'], 0), 
+                                'phong_thi': gv(col_map['phong'], 0),
+                                'ngay_thi_2': gv(col_map['ngay'], 1), 
+                                'ca_thi_2': gv(col_map['ca'], 1), 
+                                'phong_thi_2': gv(col_map['phong'], 1),
+                            }
+                        )
                     count_new += 1
                     
-            messages.success(request, f"✅ Đã nạp Lịch thi Tiếng Anh đầu vào thành công cho {count_new} sinh viên (Đã bóc tách Máy + Vấn đáp)!")
+            messages.success(request, f"✅ Đã nạp thành công {count_new} sinh viên TĐNN (Đã bóc tách Lịch Máy + Lịch Nói)!")
             return redirect('students:mofi_dot_thi_detail', dot_thi_id=dot_thi.id)
             
         except Exception as e: 
-            messages.error(request, f"❌ Lỗi xử lý file Excel (Định dạng sai): {e}")
+            messages.error(request, f"❌ Lỗi: {e}")
             return redirect('students:mofi_import_lich_thi_tdnn')
             
     return render(request, 'admin_mofi/pages/import_lich_thi_tdnn.html', {'dot_this': DotThi.objects.all().order_by('-id')})

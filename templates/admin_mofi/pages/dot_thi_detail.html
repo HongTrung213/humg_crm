@@ -2,20 +2,42 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid">
-    
-    <!-- Tiêu đề trang & Dropdown Nạp dữ liệu -->
+
+{% if messages %}
+<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
+    {% for message in messages %}
+    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
+        <div class="toast-body fw-bold py-3 px-4 small">
+            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% elif message.tags == 'warning' %}fa-exclamation-circle text-warning{% else %}fa-check-circle text-success{% endif %} me-2"></i>
+            {{ message }}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .toast.hide-after-delay {
+        animation: fadeOut 0.5s ease-in-out 4s forwards;
+    }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: translateX(0); }
+        100% { opacity: 0; transform: translateX(100%); display: none; }
+    }
+</style>
+{% endif %}
+
+<div class="container-fluid mt-4">
     <div class="page-title mb-4">
         <div class="row align-items-center g-3">
             <div class="col-lg-7 col-md-12">
-                <h4 class="fw-bold mb-0">
-                    <i class="fa fa-pie-chart text-primary me-2"></i>Báo cáo Đợt thi: <span class="text-secondary">{{ dot_thi.ten_dot }}</span>
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-pie-chart text-primary me-2"></i>Chi tiết Đợt thi: <span class="text-secondary">{{ dot_thi.ten_dot }}</span>
                 </h4>
             </div>
             <div class="col-lg-5 col-md-12 text-lg-end">
                 
-                <!-- Nút Xuất Excel -->
-                <a href="{% url 'students:mofi_export_bang_diem' dot_thi.id %}" class="btn btn-outline-success fw-bold rounded-3 px-3 py-2 me-2 shadow-sm">
+                <a href="{% url 'students:mofi_export_bang_diem' dot_thi.id %}" class="btn btn-outline-success fw-bold rounded-3 px-3 py-2 me-2 shadow-sm bg-white">
                     <i class="fa fa-download me-1"></i> Xuất Excel
                 </a>
 
@@ -23,69 +45,68 @@
                     <button class="btn btn-primary dropdown-toggle fw-bold rounded-3 px-4 py-2" type="button" data-bs-toggle="dropdown">
                         <i class="fa fa-cloud-upload me-2"></i> Nạp dữ liệu Excel
                     </button>
-                    <!-- TĂNG ĐỘ RỘNG DROPDOWN LÊN CHÚT ĐỂ ĐỦ CHỖ CHỨA MENU KÉP -->
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 p-3" style="min-width: 320px;">
+                    
+                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 p-3 bg-white" style="width: max-content;">
                         
-                        <li><h6 class="dropdown-header fw-bold text-muted fs-6"><i class="fa fa-flag-checkered me-1"></i> TIẾNG ANH ĐẦU VÀO</h6></li>
-                        <!-- Đã bổ sung Nạp Lịch thi -->
-                        <div class="d-flex px-3 gap-2 mb-2">
-                            <a class="btn btn-sm btn-outline-secondary w-50" href="{% url 'students:mofi_import_lich_thi_tdnn' %}?dot={{ dot_thi.id }}"><i class="fa fa-calendar me-1"></i> Lịch thi</a>
-                            <a class="btn btn-sm btn-outline-primary w-50" href="{% url 'students:mofi_import_diem_tdnn' %}?dot={{ dot_thi.id }}"><i class="fa fa-check me-1"></i> Điểm thi</a>
-                        </div>
+                        <li><h6 class="dropdown-header fw-bold text-dark border-bottom mb-2 pb-2 px-2"><i class="fa fa-flag-checkered me-2 text-primary"></i> TIẾNG ANH ĐẦU VÀO</h6></li>
+                        <li>
+                            <a class="dropdown-item rounded-2 py-2 mb-1 text-dark fw-bold" href="{% url 'students:mofi_import_lich_thi_tdnn' %}?dot={{ dot_thi.id }}">
+                                <i class="fa fa-calendar-plus-o me-2 text-muted"></i> Nạp danh sách Lịch thi Tiếng Anh
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item rounded-2 py-2 mb-3 text-dark fw-bold" href="{% url 'students:mofi_import_diem_tdnn' %}?dot={{ dot_thi.id }}">
+                                <i class="fa fa-check-square-o me-2 text-success"></i> Nạp bảng Điểm thi Tiếng Anh
+                            </a>
+                        </li>
                         
-                        <li><hr class="dropdown-divider my-2"></li>
+                        <li><h6 class="dropdown-header fw-bold text-dark border-bottom mb-2 pb-2 px-2"><i class="fa fa-language me-2 text-warning"></i> CĐR NGOẠI NGỮ</h6></li>
+                        <li>
+                            <a class="dropdown-item rounded-2 py-2 mb-1 text-dark fw-bold" href="{% url 'students:mofi_import_lich_thi_nn' %}?dot={{ dot_thi.id }}">
+                                <i class="fa fa-calendar-plus-o me-2 text-muted"></i> Nạp danh sách Lịch thi Ngoại ngữ
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item rounded-2 py-2 mb-3 text-dark fw-bold" href="{% url 'students:mofi_import_diem_cdr_nn' %}?dot={{ dot_thi.id }}">
+                                <i class="fa fa-check-square-o me-2 text-success"></i> Nạp bảng Điểm thi Ngoại ngữ
+                            </a>
+                        </li>
                         
-                        <li><h6 class="dropdown-header fw-bold text-muted fs-6"><i class="fa fa-language me-1"></i> CHUẨN ĐẦU RA NGOẠI NGỮ</h6></li>
-                         <!-- Đã bổ sung Nạp Lịch thi -->
-                         <div class="d-flex px-3 gap-2 mb-2">
-                            <a class="btn btn-sm btn-outline-secondary w-50" href="{% url 'students:mofi_import_lich_thi_nn' %}?dot={{ dot_thi.id }}"><i class="fa fa-calendar me-1"></i> Lịch thi</a>
-                            <a class="btn btn-sm btn-outline-success w-50" href="{% url 'students:mofi_import_diem_cdr_nn' %}?dot={{ dot_thi.id }}"><i class="fa fa-check me-1"></i> Điểm thi</a>
-                        </div>
-
-                        <li><hr class="dropdown-divider my-2"></li>
-                        
-                        <li><h6 class="dropdown-header fw-bold text-muted fs-6"><i class="fa fa-laptop me-1"></i> CHUẨN ĐẦU RA TIN HỌC</h6></li>
-                         <!-- Đã bổ sung Nạp Lịch thi -->
-                         <div class="d-flex px-3 gap-2">
-                            <a class="btn btn-sm btn-outline-secondary w-50" href="{% url 'students:mofi_import_lich_thi_cntt' %}?dot={{ dot_thi.id }}"><i class="fa fa-calendar me-1"></i> Lịch thi</a>
-                            <a class="btn btn-sm btn-outline-info w-50" href="{% url 'students:mofi_import_diem_cntt' %}?dot={{ dot_thi.id }}"><i class="fa fa-check me-1"></i> Điểm thi</a>
-                        </div>
+                        <li><h6 class="dropdown-header fw-bold text-dark border-bottom mb-2 pb-2 px-2"><i class="fa fa-laptop me-2 text-info"></i> CĐR TIN HỌC</h6></li>
+                        <li>
+                            <a class="dropdown-item rounded-2 py-2 mb-1 text-dark fw-bold" href="{% url 'students:mofi_import_lich_thi_cntt' %}?dot={{ dot_thi.id }}">
+                                <i class="fa fa-calendar-plus-o me-2 text-muted"></i> Nạp danh sách Lịch thi Tin học
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item rounded-2 py-2 text-dark fw-bold" href="{% url 'students:mofi_import_diem_cntt' %}?dot={{ dot_thi.id }}">
+                                <i class="fa fa-check-square-o me-2 text-success"></i> Nạp bảng Điểm thi Tin học
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- KHỐI THÔNG BÁO FLASH MESSAGES (Bổ sung để user biết lỗi/thành công) -->
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
-                <i class="feather-alert-circle me-2"></i> {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <!-- Thanh Tìm Kiếm & Lọc -->
-    <div class="card shadow border-0 rounded-4 mb-4">
-        <div class="card-body p-3 bg-light rounded-4">
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-3 bg-white rounded-4 border">
             <form method="GET" class="row g-3 align-items-center">
                 <input type="hidden" name="tab" value="{{ active_tab }}">
                 
                 <div class="col-md-6">
-                    <div class="input-group shadow-sm rounded-3 overflow-hidden">
-                        <span class="input-group-text bg-white border-0"><i class="fa fa-search text-muted"></i></span>
-                        <input type="text" name="q" class="form-control border-0 bg-white" placeholder="Tìm theo Mã sinh viên hoặc Họ tên..." value="{{ search_query }}">
+                    <div class="input-group rounded-3 overflow-hidden border bg-light">
+                        <span class="input-group-text bg-light border-0"><i class="fa fa-search text-muted"></i></span>
+                        <input type="text" name="q" class="form-control text-dark border-0 bg-light fw-medium" placeholder="Tìm theo Mã sinh viên hoặc Họ tên..." value="{{ search_query }}">
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="input-group shadow-sm rounded-3 overflow-hidden">
-                        <span class="input-group-text bg-white border-0"><i class="fa fa-sort-amount-desc text-muted"></i></span>
-                        <select name="sort" class="form-select border-0 bg-white fw-medium">
+                    <div class="input-group rounded-3 overflow-hidden border bg-light">
+                        <span class="input-group-text bg-light border-0"><i class="fa fa-sort-amount-desc text-muted"></i></span>
+                        <select name="sort" class="form-select text-dark border-0 bg-light fw-medium">
+                            <option value="sbd" {% if sort_by == 'sbd' %}selected{% endif %}>Sắp xếp theo Số Báo Danh</option>
                             <option value="-ngay_cap_nhat" {% if sort_by == '-ngay_cap_nhat' %}selected{% endif %}>Mới cập nhật lên đầu</option>
                             <option value="-diem_tong" {% if sort_by == '-diem_tong' %}selected{% endif %}>Tổng điểm: Cao xuống thấp</option>
-                            <option value="diem_tong" {% if sort_by == 'diem_tong' %}selected{% endif %}>Tổng điểm: Thấp lên cao</option>
-                            <option value="sinh_vien__mssv" {% if sort_by == 'sinh_vien__mssv' %}selected{% endif %}>Mã sinh viên (A - Z)</option>
                         </select>
                     </div>
                 </div>
@@ -96,7 +117,6 @@
         </div>
     </div>
 
-    <!-- Custom Tabs (Pills) -->
     <ul class="nav nav-pills custom-pills mb-4 gap-2" id="reportTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link fw-bold rounded-pill px-4 py-2 {% if active_tab == 'tdnn' %}active shadow-sm{% endif %}" data-bs-toggle="tab" data-bs-target="#tab-tdnn" type="button" role="tab">
@@ -115,82 +135,56 @@
         </li>
     </ul>
 
-    <!-- NỘI DUNG CÁC TAB -->
     <div class="tab-content" id="reportTabContent">
         
-        <!-- ================= TAB 1: TIẾNG ANH ĐẦU VÀO ================= -->
         <div class="tab-pane fade {% if active_tab == 'tdnn' %}show active{% endif %}" id="tab-tdnn" role="tabpanel">
-            
-            <div class="row g-4 mb-4">
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
-                        <div class="card-body p-4 d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-muted fw-bold mb-1">TỔNG THÍ SINH</h6><h3 class="fw-bold text-dark mb-0">{{ stats.tdnn.total }}</h3></div>
-                            <div class="bg-light-primary text-primary rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-users fs-4"></i></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
-                        <div class="card-body p-4 d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-muted fw-bold mb-1">THI ĐẠT</h6><h3 class="fw-bold text-success mb-0">{{ stats.tdnn.passed }}</h3></div>
-                            <div class="bg-light-success text-success rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-check fs-4"></i></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
-                        <div class="card-body p-4 d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-muted fw-bold mb-1">TRƯỢT / VẮNG</h6><h3 class="fw-bold text-danger mb-0">{{ stats.tdnn.failed }}</h3></div>
-                            <div class="bg-light-danger text-danger rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-times fs-4"></i></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-sm-6">
-                    <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
-                        <div class="card-body p-4 d-flex justify-content-between align-items-center">
-                            <div><h6 class="text-muted fw-bold mb-1">TỈ LỆ ĐẠT</h6><h3 class="fw-bold text-info mb-0">{{ stats.tdnn.rate }}%</h3></div>
-                            <div class="bg-light-info text-info rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-pie-chart fs-4"></i></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bảng Dữ Liệu -->
-            <div class="card shadow border-0 rounded-4 overflow-hidden mb-4">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle text-center mb-0">
-                        <thead class="table-light text-secondary">
+                        <thead class="table-light text-secondary border-bottom">
                             <tr>
-                                <th>Số Báo Danh</th><th class="text-start">Thông tin Sinh viên</th>
-                                <!-- Bổ sung hiển thị thông tin Phòng thi Vấn đáp -->
-                                <th>Phòng thi Máy | Nói</th>
-                                <th>Thành phần (1-2-3-4)</th><th>Tổng Điểm</th><th>Kết quả</th>
+                                <th>SBD</th>
+                                <th class="text-start">Thông tin Sinh viên</th>
+                                <th class="text-start">Lịch thi chi tiết</th>
+                                <th>Điểm (Nghe-Đọc-Viết-Nói)</th>
+                                <th>Tổng</th>
+                                <th>Kết quả</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for kq in page_tdnn %}
                             <tr>
-                                <td class="fw-bold text-danger">{{ kq.sbd|default:"-" }}</td>
-                                <td class="text-start"><div class="fw-bold text-dark fs-6">{{ kq.sinh_vien.ho_ten }}</div><div class="small text-muted border bg-light d-inline-block px-2 rounded">{{ kq.sinh_vien.mssv }}</div></td>
-                                <!-- Render cả Phòng máy và Phòng nói -->
-                                <td class="fw-medium">
-                                    <span class="text-primary" title="Phòng Máy">{{ kq.phong_thi|default:"-" }}</span> 
-                                    | 
-                                    <span class="text-success" title="Phòng Nói">{{ kq.phong_thi_2|default:"-" }}</span>
+                                <td class="fw-bold text-danger fs-5">{% if kq.sbd and kq.sbd != 'nan' %}{{ kq.sbd }}{% else %}-{% endif %}</td>
+                                <td class="text-start">
+                                    <div class="fw-bold text-dark fs-6">{{ kq.sinh_vien.ho_ten }}</div>
+                                    <div class="small text-muted border bg-light d-inline-block px-2 rounded mt-1">{{ kq.sinh_vien.mssv }}</div>
                                 </td>
-                                <td class="small text-muted">{{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }} | {{ kq.diem_thanh_phan_3|default:"0" }} | {{ kq.diem_thanh_phan_4|default:"0" }}</td>
+                                <td class="text-start small">
+                                    <div class="mb-1">
+                                        <span class="badge bg-light-primary text-primary" style="width: 45px;">Máy</span> 
+                                        <i class="fa fa-calendar me-1"></i>{% if kq.ngay_thi and kq.ngay_thi != 'nan' %}{{ kq.ngay_thi }}{% else %}-{% endif %} | 
+                                        <i class="fa fa-clock-o me-1"></i>{% if kq.ca_thi and kq.ca_thi != 'nan' %}{{ kq.ca_thi }}{% else %}-{% endif %} | 
+                                        <i class="fa fa-map-marker me-1"></i><span class="fw-bold text-primary">{% if kq.phong_thi and kq.phong_thi != 'nan' %}P.{{ kq.phong_thi }}{% else %}-{% endif %}</span>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-light-success text-success" style="width: 45px;">Nói</span> 
+                                        <i class="fa fa-calendar me-1"></i>{% if kq.ngay_thi_2 and kq.ngay_thi_2 != 'nan' %}{{ kq.ngay_thi_2 }}{% else %}-{% endif %} | 
+                                        <i class="fa fa-clock-o me-1"></i>{% if kq.ca_thi_2 and kq.ca_thi_2 != 'nan' %}{{ kq.ca_thi_2 }}{% else %}-{% endif %} | 
+                                        <i class="fa fa-map-marker me-1"></i><span class="fw-bold text-success">{% if kq.phong_thi_2 and kq.phong_thi_2 != 'nan' %}P.{{ kq.phong_thi_2 }}{% else %}-{% endif %}</span>
+                                    </div>
+                                </td>
+                                <td class="fw-medium text-muted">{{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }} | {{ kq.diem_thanh_phan_3|default:"0" }} | {{ kq.diem_thanh_phan_4|default:"0" }}</td>
                                 <td class="fw-bold fs-5 text-dark">{{ kq.diem_tong|default:"0" }}</td>
-                                <td>{% if kq.ket_qua_dat %}<span class="badge bg-success px-3 py-2 rounded-pill shadow-sm"><i class="fa fa-check-circle me-1"></i>ĐẠT</span>{% else %}<span class="badge bg-danger px-3 py-2 rounded-pill shadow-sm"><i class="fa fa-times-circle me-1"></i>TRƯỢT</span>{% endif %}</td>
+                                <td>{% if kq.ket_qua_dat %}<span class="badge bg-success px-3 py-2 rounded-pill shadow-sm">ĐẠT</span>{% else %}<span class="badge bg-danger px-3 py-2 rounded-pill shadow-sm">TRƯỢT</span>{% endif %}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="6" class="py-5 text-muted"><i class="fa fa-inbox fa-3x mb-3 text-light-muted d-block"></i>Chưa có dữ liệu cho bảng này hoặc không tìm thấy kết quả.</td></tr>
+                            <tr><td colspan="6" class="py-5 text-muted bg-white"><i class="fa fa-inbox fa-3x mb-3 text-light-muted d-block"></i>Chưa có dữ liệu.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
-
+            
             {% if page_tdnn.has_other_pages %}
             <nav class="mt-4"><ul class="pagination justify-content-center shadow-sm rounded-pill d-inline-flex overflow-hidden">
                 {% if page_tdnn.has_previous %}<li class="page-item"><a class="page-link text-dark fw-bold border-0" href="?tab=tdnn&p_tdnn={{ page_tdnn.previous_page_number }}&q={{ search_query|urlencode }}&sort={{ sort_by }}">Trước</a></li>{% endif %}
@@ -200,47 +194,54 @@
             {% endif %}
         </div>
 
-        <!-- ================= TAB 2: CĐR NGOẠI NGỮ ================= -->
         <div class="tab-pane fade {% if active_tab == 'cdr-nn' %}show active{% endif %}" id="tab-cdr-nn" role="tabpanel">
-            <div class="row g-4 mb-4">
-                <div class="col-xl-3 col-sm-6"><div class="card border-0 shadow-sm rounded-4 h-100 bg-white"><div class="card-body p-4 d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1">TỔNG THÍ SINH</h6><h3 class="fw-bold text-dark mb-0">{{ stats.cdr_nn.total }}</h3></div><div class="bg-light-primary text-primary rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-users fs-4"></i></div></div></div></div>
-                <div class="col-xl-3 col-sm-6"><div class="card border-0 shadow-sm rounded-4 h-100 bg-white"><div class="card-body p-4 d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1">THI ĐẠT</h6><h3 class="fw-bold text-success mb-0">{{ stats.cdr_nn.passed }}</h3></div><div class="bg-light-success text-success rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-check fs-4"></i></div></div></div></div>
-                <div class="col-xl-3 col-sm-6"><div class="card border-0 shadow-sm rounded-4 h-100 bg-white"><div class="card-body p-4 d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1">TRƯỢT / VẮNG</h6><h3 class="fw-bold text-danger mb-0">{{ stats.cdr_nn.failed }}</h3></div><div class="bg-light-danger text-danger rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-times fs-4"></i></div></div></div></div>
-                <div class="col-xl-3 col-sm-6"><div class="card border-0 shadow-sm rounded-4 h-100 bg-white"><div class="card-body p-4 d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1">TỈ LỆ ĐẠT</h6><h3 class="fw-bold text-info mb-0">{{ stats.cdr_nn.rate }}%</h3></div><div class="bg-light-info text-info rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-pie-chart fs-4"></i></div></div></div></div>
-            </div>
-
-            <div class="card shadow border-0 rounded-4 overflow-hidden mb-4">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle text-center mb-0">
-                        <thead class="table-light text-secondary">
+                        <thead class="table-light text-secondary border-bottom">
                             <tr>
-                                <th>Số Báo Danh</th><th class="text-start">Thông tin Sinh viên</th>
-                                <th>Phòng thi Máy | Nói</th>
-                                <th>Nghe | Đọc | Viết | Nói</th><th>Tổng Điểm</th><th>Kết quả</th>
+                                <th>SBD</th>
+                                <th class="text-start">Thông tin Sinh viên</th>
+                                <th class="text-start">Lịch thi chi tiết</th>
+                                <th>Điểm (Nghe-Đọc-Viết-Nói)</th>
+                                <th>Tổng</th>
+                                <th>Kết quả</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for kq in page_cdr_nn %}
                             <tr>
-                                <td class="fw-bold text-danger">{{ kq.sbd|default:"-" }}</td>
-                                <td class="text-start"><div class="fw-bold text-dark fs-6">{{ kq.sinh_vien.ho_ten }}</div><div class="small text-muted border bg-light d-inline-block px-2 rounded">{{ kq.sinh_vien.mssv }}</div></td>
-                                <td class="fw-medium">
-                                    <span class="text-primary" title="Phòng Máy">{{ kq.phong_thi|default:"-" }}</span> 
-                                    | 
-                                    <span class="text-success" title="Phòng Nói">{{ kq.phong_thi_2|default:"-" }}</span>
+                                <td class="fw-bold text-danger fs-5">{% if kq.sbd and kq.sbd != 'nan' %}{{ kq.sbd }}{% else %}-{% endif %}</td>
+                                <td class="text-start">
+                                    <div class="fw-bold text-dark fs-6">{{ kq.sinh_vien.ho_ten }}</div>
+                                    <div class="small text-muted border bg-light d-inline-block px-2 rounded mt-1">{{ kq.sinh_vien.mssv }}</div>
                                 </td>
-                                <td class="small text-muted">{{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }} | {{ kq.diem_thanh_phan_3|default:"0" }} | {{ kq.diem_thanh_phan_4|default:"0" }}</td>
+                                <td class="text-start small">
+                                    <div class="mb-1">
+                                        <span class="badge bg-light-primary text-primary" style="width: 45px;">Máy</span> 
+                                        <i class="fa fa-calendar me-1"></i>{% if kq.ngay_thi and kq.ngay_thi != 'nan' %}{{ kq.ngay_thi }}{% else %}-{% endif %} | 
+                                        <i class="fa fa-clock-o me-1"></i>{% if kq.ca_thi and kq.ca_thi != 'nan' %}{{ kq.ca_thi }}{% else %}-{% endif %} | 
+                                        <i class="fa fa-map-marker me-1"></i><span class="fw-bold text-primary">{% if kq.phong_thi and kq.phong_thi != 'nan' %}P.{{ kq.phong_thi }}{% else %}-{% endif %}</span>
+                                    </div>
+                                    <div>
+                                        <span class="badge bg-light-success text-success" style="width: 45px;">Nói</span> 
+                                        <i class="fa fa-calendar me-1"></i>{% if kq.ngay_thi_2 and kq.ngay_thi_2 != 'nan' %}{{ kq.ngay_thi_2 }}{% else %}-{% endif %} | 
+                                        <i class="fa fa-clock-o me-1"></i>{% if kq.ca_thi_2 and kq.ca_thi_2 != 'nan' %}{{ kq.ca_thi_2 }}{% else %}-{% endif %} | 
+                                        <i class="fa fa-map-marker me-1"></i><span class="fw-bold text-success">{% if kq.phong_thi_2 and kq.phong_thi_2 != 'nan' %}P.{{ kq.phong_thi_2 }}{% else %}-{% endif %}</span>
+                                    </div>
+                                </td>
+                                <td class="fw-medium text-muted">{{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }} | {{ kq.diem_thanh_phan_3|default:"0" }} | {{ kq.diem_thanh_phan_4|default:"0" }}</td>
                                 <td class="fw-bold fs-5 text-dark">{{ kq.diem_tong|default:"0" }}</td>
-                                <td>{% if kq.ket_qua_dat %}<span class="badge bg-success px-3 py-2 rounded-pill shadow-sm"><i class="fa fa-check-circle me-1"></i>ĐẠT</span>{% else %}<span class="badge bg-danger px-3 py-2 rounded-pill shadow-sm"><i class="fa fa-times-circle me-1"></i>TRƯỢT</span>{% endif %}</td>
+                                <td>{% if kq.ket_qua_dat %}<span class="badge bg-success px-3 py-2 rounded-pill shadow-sm">ĐẠT</span>{% else %}<span class="badge bg-danger px-3 py-2 rounded-pill shadow-sm">TRƯỢT</span>{% endif %}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="6" class="py-5 text-muted"><i class="fa fa-inbox fa-3x mb-3 text-light-muted d-block"></i>Chưa có dữ liệu cho bảng này hoặc không tìm thấy kết quả.</td></tr>
+                            <tr><td colspan="6" class="py-5 text-muted bg-white"><i class="fa fa-inbox fa-3x mb-3 text-light-muted d-block"></i>Chưa có dữ liệu.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
-
+            
             {% if page_cdr_nn.has_other_pages %}
             <nav class="mt-4"><ul class="pagination justify-content-center shadow-sm rounded-pill d-inline-flex overflow-hidden">
                 {% if page_cdr_nn.has_previous %}<li class="page-item"><a class="page-link text-dark fw-bold border-0" href="?tab=cdr-nn&p_cdr_nn={{ page_cdr_nn.previous_page_number }}&q={{ search_query|urlencode }}&sort={{ sort_by }}">Trước</a></li>{% endif %}
@@ -250,39 +251,45 @@
             {% endif %}
         </div>
 
-        <!-- ================= TAB 3: CĐR TIN HỌC ================= -->
         <div class="tab-pane fade {% if active_tab == 'cdr-tin' %}show active{% endif %}" id="tab-cdr-tin" role="tabpanel">
-            <div class="row g-4 mb-4">
-                <div class="col-xl-3 col-sm-6"><div class="card border-0 shadow-sm rounded-4 h-100 bg-white"><div class="card-body p-4 d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1">TỔNG THÍ SINH</h6><h3 class="fw-bold text-dark mb-0">{{ stats.cdr_tin.total }}</h3></div><div class="bg-light-primary text-primary rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-users fs-4"></i></div></div></div></div>
-                <div class="col-xl-3 col-sm-6"><div class="card border-0 shadow-sm rounded-4 h-100 bg-white"><div class="card-body p-4 d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1">THI ĐẠT</h6><h3 class="fw-bold text-success mb-0">{{ stats.cdr_tin.passed }}</h3></div><div class="bg-light-success text-success rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-check fs-4"></i></div></div></div></div>
-                <div class="col-xl-3 col-sm-6"><div class="card border-0 shadow-sm rounded-4 h-100 bg-white"><div class="card-body p-4 d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1">TRƯỢT / VẮNG</h6><h3 class="fw-bold text-danger mb-0">{{ stats.cdr_tin.failed }}</h3></div><div class="bg-light-danger text-danger rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-times fs-4"></i></div></div></div></div>
-                <div class="col-xl-3 col-sm-6"><div class="card border-0 shadow-sm rounded-4 h-100 bg-white"><div class="card-body p-4 d-flex justify-content-between align-items-center"><div><h6 class="text-muted fw-bold mb-1">TỈ LỆ ĐẠT</h6><h3 class="fw-bold text-info mb-0">{{ stats.cdr_tin.rate }}%</h3></div><div class="bg-light-info text-info rounded-circle d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;"><i class="fa fa-pie-chart fs-4"></i></div></div></div></div>
-            </div>
-
-            <div class="card shadow border-0 rounded-4 overflow-hidden mb-4">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4 bg-white">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle text-center mb-0">
-                        <thead class="table-light text-secondary">
-                            <tr><th>Số Báo Danh</th><th class="text-start">Thông tin Sinh viên</th><th>Phòng thi</th><th>Trắc nghiệm | Thực hành</th><th>Tổng Điểm</th><th>Kết quả</th></tr>
+                        <thead class="table-light text-secondary border-bottom">
+                            <tr>
+                                <th>SBD</th>
+                                <th class="text-start">Thông Sinh viên</th>
+                                <th class="text-start">Lịch thi chi tiết</th>
+                                <th>Điểm (Trắc nghiệm | Thực hành)</th>
+                                <th>Tổng</th>
+                                <th>Kết quả</th>
+                            </tr>
                         </thead>
                         <tbody>
                             {% for kq in page_cdr_tin %}
                             <tr>
-                                <td class="fw-bold text-danger">{{ kq.sbd|default:"-" }}</td>
-                                <td class="text-start"><div class="fw-bold text-dark fs-6">{{ kq.sinh_vien.ho_ten }}</div><div class="small text-muted border bg-light d-inline-block px-2 rounded">{{ kq.sinh_vien.mssv }}</div></td>
-                                <td class="fw-medium text-primary">{{ kq.phong_thi|default:"-" }}</td>
-                                <td class="small text-muted">{{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }}</td>
+                                <td class="fw-bold text-danger fs-5">{% if kq.sbd and kq.sbd != 'nan' %}{{ kq.sbd }}{% else %}-{% endif %}</td>
+                                <td class="text-start">
+                                    <div class="fw-bold text-dark fs-6">{{ kq.sinh_vien.ho_ten }}</div>
+                                    <div class="small text-muted border bg-light d-inline-block px-2 rounded mt-1">{{ kq.sinh_vien.mssv }}</div>
+                                </td>
+                                <td class="text-start small">
+                                    <div class="mb-1"><i class="fa fa-calendar me-1 text-muted"></i>{% if kq.ngay_thi and kq.ngay_thi != 'nan' %}{{ kq.ngay_thi }}{% else %}-{% endif %}</div>
+                                    <div class="mb-1"><i class="fa fa-clock-o me-1 text-muted"></i>{% if kq.ca_thi and kq.ca_thi != 'nan' %}{{ kq.ca_thi }}{% else %}-{% endif %}</div>
+                                    <div><i class="fa fa-map-marker me-1 text-muted"></i><span class="fw-bold text-info">{% if kq.phong_thi and kq.phong_thi != 'nan' %}P.{{ kq.phong_thi }}{% else %}-{% endif %}</span></div>
+                                </td>
+                                <td class="fw-medium text-muted">{{ kq.diem_thanh_phan_1|default:"0" }} | {{ kq.diem_thanh_phan_2|default:"0" }}</td>
                                 <td class="fw-bold fs-5 text-dark">{{ kq.diem_tong|default:"0" }}</td>
-                                <td>{% if kq.ket_qua_dat %}<span class="badge bg-success px-3 py-2 rounded-pill shadow-sm"><i class="fa fa-check-circle me-1"></i>ĐẠT</span>{% else %}<span class="badge bg-danger px-3 py-2 rounded-pill shadow-sm"><i class="fa fa-times-circle me-1"></i>TRƯỢT</span>{% endif %}</td>
+                                <td>{% if kq.ket_qua_dat %}<span class="badge bg-success px-3 py-2 rounded-pill shadow-sm">ĐẠT</span>{% else %}<span class="badge bg-danger px-3 py-2 rounded-pill shadow-sm">TRƯỢT</span>{% endif %}</td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="6" class="py-5 text-muted"><i class="fa fa-inbox fa-3x mb-3 text-light-muted d-block"></i>Chưa có dữ liệu cho bảng này hoặc không tìm thấy kết quả.</td></tr>
+                            <tr><td colspan="6" class="py-5 text-muted bg-white"><i class="fa fa-inbox fa-3x mb-3 text-light-muted d-block"></i>Chưa có dữ liệu.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </div>
-
+            
             {% if page_cdr_tin.has_other_pages %}
             <nav class="mt-4"><ul class="pagination justify-content-center shadow-sm rounded-pill d-inline-flex overflow-hidden">
                 {% if page_cdr_tin.has_previous %}<li class="page-item"><a class="page-link text-dark fw-bold border-0" href="?tab=cdr-tin&p_cdr_tin={{ page_cdr_tin.previous_page_number }}&q={{ search_query|urlencode }}&sort={{ sort_by }}">Trước</a></li>{% endif %}
@@ -296,19 +303,36 @@
 </div>
 
 <style>
-    /* Custom CSS cho Dropdown Hover mượt mà */
-    .hover-primary:hover { background-color: #e7f1ff; color: #0d6efd !important; }
-    .hover-success:hover { background-color: #d1e7dd; color: #198754 !important; }
-    .hover-info:hover { background-color: #cff4fc; color: #0dcaf0 !important; }
-    
-    /* Custom CSS cho Tabs dạng Pill */
-    .custom-pills .nav-link { color: #6c757d; transition: all 0.3s ease; }
-    .custom-pills .nav-link:hover { background-color: #f8f9fa; }
-    .custom-pills .nav-link.active { background-color: #0d6efd; color: white; }
+    /* DROPDOWN & TABS CSS */
+    .dropdown-menu .dropdown-item {
+        color: #000000 !important;
+        font-weight: 600 !important;
+        font-size: 14px;
+        white-space: nowrap !important;
+        transition: all 0.2s ease;
+    }
+    .dropdown-menu .dropdown-item:hover {
+        background-color: #f0f2f5 !important;
+        color: #0d6efd !important;
+        transform: translateX(5px);
+    }
+    .custom-pills .nav-link { color: #6c757d; transition: all 0.3s ease; border: 1px solid transparent; }
+    .custom-pills .nav-link:hover { background-color: #ffffff; border-color: #dee2e6; }
+    .custom-pills .nav-link.active { background-color: #0d6efd; color: white; border-color: #0d6efd; }
+    .table-responsive { background-color: #ffffff; }
+    .card-body.bg-light { background-color: #ffffff !important; border: 1px solid #e9ecef; }
 </style>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // Tự động kích hoạt Toast
+    const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    toastElList.map(function (toastEl) {
+        toastEl.classList.add('show');
+        setTimeout(() => { toastEl.classList.remove('show'); }, 4500);
+    });
+
+    // Kích hoạt Tab ẩn
     var tabs = document.querySelectorAll('button[data-bs-toggle="tab"]');
     var hiddenTabInput = document.querySelector('input[name="tab"]');
     
