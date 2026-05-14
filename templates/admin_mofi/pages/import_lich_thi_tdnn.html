@@ -25,9 +25,9 @@
                 </h4>
             </div>
             <div class="col-6 text-end">
-                <a href="{% url 'students:mofi_dot_thi_detail' request.GET.dot %}" class="btn btn-outline-light btn-sm fw-bold border-secondary shadow-sm">
-                    <i class="fa fa-chevron-left me-1"></i> Quay lại
-                </a>
+<a href="{% url 'students:mofi_dot_thi_detail' back_id %}" class="btn btn-outline-light btn-sm fw-bold border-secondary shadow-sm">
+    <i class="fa fa-chevron-left me-1"></i> Quay lại
+</a>
             </div>
         </div>
     </div>
@@ -53,7 +53,18 @@
                     <form method="POST" enctype="multipart/form-data">
                         {% csrf_token %}
                         <input type="hidden" name="dot_thi" value="{{ request.GET.dot }}">
-                        
+                                                <div class="mb-4">
+                            <label class="form-label fw-bold text-dark small text-uppercase mb-2">1. Xác nhận Đợt thi</label>
+                            <select name="dot_thi" class="form-select custom-input" required>
+                                <option value="">--- Click để chọn đợt thi ---</option>
+                                {% for dt in dot_this %}
+                                    <option value="{{ dt.id }}" {% if request.GET.dot == dt.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ dt.ten_dot }} (Bắt đầu: {{ dt.thoi_gian_bat_dau|date:"d/m/Y" }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
                         <div class="mb-4">
                             <label class="form-label fw-bold text-light-emphasis small text-uppercase mb-2">Tải lên file Excel (.xlsx, .xls, .csv)</label>
                             <input class="form-control form-control-lg bg-dark-input text-light border-secondary custom-dark-file" type="file" name="excel_file" accept=".xlsx, .xls, .csv" required>

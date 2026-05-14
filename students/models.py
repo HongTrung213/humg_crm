@@ -134,11 +134,43 @@ class SinhVien(models.Model):
     @property
     def check_dat_tin_hoc(self): return self.has_valid_cert_tin_hoc or self._has_passed_exam('CDR_TIN_HOC')
 
-    # THÊM ĐOẠN NÀY VÀO DƯỚI CÙNG CLASS SINH VIÊN:
     @property
     def ds_chung_chi(self):
         """Bí danh (Alias) giúp Frontend lấy danh sách chứng chỉ mà không cần sửa HTML"""
         return self.cac_chung_chi
+
+    # ==========================================================
+    # BỔ SUNG: LOGIC TÍNH NĂM HỌC VÀ CẢNH BÁO TIẾN ĐỘ TỐT NGHIỆP
+    # ==========================================================
+    @property
+    def nam_nhap_hoc(self):
+        """Lấy 2 số đầu MSSV suy ra năm nhập học (VD: 21 -> 2021)"""
+        try:
+            return 2000 + int(self.mssv[:2])
+        except (ValueError, TypeError):
+            return None
+
+    @property
+    def tien_do_nam_tu(self):
+        """Cảnh báo khi SV bắt đầu vào năm 4 (Từ tháng 8)"""
+        if not self.nam_nhap_hoc: return False
+        
+        now = timezone.now()
+        so_nam_da_hoc = now.year - self.nam_nhap_hoc
+        
+        if so_nam_da_hoc >= 4: return True
+        if so_nam_da_hoc == 3 and now.month >= 8: return True
+        return False
+
+    @property
+    def dat_chuan_dau_ra(self):
+        """Trả về True nếu ĐÃ đạt cả 2 môn"""
+        return self.check_dat_tin_hoc and self.check_dat_ngoai_ngu
+
+    @property
+    def chua_dat_chuan_dau_ra(self):
+        """Trả về True nếu CHƯA đạt 1 trong 2 môn"""
+        return not self.dat_chuan_dau_ra
 
 
 # ==============================================================================
@@ -189,7 +221,6 @@ class DotThi(models.Model):
     thoi_gian_bat_dau = models.DateTimeField('Thời gian bắt đầu', default=timezone.now)
     thoi_gian_ket_thuc = models.DateTimeField('Thời gian kết thúc', default=timezone.now)
     file_thong_bao = models.FileField('File thông báo (PDF)', upload_to='announcements/', blank=True, null=True)
-    #trang_thai = models.BooleanField('Đang mở đăng ký', default=True)
     
     # Cấu hình điểm
     diem_chuan_ngoai_ngu = models.FloatField('Điểm chuẩn Ngoại ngữ', default=5.0)
@@ -251,6 +282,10 @@ class LichSuThi(models.Model):
     ghi_chu = models.CharField(max_length=255, null=True, blank=True, verbose_name="Ghi chú")
     
     ket_qua_dat = models.BooleanField('Kết quả Đạt', default=False)
+    
+    # BỔ SUNG: CỜ NHẬN DIỆN BẢO LƯU ĐIỂM
+    co_bao_luu = models.BooleanField('Đã ghép điểm bảo lưu', default=False)
+
     ngay_cap_nhat = models.DateTimeField(auto_now=True)
 
     class Meta:
