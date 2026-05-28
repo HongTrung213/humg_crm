@@ -668,12 +668,7 @@ def class_list(request):
 
 
 @staff_member_required
-
-
-@login_required
 def class_form(request, pk=None):
-    if not request.user.is_staff:
-        return redirect('students:home')
     instance = get_object_or_404(LopBoiDuong, pk=pk) if pk else None
     if request.method == 'POST':
         form = LopBoiDuongForm(request.POST, instance=instance)
@@ -689,10 +684,8 @@ def class_form(request, pk=None):
     })
 
 
-@login_required
+@staff_member_required
 def class_delete(request, pk):
-    if not request.user.is_staff:
-        return redirect('students:home')
     lop = get_object_or_404(LopBoiDuong, pk=pk)
     ten_lop = lop.ten_lop
     lop.delete()
@@ -700,6 +693,47 @@ def class_delete(request, pk):
     return redirect('students:class_list')
 
 
+
+
+@staff_member_required
+def class_export_students(request, pk):
+    """Xuất danh sách sinh viên đã được duyệt vào lớp ra Excel."""
+    lop = get_object_or_404(LopBoiDuong, pk=pk)
+    students = lop.sinh_vien.select_related('khoa').all().order_by('mssv')
+
+    rows = []
+    for idx, sv in enumerate(students, start=1):
+        rows.append({
+            'STT': idx,
+            'MSSV': sv.mssv,
+            'Họ và tên': sv.ho_ten,
+            'Lớp': sv.lop or '',
+            'Khoa/Viện': sv.khoa.ten_khoa if sv.khoa else '',
+            'Email trường': sv.email_truong or '',
+            'Số điện thoại': sv.so_dien_thoai or '',
+            'Đạt ngoại ngữ': 'Đạt' if sv.check_dat_ngoai_ngu else 'Chưa đạt',
+            'Đạt tin học': 'Đạt' if sv.check_dat_tin_hoc else 'Chưa đạt',
+            'Đạt CĐR': 'Đạt' if sv.dat_chuan_dau_ra else 'Chưa đạt',
+        })
+
+    df = pd.DataFrame(rows)
+    if df.empty:
+        df = pd.DataFrame(columns=['STT', 'MSSV', 'Họ và tên', 'Lớp', 'Khoa/Viện', 'Email trường', 'Số điện thoại', 'Đạt ngoại ngữ', 'Đạt tin học', 'Đạt CĐR'])
+
+    safe_name = re.sub(r'[^A-Za-z0-9_-]+', '_', lop.ma_lop or f'lop_{lop.pk}')
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="danh_sach_{safe_name}.xlsx"'
+
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Danh sach lop')
+        ws = writer.sheets['Danh sach lop']
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 35)
+
+    return response
+
+@staff_member_required
 def registration_list(request):
     regs = DangKyLop.objects.select_related('sinh_vien', 'lop_hoc').all().order_by(
         Case(
@@ -947,6 +981,126 @@ def mofi_group_delete(request, pk):
     get_object_or_404(Group, pk=pk).delete()
     messages.success(request, 'Đã xóa Nhóm quyền thành công.')
     return redirect('students:mofi_group_list')
+
+
+
+# ==============================================================================
+# 4.5. CHĂM SÓC SINH VIÊN - THÔNG BÁO/CẢNH BÁO
+# ==============================================================================
+@staff_member_required
+def mofi_thongbao_list(request):
+    query = request.GET.get('q', '').strip()
+    loai = request.GET.get('loai', '').strip()
+    doi_tuong = request.GET.get('doi_tuong', '').strip()
+
+    notifications = ThongBao.objects.select_related('created_by').all().order_by('-created_at')
+
+    if query:
+        notifications = notifications.filter(
+            Q(tieu_de__icontains=query) |
+            Q(noi_dung__icontains=query) |
+            Q(link_url__icontains=query)
+        )
+    if loai:
+        notifications = notifications.filter(loai=loai)
+    if doi_tuong:
+        notifications = notifications.filter(doi_tuong=doi_tuong)
+
+    context = {
+        'notifications': notifications,
+        'thong_baos': notifications,
+        'query': query,
+        'loai': loai,
+        'doi_tuong': doi_tuong,
+        'loai_choices': ThongBao.LOAI_THONG_BAO,
+        'doi_tuong_choices': ThongBao.DOI_TUONG,
+        'tong_thong_bao': ThongBao.objects.count(),
+        'dang_hien_thi': ThongBao.objects.filter(is_active=True).count(),
+        'tong_sv_chua_dat_nn': sum(1 for sv in SinhVien.objects.all() if not sv.check_dat_ngoai_ngu),
+        'tong_sv_chua_dat_th': sum(1 for sv in SinhVien.objects.all() if not sv.check_dat_tin_hoc),
+    }
+    return render(request, 'admin_mofi/pages/thongbao_list.html', context)
+
+
+@staff_member_required
+def mofi_thongbao_form(request, pk=None):
+    instance = get_object_or_404(ThongBao, pk=pk) if pk else None
+
+    if request.method == 'POST':
+        form = ThongBaoForm(request.POST, instance=instance)
+        if form.is_valid():
+            thong_bao = form.save(commit=False)
+            if not thong_bao.created_by_id:
+                thong_bao.created_by = request.user
+            thong_bao.save()
+            messages.success(request, 'Đã lưu thông báo/cảnh báo sinh viên thành công.')
+            return redirect('students:mofi_thongbao_list')
+    else:
+        form = ThongBaoForm(instance=instance)
+
+    return render(request, 'admin_mofi/pages/thongbao_form.html', {
+        'form': form,
+        'instance': instance,
+    })
+
+
+@staff_member_required
+def mofi_thongbao_delete(request, pk):
+    thong_bao = get_object_or_404(ThongBao, pk=pk)
+    title = thong_bao.tieu_de
+    thong_bao.delete()
+    messages.success(request, f'Đã xóa thông báo "{title}".')
+    return redirect('students:mofi_thongbao_list')
+
+
+@staff_member_required
+def mofi_export_chua_dat_chuan(request):
+    """Xuất danh sách sinh viên chưa đạt chuẩn đầu ra để cán bộ chăm sóc/nhắc việc."""
+    students = SinhVien.objects.select_related('khoa').all().order_by('khoa__ten_khoa', 'lop', 'mssv')
+    rows = []
+
+    for sv in students:
+        dat_nn = sv.check_dat_ngoai_ngu
+        dat_th = sv.check_dat_tin_hoc
+        if dat_nn and dat_th:
+            continue
+
+        ly_do = []
+        if not dat_nn:
+            ly_do.append('Chưa đạt Ngoại ngữ')
+        if not dat_th:
+            ly_do.append('Chưa đạt Tin học')
+
+        rows.append({
+            'STT': len(rows) + 1,
+            'MSSV': sv.mssv,
+            'Họ và tên': sv.ho_ten,
+            'Lớp': sv.lop or '',
+            'Khoa/Viện': sv.khoa.ten_khoa if sv.khoa else '',
+            'Email trường': sv.email_truong or '',
+            'Email cá nhân': sv.email_ca_nhan or '',
+            'Số điện thoại': sv.so_dien_thoai or '',
+            'Năm cuối': 'Có' if sv.tien_do_nam_tu else 'Không',
+            'Ngoại ngữ': 'Đạt' if dat_nn else 'Chưa đạt',
+            'Tin học': 'Đạt' if dat_th else 'Chưa đạt',
+            'Nội dung cần chăm sóc': '; '.join(ly_do),
+        })
+
+    columns = ['STT', 'MSSV', 'Họ và tên', 'Lớp', 'Khoa/Viện', 'Email trường', 'Email cá nhân', 'Số điện thoại', 'Năm cuối', 'Ngoại ngữ', 'Tin học', 'Nội dung cần chăm sóc']
+    df = pd.DataFrame(rows, columns=columns)
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"danh_sach_chua_dat_chuan_{timezone.now().strftime('%Y%m%d_%H%M')}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Chua dat CDR')
+        ws = writer.sheets['Chua dat CDR']
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 40)
+
+    return response
 
 
 # ==============================================================================

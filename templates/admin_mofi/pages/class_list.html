@@ -60,8 +60,17 @@
                             {% endif %}
                         </td>
                         <td class="text-center">
-                            <a href="{% url 'students:class_edit' lop.pk %}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
-                            <a href="{% url 'students:class_delete' lop.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Xóa lớp này?');"><i class="fa fa-trash"></i></a>
+                            <div class="btn-group shadow-sm" role="group">
+                                <a href="{% url 'students:class_export_students' lop.pk %}" class="btn btn-outline-success btn-sm" title="Xuất danh sách sinh viên">
+                                    <i class="fa fa-download"></i>
+                                </a>
+                                <a href="{% url 'students:class_edit' lop.pk %}" class="btn btn-warning btn-sm" title="Sửa lớp">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <a href="{% url 'students:class_delete' lop.pk %}" class="btn btn-danger btn-sm" title="Xóa lớp" onclick="return confirm('Xóa lớp này?');">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}

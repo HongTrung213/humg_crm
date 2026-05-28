@@ -45,6 +45,7 @@ urlpatterns = [
     path('admin-panel/classes/add/', views.class_form, name='class_add'),
     path('admin-panel/classes/edit/<int:pk>/', views.class_form, name='class_edit'),
     path('admin-panel/classes/delete/<int:pk>/', views.class_delete, name='class_delete'),
+    path('admin-panel/classes/export/<int:pk>/', views.class_export_students, name='class_export_students'),
     path('quan-tri/lop-hoc/import/', views.mofi_import_class_list, name='mofi_import_class_list'),
     path('admin-panel/registrations/', views.registration_list, name='registration_list'),
     path('admin-panel/registrations/approve/<int:id>/', views.approve_registration, name='approve_registration'),

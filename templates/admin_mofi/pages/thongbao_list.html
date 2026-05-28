@@ -20,6 +20,22 @@
         {% endfor %}
     {% endif %}
 
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small fw-bold">Tổng thông báo</div><h3 class="fw-bold mb-0">{{ tong_thong_bao }}</h3></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small fw-bold">Đang hiển thị</div><h3 class="fw-bold text-success mb-0">{{ dang_hien_thi }}</h3></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small fw-bold">SV chưa đạt NN</div><h3 class="fw-bold text-warning mb-0">{{ tong_sv_chua_dat_nn }}</h3></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100"><div class="card-body"><div class="text-muted small fw-bold">SV chưa đạt TH</div><h3 class="fw-bold text-danger mb-0">{{ tong_sv_chua_dat_th }}</h3></div></div>
+        </div>
+    </div>
+
     <div class="card shadow-sm border-0 mb-3">
         <div class="card-body">
             <form method="GET" class="row g-2 align-items-end">
