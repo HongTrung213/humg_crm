@@ -1,13 +1,14 @@
+
 from django.urls import path
 from . import views
 
 app_name = 'cms'
 
 urlpatterns = [
-    # Public views
+    # Public: app đã được include tại /tin-tuc/ trong core/urls.py
     path('', views.post_list, name='post_list'),
-    path('danh-muc/<slug:category_slug>/', views.post_list, name='post_by_category'),
     path('bai-viet/<slug:post_slug>/', views.post_detail, name='post_detail'),
+    path('danh-muc/<slug:category_slug>/', views.post_list, name='post_by_category'),
 
     # Quản trị Bài viết
     path('quan-tri/bai-viet/', views.mofi_post_list, name='mofi_post_list'),
@@ -15,7 +16,7 @@ urlpatterns = [
     path('quan-tri/bai-viet/sua/<int:pk>/', views.mofi_post_edit, name='mofi_post_edit'),
     path('quan-tri/bai-viet/xoa/<int:pk>/', views.mofi_post_delete, name='mofi_post_delete'),
 
-    # Quản trị Danh mục (ĐÃ SỬA - tách add và edit)
+    # Quản trị Danh mục
     path('quan-tri/danh-muc/', views.mofi_category_list, name='mofi_category_list'),
     path('quan-tri/danh-muc/them/', views.mofi_category_add, name='mofi_category_add'),
     path('quan-tri/danh-muc/sua/<int:pk>/', views.mofi_category_edit, name='mofi_category_edit'),
@@ -33,9 +34,6 @@ urlpatterns = [
     path('quan-tri/quicklink/sua/<int:pk>/', views.mofi_quicklink_form, name='mofi_quicklink_edit'),
     path('quan-tri/quicklink/xoa/<int:pk>/', views.mofi_quicklink_delete, name='mofi_quicklink_delete'),
 
-    # 1. URL cho trang Tin tức tổng hợp (tất cả bài viết)
-    path('tin-tuc/', views.post_list, name='post_list'),
-    
-    # 2. URL DÀNH CHO MENU: Lọc tin tức theo từng danh mục
-    path('tin-tuc/<slug:category_slug>/', views.post_list, name='post_list_by_category'),
+    # Slug danh mục đặt cuối để không bắt nhầm các route quản trị
+    path('<slug:category_slug>/', views.post_list, name='post_list_by_category'),
 ]

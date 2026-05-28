@@ -1,0 +1,56 @@
+
+{% extends 'admin_mofi/base.html' %}
+{% block title %}Chăm sóc sinh viên | HUMG CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-7"><h4 class="fw-bold mb-0"><i class="fa fa-bell text-primary me-2"></i>Thông báo & Cảnh báo sinh viên</h4></div>
+            <div class="col-md-5 text-end">
+                <a href="{% url 'students:mofi_export_chua_dat_chuan' %}" class="btn btn-outline-success fw-bold me-2"><i class="fa fa-download me-1"></i> DS chưa đạt CĐR</a>
+                <a href="{% url 'students:mofi_thongbao_add' %}" class="btn btn-primary fw-bold"><i class="fa fa-plus me-1"></i> Tạo thông báo</a>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-5"><label class="form-label fw-bold">Từ khóa</label><input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Tìm theo tiêu đề/nội dung..."></div>
+                <div class="col-md-3"><label class="form-label fw-bold">Loại</label><select name="loai" class="form-select"><option value="">Tất cả</option>{% for code, label in loai_choices %}<option value="{{ code }}" {% if loai == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+                <div class="col-md-3"><label class="form-label fw-bold">Đối tượng</label><select name="doi_tuong" class="form-select"><option value="">Tất cả</option>{% for code, label in doi_tuong_choices %}<option value="{{ code }}" {% if doi_tuong == code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+                <div class="col-md-1"><button class="btn btn-primary w-100"><i class="fa fa-search"></i></button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive p-3">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr><th>Thông báo</th><th>Loại</th><th>Đối tượng</th><th>Hiệu lực</th><th>Trạng thái</th><th class="text-center">Thao tác</th></tr></thead>
+                <tbody>
+                    {% for tb in thong_baos %}
+                    <tr>
+                        <td><div class="fw-bold">{{ tb.tieu_de }}</div><div class="small text-muted text-truncate" style="max-width: 420px;">{{ tb.noi_dung|striptags }}</div></td>
+                        <td><span class="badge bg-light text-primary border">{{ tb.get_loai_display }}</span></td>
+                        <td>{{ tb.get_doi_tuong_display }}</td>
+                        <td><small>{{ tb.ngay_bat_dau|date:'d/m/Y'|default:'-' }} → {{ tb.ngay_ket_thuc|date:'d/m/Y'|default:'-' }}</small></td>
+                        <td>{% if tb.is_active %}<span class="badge bg-success">Đang bật</span>{% else %}<span class="badge bg-secondary">Đã tắt</span>{% endif %}</td>
+                        <td class="text-center"><a href="{% url 'students:mofi_thongbao_edit' tb.pk %}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a> <a href="{% url 'students:mofi_thongbao_delete' tb.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Xóa thông báo này?');"><i class="fa fa-trash"></i></a></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center py-5 text-muted">Chưa có thông báo/cảnh báo nào.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

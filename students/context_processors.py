@@ -1,11 +1,25 @@
-from .models import SinhVien
+
+from .models import SinhVien, ThongBao
+
 
 def sinh_vien_global(request):
-    # Trả về thông tin sinh viên cho tất cả các trang HTML nếu đã đăng nhập
+    """Đưa hồ sơ sinh viên và số thông báo/cảnh báo ra toàn bộ template."""
+    sinh_vien = None
+    so_thong_bao_cham_soc = 0
+
     if request.user.is_authenticated:
-        try:
-            sv = SinhVien.objects.get(mssv=request.user.username)
-            return {'sinh_vien_global': sv}
-        except SinhVien.DoesNotExist:
-            pass
-    return {'sinh_vien_global': None}
+        sinh_vien = SinhVien.objects.filter(user=request.user).first()
+        if not sinh_vien:
+            sinh_vien = SinhVien.objects.filter(mssv=request.user.username).first()
+        if not sinh_vien and request.user.email:
+            sinh_vien = SinhVien.objects.filter(email_truong__iexact=request.user.email).first()
+
+        if sinh_vien:
+            so_thong_bao_cham_soc = sum(
+                1 for tb in ThongBao.objects.filter(is_active=True) if tb.phu_hop_voi_sinh_vien(sinh_vien)
+            )
+
+    return {
+        'sinh_vien_global': sinh_vien,
+        'so_thong_bao_cham_soc': so_thong_bao_cham_soc,
+    }

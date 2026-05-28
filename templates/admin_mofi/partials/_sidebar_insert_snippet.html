@@ -1,0 +1,12 @@
+
+{# Chèn trong templates/admin_mofi/partials/_sidebar.html, khu vực "Đào tạo & Khảo thí" hoặc trước "Nội dung Website" #}
+<li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+  <a class="sidebar-link sidebar-title" href="javascript:void(0)">
+    <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-board"></use></svg>
+    <span class="fw-bold text-dark">Chăm sóc Sinh viên</span>
+  </a>
+  <ul class="sidebar-submenu">
+    <li><a href="{% url 'students:mofi_thongbao_list' %}">Thông báo & Cảnh báo</a></li>
+    <li><a href="{% url 'students:mofi_export_chua_dat_chuan' %}">DS chưa đạt CĐR</a></li>
+  </ul>
+</li>

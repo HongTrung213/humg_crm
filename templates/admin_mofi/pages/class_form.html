@@ -1,0 +1,56 @@
+
+{% extends 'admin_mofi/base.html' %}
+{% block title %}{% if instance %}Sửa lớp{% else %}Thêm lớp{% endif %} | HUMG CRM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h4 class="fw-bold mb-0">
+                    <i class="fa fa-users text-primary me-2"></i>
+                    {% if instance %}Cập nhật lớp: {{ instance.ten_lop }}{% else %}Tạo lớp bồi dưỡng mới{% endif %}
+                </h4>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'students:class_list' %}" class="btn btn-light border fw-bold"><i class="fa fa-arrow-left me-1"></i> Quay lại</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white px-4 py-3">
+                    <h5 class="text-white mb-0 fw-bold"><i class="fa fa-info-circle me-2"></i>Thông tin lớp học</h5>
+                </div>
+                <form method="POST" class="form theme-form">
+                    {% csrf_token %}
+                    <div class="card-body p-4">
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                        {% endif %}
+                        <div class="row g-3">
+                            {% for field in form %}
+                                <div class="col-md-{% if field.name == 'mo_ta' %}12{% else %}6{% endif %}">
+                                    <label class="form-label fw-bold">{{ field.label }}{% if field.field.required %}<span class="text-danger"> *</span>{% endif %}</label>
+                                    {% if field.field.widget.input_type == 'checkbox' %}
+                                        <div class="form-check form-switch mt-2">{{ field }} <span class="ms-2">Đang mở đăng ký</span></div>
+                                    {% else %}
+                                        {{ field }}
+                                    {% endif %}
+                                    {% if field.help_text %}<small class="text-muted d-block mt-1">{{ field.help_text }}</small>{% endif %}
+                                    {% if field.errors %}<div class="text-danger small fw-bold mt-1">{{ field.errors|striptags }}</div>{% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-white text-end p-3">
+                        <button type="submit" class="btn btn-primary fw-bold px-4"><i class="fa fa-save me-1"></i> Lưu thông tin</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+
+{% if thong_bao_moi %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white border-bottom pb-3 pt-4">
+        <h5 class="fw-bold mb-0"><i class="feather-bell text-warning me-2"></i>Thông báo & Cảnh báo dành cho bạn</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="list-group list-group-flush">
+            {% for tb in thong_bao_moi %}
+            <a {% if tb.link_url %}href="{{ tb.link_url }}" target="_blank"{% else %}href="javascript:void(0)"{% endif %} class="list-group-item list-group-item-action p-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <span class="badge bg-light text-primary border mb-2">{{ tb.get_loai_display }}</span>
+                        <h6 class="fw-bold mb-1 text-dark">{{ tb.tieu_de }}</h6>
+                        <p class="mb-0 text-muted small">{{ tb.noi_dung|striptags|truncatechars:180 }}</p>
+                    </div>
+                    <small class="text-muted ms-3">{{ tb.created_at|date:'d/m/Y' }}</small>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
