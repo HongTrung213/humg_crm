@@ -86,6 +86,7 @@ urlpatterns = [
     path('quan-tri/cham-soc/thong-bao/them/', views.mofi_thongbao_form, name='mofi_thongbao_add'),
     path('quan-tri/cham-soc/thong-bao/sua/<int:pk>/', views.mofi_thongbao_form, name='mofi_thongbao_edit'),
     path('quan-tri/cham-soc/thong-bao/xoa/<int:pk>/', views.mofi_thongbao_delete, name='mofi_thongbao_delete'),
+    path('quan-tri/cham-soc/thong-bao/gui-email/<int:pk>/', views.mofi_thongbao_send_email, name='mofi_thongbao_send_email'),
     path('quan-tri/cham-soc/xuat-danh-sach-chua-dat/', views.mofi_export_chua_dat_chuan, name='mofi_export_chua_dat_chuan'),
 
     # ==========================================

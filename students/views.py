@@ -6,6 +6,10 @@ import pandas as pd
 from openpyxl import load_workbook
 
 from django.contrib import messages
+from django.views.decorators.http import require_POST
+from django.utils.html import escape
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -1050,6 +1054,146 @@ def mofi_thongbao_delete(request, pk):
     title = thong_bao.tieu_de
     thong_bao.delete()
     messages.success(request, f'Đã xóa thông báo "{title}".')
+    return redirect('students:mofi_thongbao_list')
+
+
+
+
+def _get_thongbao_student_recipients(thong_bao):
+    """
+    Lấy danh sách email sinh viên theo đối tượng nhận của thông báo.
+
+    Ưu tiên email trường; nếu không có thì dùng email cá nhân.
+    Danh sách email được loại trùng và chuẩn hóa chữ thường.
+    """
+    students = SinhVien.objects.select_related('khoa').all()
+    recipients = []
+
+    for sv in students:
+        is_target = False
+
+        if thong_bao.doi_tuong == 'ALL':
+            is_target = True
+        elif thong_bao.doi_tuong == 'CHUA_DAT_NN':
+            is_target = not sv.check_dat_ngoai_ngu
+        elif thong_bao.doi_tuong == 'CHUA_DAT_TH':
+            is_target = not sv.check_dat_tin_hoc
+        elif thong_bao.doi_tuong == 'CHUA_DAT_CDR':
+            is_target = not sv.dat_chuan_dau_ra
+        elif thong_bao.doi_tuong == 'NAM_CUOI':
+            is_target = sv.tien_do_nam_tu
+
+        if not is_target:
+            continue
+
+        email = (sv.email_truong or sv.email_ca_nhan or '').strip().lower()
+        if email:
+            recipients.append(email)
+
+    return sorted(set(recipients))
+
+
+@staff_member_required
+@require_POST
+def mofi_thongbao_send_email(request, pk):
+    """
+    Gửi email thông báo/cảnh báo tới nhóm sinh viên phù hợp.
+
+    Cơ chế gửi:
+    - Chỉ gửi thông báo đang bật và đang hiệu lực.
+    - Lọc người nhận theo trường doi_tuong của ThongBao.
+    - Gửi theo lô bằng BCC để không lộ danh sách email sinh viên.
+    """
+    thong_bao = get_object_or_404(ThongBao, pk=pk)
+
+    if not thong_bao.is_active:
+        messages.error(request, 'Thông báo này đang tắt hiển thị, không thể gửi email.')
+        return redirect('students:mofi_thongbao_list')
+
+    if hasattr(thong_bao, 'dang_hieu_luc') and not thong_bao.dang_hieu_luc():
+        messages.error(request, 'Thông báo này chưa đến ngày hiệu lực hoặc đã hết hạn, không thể gửi email.')
+        return redirect('students:mofi_thongbao_list')
+
+    recipients = _get_thongbao_student_recipients(thong_bao)
+
+    if not recipients:
+        messages.warning(request, 'Không tìm thấy email sinh viên phù hợp để gửi.')
+        return redirect('students:mofi_thongbao_list')
+
+    subject = f'[HUMG CFI] {thong_bao.tieu_de}'
+    safe_title = escape(thong_bao.tieu_de)
+    safe_content = escape(thong_bao.noi_dung)
+    safe_link = escape(thong_bao.link_url or '')
+
+    plain_body = f"""Kính gửi sinh viên,
+
+Trung tâm Ngoại ngữ - Tin học HUMG gửi tới bạn thông báo sau:
+
+{thong_bao.tieu_de}
+
+{thong_bao.noi_dung}
+
+{('Xem thêm tại: ' + thong_bao.link_url) if thong_bao.link_url else ''}
+
+Trân trọng,
+Trung tâm Ngoại ngữ - Tin học HUMG
+Trường Đại học Mỏ - Địa chất
+"""
+
+    html_body = f"""
+<div style="font-family: Arial, sans-serif; font-size: 14px; color: #222; line-height: 1.6;">
+    <p>Kính gửi sinh viên,</p>
+    <p>Trung tâm Ngoại ngữ - Tin học HUMG gửi tới bạn thông báo sau:</p>
+
+    <div style="border-left: 4px solid #0d6efd; padding: 12px 16px; background: #f8f9fa; margin: 16px 0;">
+        <h3 style="margin: 0 0 10px 0; color: #0d6efd;">{safe_title}</h3>
+        <p style="margin: 0; white-space: pre-line;">{safe_content}</p>
+    </div>
+"""
+
+    if thong_bao.link_url:
+        html_body += f"""
+    <p>
+        <a href="{safe_link}"
+           style="display: inline-block; padding: 10px 16px; background: #0d6efd; color: #fff; text-decoration: none; border-radius: 4px;">
+            Xem thông tin liên quan
+        </a>
+    </p>
+"""
+
+    html_body += """
+    <p>Trân trọng,</p>
+    <p>
+        <strong>Trung tâm Ngoại ngữ - Tin học HUMG</strong><br>
+        Trường Đại học Mỏ - Địa chất
+    </p>
+</div>
+"""
+
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@humg.edu.vn')
+    batch_size = 50
+    sent_count = 0
+
+    try:
+        for start in range(0, len(recipients), batch_size):
+            batch = recipients[start:start + batch_size]
+
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=plain_body,
+                from_email=from_email,
+                to=[from_email],
+                bcc=batch,
+            )
+            email.attach_alternative(html_body, 'text/html')
+            email.send(fail_silently=False)
+            sent_count += len(batch)
+
+        messages.success(request, f'Đã gửi email thông báo tới {sent_count} sinh viên.')
+
+    except Exception as e:
+        messages.error(request, f'Lỗi khi gửi email: {e}')
+
     return redirect('students:mofi_thongbao_list')
 
 

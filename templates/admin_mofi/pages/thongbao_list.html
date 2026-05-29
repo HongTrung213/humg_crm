@@ -59,7 +59,19 @@
                         <td>{{ tb.get_doi_tuong_display }}</td>
                         <td><small>{{ tb.ngay_bat_dau|date:'d/m/Y'|default:'-' }} → {{ tb.ngay_ket_thuc|date:'d/m/Y'|default:'-' }}</small></td>
                         <td>{% if tb.is_active %}<span class="badge bg-success">Đang bật</span>{% else %}<span class="badge bg-secondary">Đã tắt</span>{% endif %}</td>
-                        <td class="text-center"><a href="{% url 'students:mofi_thongbao_edit' tb.pk %}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a> <a href="{% url 'students:mofi_thongbao_delete' tb.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Xóa thông báo này?');"><i class="fa fa-trash"></i></a></td>
+                        <td class="text-center">
+                            <a href="{% url 'students:mofi_thongbao_edit' tb.pk %}" class="btn btn-warning btn-sm" title="Sửa thông báo"><i class="fa fa-edit"></i></a>
+
+                            <form method="POST" action="{% url 'students:mofi_thongbao_send_email' tb.pk %}" class="d-inline" onsubmit="return confirm('Gửi email thông báo này tới nhóm sinh viên phù hợp?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-info btn-sm" title="Gửi email sinh viên"><i class="fa fa-envelope"></i></button>
+                            </form>
+
+                            <form method="POST" action="{% url 'students:mofi_thongbao_delete' tb.pk %}" class="d-inline" onsubmit="return confirm('Xóa thông báo này?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" title="Xóa thông báo"><i class="fa fa-trash"></i></button>
+                            </form>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr><td colspan="6" class="text-center py-5 text-muted">Chưa có thông báo/cảnh báo nào.</td></tr>
