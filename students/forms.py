@@ -11,9 +11,16 @@ from .models import ChungChi, DanhMucChungChi, Khoa, LopBoiDuong, ThongBao
 class KhoaForm(forms.ModelForm):
     class Meta:
         model = Khoa
-        fields = ['ten_khoa']
+        fields = ['ma_khoa', 'ten_khoa']
         widgets = {
-            'ten_khoa': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nhập tên khoa/viện...'}),
+            'ma_khoa': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'VD: 105, 101, 102...',
+            }),
+            'ten_khoa': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập tên khoa/viện...',
+            }),
         }
 
 

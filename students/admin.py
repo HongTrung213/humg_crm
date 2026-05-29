@@ -5,8 +5,9 @@ from .models import ChungChi, DangKyLop, DanhMucChungChi, DotThi, Khoa, LichSuTh
 
 @admin.register(Khoa)
 class KhoaAdmin(admin.ModelAdmin):
-    list_display = ('ten_khoa',)
-    search_fields = ('ten_khoa',)
+    list_display = ('id', 'ma_khoa', 'ten_khoa')
+    search_fields = ('ma_khoa', 'ten_khoa')
+    ordering = ('ma_khoa', 'ten_khoa')
 
 
 @admin.register(DanhMucChungChi)

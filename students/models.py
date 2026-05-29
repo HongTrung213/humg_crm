@@ -14,14 +14,24 @@ from django.utils import timezone
 # DANH MỤC HỆ THỐNG (MASTER DATA)
 # ==============================================================================
 class Khoa(models.Model):
+    ma_khoa = models.CharField(
+        'Mã Khoa',
+        max_length=10,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text='VD: 105, 101, 102... dùng để tự động phân khoa từ MSSV',
+    )
     ten_khoa = models.CharField('Tên Khoa/Viện', max_length=200, unique=True)
 
     class Meta:
         verbose_name = 'Danh mục Khoa'
         verbose_name_plural = '1. Danh mục Khoa/Viện'
-        ordering = ['ten_khoa']
+        ordering = ['ma_khoa', 'ten_khoa']
 
     def __str__(self):
+        if self.ma_khoa:
+            return f"[{self.ma_khoa}] {self.ten_khoa}"
         return self.ten_khoa
 
 

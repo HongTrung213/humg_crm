@@ -1,105 +1,99 @@
 {% extends 'admin_mofi/base.html' %}
-{% block title %}Danh sách Khoa | HUMG CRM{% endblock %}
+{% load static %}
+
+{% block title %}Danh mục Khoa/Viện | HUMG CRM{% endblock %}
+{% block page_title %}Danh mục Khoa/Viện{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <!-- TIÊU ĐỀ TRANG -->
     <div class="page-title mb-4">
         <div class="row align-items-center">
             <div class="col-6">
-                <h4 class="fw-bold mb-0 text-dark">
-                    <i class="fa fa-university text-muted me-2"></i>Quản lý Khoa / Đơn vị
+                <h4 class="fw-bold mb-0">
+                    <i class="fa fa-university text-primary me-2"></i>
+                    Danh mục Khoa/Viện
                 </h4>
             </div>
             <div class="col-6 text-end">
-                <a href="{% url 'students:mofi_khoa_add' %}" class="btn btn-dark fw-bold shadow-sm rounded-3">
-                    <i class="fa fa-plus-circle me-1"></i> Thêm Khoa mới
+                <a href="{% url 'students:mofi_khoa_add' %}" class="btn btn-primary fw-bold shadow-sm rounded-3">
+                    <i class="fa fa-plus-circle me-1"></i> Thêm Khoa/Viện
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- KHỐI DANH SÁCH -->
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-                <div class="card-header bg-white pt-4 px-4 pb-0 border-bottom-0 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold text-secondary mb-0 text-uppercase small" style="letter-spacing: 0.5px;">Cơ cấu tổ chức đào tạo</h6>
-                    
-                    <!-- Form tìm kiếm tinh tế -->
-                    <form method="GET" style="width: 280px;">
-                        <div class="input-group shadow-none border rounded-3 overflow-hidden bg-light">
-                            <span class="input-group-text bg-transparent border-0 pe-0 text-muted">
-                                <i class="fa fa-search small"></i>
-                            </span>
-                            <input class="form-control border-0 bg-transparent text-dark py-2" style="font-size: 13px;" type="text" name="q" value="{{ query }}" placeholder="Tìm nhanh tên khoa...">
-                            <button class="btn btn-transparent border-0 text-primary fw-bold" type="submit" style="font-size: 12px;">Lọc</button>
-                        </div>
-                    </form>
-                </div>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
 
-                <div class="card-body p-0 mt-3">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light border-top border-bottom">
-                                <tr>
-                                    <th width="80" class="text-center py-3 text-muted small fw-bold">ID</th>
-                                    <th class="py-3 text-muted small fw-bold">TÊN KHOA / ĐƠN VỊ ĐÀO TẠO</th>
-                                    <th class="text-center py-3 text-muted small fw-bold">SĨ SỐ SINH VIÊN</th>
-                                    <th width="120" class="text-center py-3 text-muted small fw-bold">THAO TÁC</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for khoa in danh_sach_khoa %}
-                                <tr class="transition-all">
-                                    <td class="text-center text-muted small fw-medium">{{ khoa.id }}</td>
-                                    <td class="py-3">
-                                        <div class="fw-bold text-dark fs-6">{{ khoa.ten_khoa }}</div>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="badge bg-light text-primary border rounded-pill px-3 py-2 fw-bold" style="font-size: 12px;">
-                                            <i class="fa fa-users me-1 text-muted"></i> {{ khoa.sinh_vien_list.count|default:"0" }}
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <a href="{% url 'students:mofi_khoa_edit' khoa.id %}" class="btn btn-sm btn-white border shadow-sm fw-bold px-3 py-1 text-dark" style="font-size: 12px;">
-                                            <i class="fa fa-pencil me-1"></i> Sửa
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="4" class="text-center py-5">
-                                        <div class="text-muted">
-                                            <i class="fa fa-folder-open-o fa-3x mb-3 d-block opacity-25"></i>
-                                            <p class="mb-0">Chưa có dữ liệu Khoa nào được tìm thấy.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white border-bottom">
+            <form method="GET" class="row g-2 align-items-center">
+                <div class="col-md-10">
+                    <input type="text" name="q" value="{{ query }}" class="form-control"
+                           placeholder="Tìm kiếm theo mã khoa hoặc tên khoa/viện...">
                 </div>
-                
-                <!-- Footer card nếu cần phân trang -->
-                <div class="card-footer bg-white border-0 py-3"></div>
+                <div class="col-md-2 text-end">
+                    <button class="btn btn-outline-primary w-100" type="submit">
+                        <i class="fa fa-search me-1"></i> Tìm kiếm
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">#</th>
+                            <th style="width: 160px;">Mã Khoa</th>
+                            <th>Tên Khoa/Viện</th>
+                            <th class="text-center" style="width: 180px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for khoa in danh_sach_khoa %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                {% if khoa.ma_khoa %}
+                                    <span class="badge bg-light text-primary border fw-bold">{{ khoa.ma_khoa }}</span>
+                                {% else %}
+                                    <span class="text-muted small">Chưa khai báo</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-dark">{{ khoa.ten_khoa }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'students:mofi_khoa_edit' khoa.pk %}"
+                                   class="btn btn-warning btn-sm" title="Sửa">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <a href="{% url 'students:mofi_khoa_delete' khoa.pk %}"
+                                   class="btn btn-danger btn-sm"
+                                   title="Xóa"
+                                   onclick="return confirm('Bạn có chắc chắn muốn xóa khoa/viện này?');">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-5">
+                                <i class="fa fa-university d-block mb-2" style="font-size: 2rem; opacity: 0.4;"></i>
+                                Chưa có khoa/viện nào trong hệ thống.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    /* Hiệu ứng mượt mà khi hover dòng */
-    .table-hover tbody tr:hover {
-        background-color: #fbfbfb !important;
-    }
-    .transition-all {
-        transition: all 0.2s ease-in-out;
-    }
-    /* Chỉnh chữ trong bảng rõ nét */
-    .table td, .table th {
-        border-color: #f1f1f1 !important;
-    }
-</style>
 {% endblock %}

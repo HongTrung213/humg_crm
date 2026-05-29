@@ -80,27 +80,30 @@ def to_float(val):
         return None
 
 
-def parse_mssv_humg(mssv):
-    """Tự động suy ra Khoa từ mã sinh viên HUMG."""
+def get_khoa_from_mssv(mssv):
+    """
+    Tự động xác định Khoa từ MSSV HUMG bằng mã khoa lưu trong Database.
+
+    Quy ước hiện dùng:
+    - MSSV có 10 chữ số.
+    - 3 số ở vị trí 4-6 là mã khoa.
+    - Ví dụ: 2121050001 -> mã khoa 105.
+    """
     mssv_str = str(mssv or '').strip()
     if not mssv_str.isdigit() or len(mssv_str) != 10:
         return None
 
     ma_khoa = mssv_str[3:6]
-    dict_khoa = {
-        '100': 'Khoa Khoa học cơ bản',
-        '101': 'Khoa Dầu khí và Năng lượng',
-        '102': 'Khoa Khoa học và Kỹ thuật Địa chất',
-        '103': 'Khoa Trắc địa - Bản đồ và Quản lý đất đai',
-        '104': 'Khoa Mỏ',
-        '105': 'Khoa Công nghệ Thông tin',
-        '106': 'Khoa Cơ - Điện',
-        '107': 'Khoa Xây dựng',
-        '108': 'Khoa Môi trường',
-        '109': 'Chương trình tiên tiến',
-        '401': 'Khoa Kinh tế - Quản trị kinh doanh',
-    }
-    return dict_khoa.get(ma_khoa, 'Khoa Khác')
+    return Khoa.objects.filter(ma_khoa=ma_khoa).first()
+
+
+def parse_mssv_humg(mssv):
+    """
+    Hàm tương thích với code cũ.
+    Trả về tên khoa nếu tìm thấy trong Database, ngược lại trả về 'Khoa Khác'.
+    """
+    khoa = get_khoa_from_mssv(mssv)
+    return khoa.ten_khoa if khoa else 'Khoa Khác'
 
 
 def extract_mssv(value):
@@ -218,10 +221,18 @@ def ensure_student(mssv, ho_ten='', lop='', khoa_name='', email=''):
         return None
 
     ho_ten = ho_ten or f'SV_{mssv}'
-    khoa_name = khoa_name or parse_mssv_humg(mssv)
     khoa_obj = None
+
     if khoa_name:
+        # Nếu file Excel có cột Khoa thì ưu tiên dùng tên khoa trong file.
+        # Trường hợp tên khoa chưa có trong danh mục, hệ thống tự tạo bản ghi mới.
         khoa_obj, _ = Khoa.objects.get_or_create(ten_khoa=khoa_name)
+    else:
+        # Nếu file không có cột Khoa, tự động tra mã khoa từ MSSV theo bảng Danh mục Khoa.
+        khoa_obj = get_khoa_from_mssv(mssv)
+
+    if not khoa_obj:
+        khoa_obj, _ = Khoa.objects.get_or_create(ten_khoa='Khoa Khác')
 
     user, user_created = User.objects.get_or_create(
         username=mssv,
@@ -647,7 +658,7 @@ def import_sinh_vien(request):
                     continue
                 ho_ten = get_first(row, ['hoten', 'ho ten', 'hovaten', 'ten sinh vien'])
                 lop = get_first(row, ['lop', 'lop sinh hoat'])
-                khoa = get_first(row, ['khoa', 'khoa vien', 'khoa/viện']) or parse_mssv_humg(mssv)
+                khoa = get_first(row, ['khoa', 'khoa vien', 'khoa/viện'])
                 email = get_first(row, ['email', 'email truong']) or f'{mssv}@student.humg.edu.vn'
                 sv = ensure_student(mssv, ho_ten=ho_ten, lop=lop, khoa_name=khoa, email=email)
                 if sv:
@@ -868,10 +879,15 @@ def delete_certificate(request, cert_id):
 @staff_member_required
 def mofi_khoa_list(request):
     query = request.GET.get('q', '').strip()
-    danh_sach_khoa = Khoa.objects.all().order_by('ten_khoa')
+    danh_sach_khoa = Khoa.objects.all().order_by('ma_khoa', 'ten_khoa')
     if query:
-        danh_sach_khoa = danh_sach_khoa.filter(ten_khoa__icontains=query)
-    return render(request, 'admin_mofi/pages/khoa_list.html', {'danh_sach_khoa': danh_sach_khoa, 'query': query})
+        danh_sach_khoa = danh_sach_khoa.filter(
+            Q(ma_khoa__icontains=query) | Q(ten_khoa__icontains=query)
+        )
+    return render(request, 'admin_mofi/pages/khoa_list.html', {
+        'danh_sach_khoa': danh_sach_khoa,
+        'query': query,
+    })
 
 
 @staff_member_required
@@ -1049,6 +1065,7 @@ def mofi_thongbao_form(request, pk=None):
 
 
 @staff_member_required
+@require_POST
 def mofi_thongbao_delete(request, pk):
     thong_bao = get_object_or_404(ThongBao, pk=pk)
     title = thong_bao.tieu_de
@@ -1442,7 +1459,7 @@ def import_lich_thi_generic(request, mon_thi_code, template_name, success_label)
                             continue
                         ho_ten = get_first(row, ['hoten', 'ho ten', 'hovaten', 'ten sinh vien'])
                         lop = get_first(row, ['lop', 'lop sinh hoat'])
-                        khoa = get_first(row, ['khoa', 'khoa vien']) or parse_mssv_humg(mssv)
+                        khoa = get_first(row, ['khoa', 'khoa vien'])
                         sv = ensure_student(mssv, ho_ten=ho_ten, lop=lop, khoa_name=khoa)
                         if not sv:
                             continue
@@ -1527,7 +1544,7 @@ def import_diem_generic(request, mon_thi_code, template_name, success_label):
 
                         ho_ten = get_first(row, ['hoten', 'ho ten', 'hovaten', 'ten sinh vien'])
                         lop = get_first(row, ['lop', 'lop sinh hoat'])
-                        khoa = get_first(row, ['khoa', 'khoa vien']) or parse_mssv_humg(mssv)
+                        khoa = get_first(row, ['khoa', 'khoa vien'])
                         sv = ensure_student(mssv, ho_ten=ho_ten, lop=lop, khoa_name=khoa)
                         if not sv:
                             continue
