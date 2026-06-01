@@ -2,7 +2,7 @@
 from django import forms
 from django.contrib.auth.models import Group, Permission, User
 
-from .models import ChungChi, DanhMucChungChi, Khoa, LopBoiDuong, ThongBao
+from .models import ChungChi, DanhMucChungChi, Khoa, NganhDaoTao, LopBoiDuong, ThongBao
 
 
 # ==============================
@@ -19,7 +19,44 @@ class KhoaForm(forms.ModelForm):
             }),
             'ten_khoa': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Nhập tên khoa/viện...',
+                'placeholder': 'Nhập tên khoa...',
+            }),
+        }
+
+
+# ==============================
+# FORM NGÀNH ĐÀO TẠO
+# ==============================
+class NganhDaoTaoForm(forms.ModelForm):
+    class Meta:
+        model = NganhDaoTao
+        fields = [
+            'ma_nganh',
+            'ten_nganh',
+            'khoa',
+            'loai_nganh',
+            'thoi_gian_dao_tao_nam',
+            'is_active',
+        ]
+        widgets = {
+            'ma_nganh': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'VD: 7480201, 7220201...',
+            }),
+            'ten_nganh': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nhập tên ngành...',
+            }),
+            'khoa': forms.Select(attrs={'class': 'form-select'}),
+            'loai_nganh': forms.Select(attrs={'class': 'form-select'}),
+            'thoi_gian_dao_tao_nam': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.5',
+                'min': '1',
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'role': 'switch',
             }),
         }
 

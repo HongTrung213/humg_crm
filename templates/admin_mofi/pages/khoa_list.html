@@ -1,8 +1,8 @@
 {% extends 'admin_mofi/base.html' %}
 {% load static %}
 
-{% block title %}Danh mục Khoa/Viện | HUMG CRM{% endblock %}
-{% block page_title %}Danh mục Khoa/Viện{% endblock %}
+{% block title %}Danh mục Khoa | HUMG CRM{% endblock %}
+{% block page_title %}Danh mục Khoa{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -11,12 +11,12 @@
             <div class="col-6">
                 <h4 class="fw-bold mb-0">
                     <i class="fa fa-university text-primary me-2"></i>
-                    Danh mục Khoa/Viện
+                    Danh mục Khoa
                 </h4>
             </div>
             <div class="col-6 text-end">
                 <a href="{% url 'students:mofi_khoa_add' %}" class="btn btn-primary fw-bold shadow-sm rounded-3">
-                    <i class="fa fa-plus-circle me-1"></i> Thêm Khoa/Viện
+                    <i class="fa fa-plus-circle me-1"></i> Thêm Khoa
                 </a>
             </div>
         </div>
@@ -36,7 +36,7 @@
             <form method="GET" class="row g-2 align-items-center">
                 <div class="col-md-10">
                     <input type="text" name="q" value="{{ query }}" class="form-control"
-                           placeholder="Tìm kiếm theo mã khoa hoặc tên khoa/viện...">
+                           placeholder="Tìm kiếm theo mã khoa hoặc tên khoa...">
                 </div>
                 <div class="col-md-2 text-end">
                     <button class="btn btn-outline-primary w-100" type="submit">
@@ -53,7 +53,7 @@
                         <tr>
                             <th style="width: 80px;">#</th>
                             <th style="width: 160px;">Mã Khoa</th>
-                            <th>Tên Khoa/Viện</th>
+                            <th>Tên Khoa</th>
                             <th class="text-center" style="width: 180px;">Thao tác</th>
                         </tr>
                     </thead>
@@ -77,7 +77,7 @@
                                 <a href="{% url 'students:mofi_khoa_delete' khoa.pk %}"
                                    class="btn btn-danger btn-sm"
                                    title="Xóa"
-                                   onclick="return confirm('Bạn có chắc chắn muốn xóa khoa/viện này?');">
+                                   onclick="return confirm('Bạn có chắc chắn muốn xóa khoa này?');">
                                     <i class="fa fa-trash"></i>
                                 </a>
                             </td>
@@ -86,7 +86,7 @@
                         <tr>
                             <td colspan="4" class="text-center text-muted py-5">
                                 <i class="fa fa-university d-block mb-2" style="font-size: 2rem; opacity: 0.4;"></i>
-                                Chưa có khoa/viện nào trong hệ thống.
+                                Chưa có khoa nào trong hệ thống.
                             </td>
                         </tr>
                         {% endfor %}

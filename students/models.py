@@ -15,18 +15,18 @@ from django.utils import timezone
 # ==============================================================================
 class Khoa(models.Model):
     ma_khoa = models.CharField(
-        'Mã Khoa',
+        'Mã khoa',
         max_length=10,
         unique=True,
         null=True,
         blank=True,
-        help_text='VD: 105, 101, 102... dùng để tự động phân khoa từ MSSV',
+        help_text='VD: 100, 105, 401... dùng để xác định khoa từ MSSV',
     )
-    ten_khoa = models.CharField('Tên Khoa/Viện', max_length=200, unique=True)
+    ten_khoa = models.CharField('Tên khoa', max_length=200, unique=True)
 
     class Meta:
-        verbose_name = 'Danh mục Khoa'
-        verbose_name_plural = '1. Danh mục Khoa/Viện'
+        verbose_name = 'Khoa'
+        verbose_name_plural = '1. Danh mục Khoa'
         ordering = ['ma_khoa', 'ten_khoa']
 
     def __str__(self):
@@ -34,6 +34,45 @@ class Khoa(models.Model):
             return f"[{self.ma_khoa}] {self.ten_khoa}"
         return self.ten_khoa
 
+
+
+class NganhDaoTao(models.Model):
+    LOAI_NGANH = [
+        ('THUONG', 'Ngành thông thường'),
+        ('NGON_NGU_ANH', 'Ngôn ngữ Anh'),
+        ('NGON_NGU_TRUNG', 'Ngôn ngữ Trung Quốc'),
+    ]
+
+    ma_nganh = models.CharField('Mã ngành', max_length=30, null=True, blank=True)
+    ten_nganh = models.CharField('Tên ngành', max_length=255)
+    khoa = models.ForeignKey(
+        Khoa,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cac_nganh',
+        verbose_name='Khoa quản lý',
+    )
+    loai_nganh = models.CharField('Loại ngành', max_length=30, choices=LOAI_NGANH, default='THUONG')
+    thoi_gian_dao_tao_nam = models.FloatField(
+        'Thời gian đào tạo',
+        default=4.0,
+        help_text='VD: 4.0, 4.5, 5.0 năm',
+    )
+    is_active = models.BooleanField('Đang áp dụng', default=True)
+
+    class Meta:
+        verbose_name = 'Ngành đào tạo'
+        verbose_name_plural = '2. Danh mục Ngành đào tạo'
+        ordering = ['khoa__ma_khoa', 'ten_nganh']
+        constraints = [
+            models.UniqueConstraint(fields=['khoa', 'ten_nganh'], name='unique_nganh_theo_khoa')
+        ]
+
+    def __str__(self):
+        if self.khoa:
+            return f"{self.ten_nganh} - {self.khoa.ten_khoa}"
+        return self.ten_nganh
 
 class DanhMucChungChi(models.Model):
     LOAI_CC = [
@@ -51,7 +90,7 @@ class DanhMucChungChi(models.Model):
 
     class Meta:
         verbose_name = 'Danh mục Chứng chỉ'
-        verbose_name_plural = '2. Danh mục Chứng chỉ'
+        verbose_name_plural = '3. Danh mục Chứng chỉ'
         ordering = ['loai', 'ten_chung_chi']
 
     def __str__(self):
@@ -62,6 +101,13 @@ class DanhMucChungChi(models.Model):
 # PHÂN HỆ 1: QUẢN LÝ HỒ SƠ SINH VIÊN & CHỨNG CHỈ
 # ==============================================================================
 class SinhVien(models.Model):
+    CHUONG_TRINH_DAO_TAO = [
+        ('DAI_TRA', 'Đại trà'),
+        ('CHAT_LUONG_CAO', 'Chất lượng cao'),
+        ('TIEN_TIEN', 'Tiên tiến'),
+        ('KHAC', 'Khác'),
+    ]
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -77,17 +123,39 @@ class SinhVien(models.Model):
         null=True,
         blank=True,
         related_name='sinh_vien_list',
-        verbose_name='Khoa/Viện',
+        verbose_name='Khoa',
     )
     lop = models.CharField('Lớp sinh hoạt', max_length=50, null=True, blank=True)
     so_dien_thoai = models.CharField('Số điện thoại', max_length=15, null=True, blank=True)
     email_truong = models.EmailField('Email trường', unique=True, null=True, blank=True)
     email_ca_nhan = models.EmailField('Email cá nhân', null=True, blank=True)
     anh_dai_dien = models.ImageField('Ảnh đại diện', upload_to='profile_pics/', null=True, blank=True)
+    nganh_dao_tao = models.ForeignKey(
+        'NganhDaoTao',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sinh_viens',
+        verbose_name='Ngành đào tạo',
+    )
+    khoa_tuyen_sinh = models.PositiveSmallIntegerField(
+        'Khóa tuyển sinh',
+        null=True,
+        blank=True,
+        help_text='VD: 69, 70, 71...',
+    )
+    nam_nhap_hoc = models.PositiveSmallIntegerField('Năm nhập học', null=True, blank=True)
+    nam_du_kien_tot_nghiep = models.PositiveSmallIntegerField('Năm dự kiến tốt nghiệp', null=True, blank=True)
+    chuong_trinh_dao_tao = models.CharField(
+        'Chương trình đào tạo',
+        max_length=30,
+        choices=CHUONG_TRINH_DAO_TAO,
+        default='DAI_TRA',
+    )
 
     class Meta:
         verbose_name = 'Sinh Viên'
-        verbose_name_plural = '3. Quản lý Hồ sơ Sinh Viên'
+        verbose_name_plural = '4. Quản lý Hồ sơ Sinh Viên'
         ordering = ['-mssv']
 
     def __str__(self):
@@ -98,6 +166,26 @@ class SinhVien(models.Model):
         Tự đồng bộ tài khoản User theo MSSV.
         Mật khẩu mặc định cho sinh viên tạo tự động: cfihumg.
         """
+        if self.mssv and not self.khoa_id:
+            mssv_str = str(self.mssv).strip()
+            if mssv_str.isdigit() and len(mssv_str) >= 6:
+                ma_khoa = mssv_str[3:6]
+                khoa_obj = Khoa.objects.filter(ma_khoa=ma_khoa).first()
+                if khoa_obj:
+                    self.khoa = khoa_obj
+
+        if self.khoa_tuyen_sinh and not self.nam_nhap_hoc:
+            try:
+                self.nam_nhap_hoc = 1955 + int(self.khoa_tuyen_sinh)
+            except (TypeError, ValueError):
+                pass
+
+        if self.nam_nhap_hoc and not self.nam_du_kien_tot_nghiep:
+            thoi_gian = 4.0
+            if self.nganh_dao_tao and self.nganh_dao_tao.thoi_gian_dao_tao_nam:
+                thoi_gian = float(self.nganh_dao_tao.thoi_gian_dao_tao_nam)
+            self.nam_du_kien_tot_nghiep = int(self.nam_nhap_hoc + thoi_gian)
+
         if not self.email_truong and self.mssv:
             self.email_truong = f"{self.mssv}@student.humg.edu.vn"
 
@@ -195,12 +283,6 @@ class SinhVien(models.Model):
     def ds_chung_chi(self):
         return self.cac_chung_chi
 
-    @property
-    def nam_nhap_hoc(self):
-        try:
-            return 2000 + int(str(self.mssv)[:2])
-        except (ValueError, TypeError):
-            return None
 
     @property
     def tien_do_nam_tu(self):
@@ -213,6 +295,22 @@ class SinhVien(models.Model):
         if so_nam_da_hoc == 3 and now.month >= 8:
             return True
         return False
+
+
+    def get_required_foreign_language_level(self):
+        """
+        Xác định bậc ngoại ngữ yêu cầu theo ngành và chương trình đào tạo.
+
+        - Đại trà: Bậc 3
+        - Chất lượng cao: Bậc 4
+        - Tiên tiến: tạm tính Bậc 4
+        - Ngôn ngữ Anh / Ngôn ngữ Trung Quốc: ngoại ngữ thứ hai Bậc 5
+        """
+        if self.nganh_dao_tao and self.nganh_dao_tao.loai_nganh in ['NGON_NGU_ANH', 'NGON_NGU_TRUNG']:
+            return 5
+        if self.chuong_trinh_dao_tao in ['CHAT_LUONG_CAO', 'TIEN_TIEN']:
+            return 4
+        return 3
 
     @property
     def dat_chuan_dau_ra(self):
@@ -244,7 +342,7 @@ class ChungChi(models.Model):
 
     class Meta:
         verbose_name = 'Hồ sơ Chứng chỉ'
-        verbose_name_plural = '4. Hồ sơ Chứng chỉ'
+        verbose_name_plural = '5. Hồ sơ Chứng chỉ'
         unique_together = ['sinh_vien', 'so_hieu']
         ordering = ['-ngay_nop']
 
@@ -274,7 +372,7 @@ class DotThi(models.Model):
 
     class Meta:
         verbose_name = 'Đợt thi'
-        verbose_name_plural = '5. Cấu hình Đợt thi'
+        verbose_name_plural = '6. Cấu hình Đợt thi'
         ordering = ['-thoi_gian_bat_dau']
 
     def __str__(self):
@@ -325,7 +423,7 @@ class LichSuThi(models.Model):
 
     class Meta:
         verbose_name = 'Điểm thi / Lịch thi'
-        verbose_name_plural = '6. Quản lý Điểm thi'
+        verbose_name_plural = '7. Quản lý Điểm thi'
         indexes = [
             models.Index(fields=['dot_thi', 'mon_thi']),
             models.Index(fields=['sbd']),

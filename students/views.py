@@ -26,13 +26,14 @@ from django.utils.text import slugify
 from django.core.paginator import Paginator
 
 from cms.models import Category, Post, QuickLink, Slider
-from .forms import DanhMucChungChiForm, GroupForm, KhoaForm, LopBoiDuongForm, ThongBaoForm, UserAccountForm
+from .forms import DanhMucChungChiForm, GroupForm, KhoaForm, NganhDaoTaoForm, LopBoiDuongForm, ThongBaoForm, UserAccountForm
 from .models import (
     ChungChi,
     DangKyLop,
     DanhMucChungChi,
     DotThi,
     Khoa,
+    NganhDaoTao,
     LichSuThi,
     LopBoiDuong,
     SinhVien,
@@ -85,12 +86,11 @@ def get_khoa_from_mssv(mssv):
     Tự động xác định Khoa từ MSSV HUMG bằng mã khoa lưu trong Database.
 
     Quy ước hiện dùng:
-    - MSSV có 10 chữ số.
     - 3 số ở vị trí 4-6 là mã khoa.
-    - Ví dụ: 2121050001 -> mã khoa 105.
+    - Ví dụ: 2521050285 -> mã khoa 105.
     """
     mssv_str = str(mssv or '').strip()
-    if not mssv_str.isdigit() or len(mssv_str) != 10:
+    if not mssv_str.isdigit() or len(mssv_str) < 6:
         return None
 
     ma_khoa = mssv_str[3:6]
@@ -176,6 +176,132 @@ def get_float_first(row, keys):
     return None
 
 
+DEFAULT_KHOA_BY_CODE = {
+    '100': 'Khoa Khoa học cơ bản',
+    '105': 'Khoa Công nghệ thông tin',
+}
+
+
+def clean_office365_value(value):
+    """Làm sạch dữ liệu đọc từ Excel Office 365."""
+    if value is None or pd.isna(value):
+        return ''
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    text = str(value).strip()
+    if text.lower() in ['nan', 'none', 'null']:
+        return ''
+    text = text.replace('_x000D_', ' ')
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
+
+
+def get_column_value(row, possible_names):
+    """Lấy giá trị theo nhiều tên cột khác nhau, có hỗ trợ tiếng Việt có dấu."""
+    normalized_map = {normalize_key(key): key for key in row.keys()}
+    for name in possible_names:
+        lookup = normalize_key(name)
+        if lookup in normalized_map:
+            return clean_office365_value(row.get(normalized_map[lookup]))
+    return ''
+
+
+def extract_ma_khoa_from_mssv(mssv):
+    """Suy mã khoa từ MSSV. Ví dụ: 2521000001 -> 100; 2521050285 -> 105."""
+    mssv = extract_mssv(mssv) or clean_office365_value(mssv)
+    if mssv.isdigit() and len(mssv) >= 6:
+        return mssv[3:6]
+    return ''
+
+
+def get_or_create_khoa_by_mssv(mssv):
+    """Lấy hoặc tạo Khoa theo mã khoa trích từ MSSV."""
+    ma_khoa = extract_ma_khoa_from_mssv(mssv)
+    if not ma_khoa:
+        return None
+    ten_khoa_mac_dinh = DEFAULT_KHOA_BY_CODE.get(ma_khoa, f'Khoa mã {ma_khoa}')
+    khoa, _ = Khoa.objects.get_or_create(
+        ma_khoa=ma_khoa,
+        defaults={'ten_khoa': ten_khoa_mac_dinh},
+    )
+    return khoa
+
+
+def detect_loai_nganh(ten_nganh):
+    """Nhận diện ngành đặc biệt dùng cho xét chuẩn ngoại ngữ."""
+    text = vi_slugify(clean_office365_value(ten_nganh)).replace('-', ' ')
+    if 'ngon ngu anh' in text:
+        return 'NGON_NGU_ANH'
+    if 'ngon ngu trung' in text or 'trung quoc' in text:
+        return 'NGON_NGU_TRUNG'
+    return 'THUONG'
+
+
+def get_or_create_nganh_from_office365(ten_nganh, khoa):
+    """Tạo hoặc lấy Ngành đào tạo theo Khoa từ cột NgÀNH."""
+    ten_nganh = clean_office365_value(ten_nganh)
+    if not ten_nganh:
+        return None
+    loai_nganh = detect_loai_nganh(ten_nganh)
+    nganh, _ = NganhDaoTao.objects.get_or_create(
+        khoa=khoa,
+        ten_nganh=ten_nganh,
+        defaults={
+            'loai_nganh': loai_nganh,
+            'is_active': True,
+        },
+    )
+    changed_fields = []
+    if nganh.loai_nganh != loai_nganh:
+        nganh.loai_nganh = loai_nganh
+        changed_fields.append('loai_nganh')
+    if not nganh.is_active:
+        nganh.is_active = True
+        changed_fields.append('is_active')
+    if changed_fields:
+        nganh.save(update_fields=changed_fields)
+    return nganh
+
+
+def extract_khoa_tuyen_sinh(ma_lop):
+    """Suy khóa tuyển sinh từ mã lớp. Ví dụ: DCCBNNA70A, CTTTK70 -> 70."""
+    text = clean_office365_value(ma_lop).upper()
+    numbers = re.findall(r'(\d{2})', text)
+    for num in reversed(numbers):
+        value = int(num)
+        if 50 <= value <= 99:
+            return value
+    return None
+
+
+def calculate_nam_nhap_hoc(khoa_tuyen_sinh):
+    """Tính năm nhập học. Theo dữ liệu: K69 -> 2024, K70 -> 2025."""
+    try:
+        return 1955 + int(khoa_tuyen_sinh)
+    except (TypeError, ValueError):
+        return None
+
+
+def calculate_nam_du_kien_tot_nghiep(khoa_tuyen_sinh, nganh=None):
+    """Tính năm dự kiến tốt nghiệp, mặc định 4 năm nếu ngành chưa cấu hình riêng."""
+    nam_nhap_hoc = calculate_nam_nhap_hoc(khoa_tuyen_sinh)
+    if not nam_nhap_hoc:
+        return None
+    thoi_gian_dao_tao = 4.0
+    if nganh and getattr(nganh, 'thoi_gian_dao_tao_nam', None):
+        thoi_gian_dao_tao = float(nganh.thoi_gian_dao_tao_nam)
+    return int(nam_nhap_hoc + thoi_gian_dao_tao)
+
+
+def normalize_chuong_trinh_dao_tao(ma_lop='', ten_nganh=''):
+    """Xác định chương trình đào tạo từ mã lớp hoặc tên ngành."""
+    text = vi_slugify(f'{clean_office365_value(ma_lop)} {clean_office365_value(ten_nganh)}').replace('-', ' ')
+    if 'chat luong cao' in text or 'clc' in text:
+        return 'CHAT_LUONG_CAO'
+    if 'tien tien' in text or 'cttt' in text:
+        return 'TIEN_TIEN'
+    return 'DAI_TRA'
+
 
 
 def get_current_sinh_vien(user):
@@ -183,7 +309,7 @@ def get_current_sinh_vien(user):
     if not user or not user.is_authenticated:
         return None
 
-    qs = SinhVien.objects.select_related('khoa', 'user')
+    qs = SinhVien.objects.select_related('khoa', 'nganh_dao_tao', 'user')
     sinh_vien = qs.filter(user=user).first()
     if sinh_vien:
         return sinh_vien
@@ -214,7 +340,7 @@ def get_thong_bao_for_student(sinh_vien, limit=5):
     return [tb for tb in qs if tb.phu_hop_voi_sinh_vien(sinh_vien)][:limit]
 
 
-def ensure_student(mssv, ho_ten='', lop='', khoa_name='', email=''):
+def ensure_student(mssv, ho_ten='', lop='', khoa_name='', email='', phone='', ten_nganh='', ma_lop=''):
     """Tạo/cập nhật SinhVien + User theo MSSV."""
     mssv = extract_mssv(mssv)
     if not mssv:
@@ -232,7 +358,16 @@ def ensure_student(mssv, ho_ten='', lop='', khoa_name='', email=''):
         khoa_obj = get_khoa_from_mssv(mssv)
 
     if not khoa_obj:
+        khoa_obj = get_or_create_khoa_by_mssv(mssv)
+
+    if not khoa_obj:
         khoa_obj, _ = Khoa.objects.get_or_create(ten_khoa='Khoa Khác')
+
+    nganh_obj = get_or_create_nganh_from_office365(ten_nganh, khoa_obj) if ten_nganh else None
+    khoa_tuyen_sinh = extract_khoa_tuyen_sinh(ma_lop or lop)
+    nam_nhap_hoc = calculate_nam_nhap_hoc(khoa_tuyen_sinh)
+    nam_du_kien_tot_nghiep = calculate_nam_du_kien_tot_nghiep(khoa_tuyen_sinh, nganh_obj)
+    chuong_trinh = normalize_chuong_trinh_dao_tao(ma_lop or lop, ten_nganh)
 
     user, user_created = User.objects.get_or_create(
         username=mssv,
@@ -257,6 +392,12 @@ def ensure_student(mssv, ho_ten='', lop='', khoa_name='', email=''):
             'lop': lop or None,
             'khoa': khoa_obj,
             'email_truong': email or f'{mssv}@student.humg.edu.vn',
+            'so_dien_thoai': phone or None,
+            'nganh_dao_tao': nganh_obj,
+            'khoa_tuyen_sinh': khoa_tuyen_sinh,
+            'nam_nhap_hoc': nam_nhap_hoc,
+            'nam_du_kien_tot_nghiep': nam_du_kien_tot_nghiep,
+            'chuong_trinh_dao_tao': chuong_trinh,
         },
     )
 
@@ -272,6 +413,24 @@ def ensure_student(mssv, ho_ten='', lop='', khoa_name='', email=''):
         changed = True
     if email and sv.email_truong != email:
         sv.email_truong = email
+        changed = True
+    if phone and sv.so_dien_thoai != phone:
+        sv.so_dien_thoai = phone
+        changed = True
+    if nganh_obj and sv.nganh_dao_tao_id != nganh_obj.id:
+        sv.nganh_dao_tao = nganh_obj
+        changed = True
+    if khoa_tuyen_sinh and sv.khoa_tuyen_sinh != khoa_tuyen_sinh:
+        sv.khoa_tuyen_sinh = khoa_tuyen_sinh
+        changed = True
+    if nam_nhap_hoc and sv.nam_nhap_hoc != nam_nhap_hoc:
+        sv.nam_nhap_hoc = nam_nhap_hoc
+        changed = True
+    if nam_du_kien_tot_nghiep and sv.nam_du_kien_tot_nghiep != nam_du_kien_tot_nghiep:
+        sv.nam_du_kien_tot_nghiep = nam_du_kien_tot_nghiep
+        changed = True
+    if chuong_trinh and sv.chuong_trinh_dao_tao != chuong_trinh:
+        sv.chuong_trinh_dao_tao = chuong_trinh
         changed = True
     if not sv.user_id:
         sv.user = user
@@ -533,7 +692,7 @@ def lich_thi(request):
 # ==============================================================================
 @staff_member_required
 def admin_mofi_dashboard(request):
-    tat_ca_sv = SinhVien.objects.select_related('khoa').all()
+    tat_ca_sv = SinhVien.objects.select_related('khoa', 'nganh_dao_tao').all()
     sv_canh_bao_nam_cuoi = [sv for sv in tat_ca_sv if getattr(sv, 'tien_do_nam_tu', False)]
 
     thong_ke_khoa = {}
@@ -567,7 +726,7 @@ def admin_mofi_dashboard(request):
 @staff_member_required
 def student_list(request):
     query = request.GET.get('q', '').strip()
-    sinhviens = SinhVien.objects.select_related('khoa').all().order_by('-mssv')
+    sinhviens = SinhVien.objects.select_related('khoa', 'nganh_dao_tao').all().order_by('-mssv')
     if query:
         sinhviens = sinhviens.filter(Q(mssv__icontains=query) | Q(ho_ten__icontains=query) | Q(lop__icontains=query))
     return render(request, 'admin_mofi/students/student_list.html', {'sinhviens': sinhviens, 'query': query})
@@ -575,7 +734,7 @@ def student_list(request):
 
 @staff_member_required
 def student_detail(request, id):
-    student = get_object_or_404(SinhVien.objects.select_related('khoa'), id=id)
+    student = get_object_or_404(SinhVien.objects.select_related('khoa', 'nganh_dao_tao'), id=id)
     return render(request, 'admin_mofi/students/student_detail.html', {
         'student': student,
         'ds_dang_ky': student.ds_dang_ky_lop.select_related('lop_hoc').all().order_by('-thoi_gian_dk'),
@@ -644,32 +803,118 @@ def student_delete(request, id):
 
 @staff_member_required
 def import_sinh_vien(request):
+    """
+    Import danh sách sinh viên từ file Excel dùng cho Office 365.
+
+    Logic chuẩn:
+    - MaSV -> lấy mã khoa từ MSSV -> tra bảng Khoa
+    - NgÀNH -> tạo/gán Ngành đào tạo thuộc Khoa đó
+    - Mã lớp -> lấy khóa tuyển sinh -> xác định năm nhập học + năm dự kiến ra trường
+    - UserPrincipalName -> email trường
+    - DisplayName -> họ tên
+    """
     if request.method == 'POST':
         excel_file = request.FILES.get('excel_file')
         if not excel_file:
             messages.error(request, 'Vui lòng chọn file Excel.')
             return redirect('students:import_sinh_vien')
+
         try:
-            df = read_excel_with_smart_header(excel_file)
-            count = 0
-            for _, row in df.iterrows():
-                mssv = extract_mssv(get_first(row, ['mssv', 'ma sinh vien', 'masinhvien']))
-                if not mssv:
-                    continue
-                ho_ten = get_first(row, ['hoten', 'ho ten', 'hovaten', 'ten sinh vien'])
-                lop = get_first(row, ['lop', 'lop sinh hoat'])
-                khoa = get_first(row, ['khoa', 'khoa vien', 'khoa/viện'])
-                email = get_first(row, ['email', 'email truong']) or f'{mssv}@student.humg.edu.vn'
-                sv = ensure_student(mssv, ho_ten=ho_ten, lop=lop, khoa_name=khoa, email=email)
-                if sv:
-                    sv.so_dien_thoai = get_first(row, ['sdt', 'so dien thoai', 'dienthoai']) or sv.so_dien_thoai
-                    sv.save()
-                    count += 1
-            messages.success(request, f'Nhập dữ liệu thành công: {count} sinh viên.')
-            return redirect('students:student_list')
+            file_name = (excel_file.name or '').lower()
+            if file_name.endswith('.csv'):
+                df = pd.read_csv(excel_file)
+            else:
+                df = pd.read_excel(excel_file)
+            df = df.fillna('')
         except Exception as e:
-            messages.error(request, f'Lỗi import sinh viên: {e}')
+            messages.error(request, f'Không đọc được file dữ liệu: {e}')
+            return redirect('students:import_sinh_vien')
+
+        created_count = 0
+        updated_count = 0
+        skipped_count = 0
+        error_rows = []
+
+        for index, row in df.iterrows():
+            row_dict = row.to_dict()
+
+            mssv = extract_mssv(get_column_value(row_dict, [
+                'MaSV', 'MSSV', 'Mã sinh viên', 'Ma sinh vien'
+            ]))
+            email_truong = get_column_value(row_dict, [
+                'UserPrincipalName', 'Email', 'Email trường', 'Email truong'
+            ])
+            display_name = get_column_value(row_dict, [
+                'DisplayName', 'Họ tên', 'Ho ten', 'Họ và tên', 'Ho va ten'
+            ])
+            ho_lot = get_column_value(row_dict, [
+                'HoLotSV', 'Họ lót', 'Ho lot', 'Họ đệm', 'Ho dem'
+            ])
+            ten_sv = get_column_value(row_dict, [
+                'TenSV', 'Tên', 'Ten'
+            ])
+            ma_lop = get_column_value(row_dict, [
+                'Mã lớp', 'Ma lop', 'Lớp', 'Lop'
+            ])
+            phone = get_column_value(row_dict, [
+                'PhoneNumber', 'Số điện thoại', 'So dien thoai', 'SDT', 'SĐT'
+            ])
+            ten_nganh = get_column_value(row_dict, [
+                'NgÀNH', 'Ngành', 'NGÀNH', 'Nganh'
+            ])
+
+            if not mssv:
+                skipped_count += 1
+                error_rows.append(f'Dòng {index + 2}: thiếu MSSV')
+                continue
+
+            if not display_name:
+                display_name = f'{ho_lot} {ten_sv}'.strip()
+            if not display_name:
+                skipped_count += 1
+                error_rows.append(f'Dòng {index + 2}: thiếu họ tên')
+                continue
+
+            if not email_truong:
+                email_truong = f'{mssv}@student.humg.edu.vn'
+
+            try:
+                existed = SinhVien.objects.filter(mssv=mssv).exists()
+                sv = ensure_student(
+                    mssv=mssv,
+                    ho_ten=display_name,
+                    lop=ma_lop,
+                    email=email_truong,
+                    phone=phone,
+                    ten_nganh=ten_nganh,
+                    ma_lop=ma_lop,
+                )
+                if sv:
+                    if existed:
+                        updated_count += 1
+                    else:
+                        created_count += 1
+                else:
+                    skipped_count += 1
+                    error_rows.append(f'Dòng {index + 2}: không thể tạo/cập nhật sinh viên')
+            except Exception as e:
+                skipped_count += 1
+                error_rows.append(f'Dòng {index + 2}: {e}')
+
+        if error_rows:
+            request.session['last_import_errors'] = error_rows[:100]
+
+        messages.success(
+            request,
+            f'Import hoàn tất. Thêm mới: {created_count}, cập nhật: {updated_count}, bỏ qua: {skipped_count}.'
+        )
+        return redirect('students:student_list')
+
     return render(request, 'admin_mofi/students/import_excel.html')
+
+
+def import_students_office365(request):
+    return import_sinh_vien(request)
 
 
 # ==============================================================================
@@ -912,6 +1157,49 @@ def mofi_khoa_delete(request, pk):
 
 
 @staff_member_required
+def mofi_nganh_list(request):
+    query = request.GET.get('q', '').strip()
+    ds_nganh = NganhDaoTao.objects.select_related('khoa').all().order_by('khoa__ma_khoa', 'ten_nganh')
+    if query:
+        ds_nganh = ds_nganh.filter(
+            Q(ma_nganh__icontains=query) |
+            Q(ten_nganh__icontains=query) |
+            Q(khoa__ma_khoa__icontains=query) |
+            Q(khoa__ten_khoa__icontains=query)
+        )
+    return render(request, 'admin_mofi/pages/nganh_list.html', {
+        'ds_nganh': ds_nganh,
+        'query': query,
+    })
+
+
+@staff_member_required
+def mofi_nganh_form(request, pk=None):
+    instance = get_object_or_404(NganhDaoTao, pk=pk) if pk else None
+    if request.method == 'POST':
+        form = NganhDaoTaoForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Đã lưu ngành đào tạo thành công.')
+            return redirect('students:mofi_nganh_list')
+    else:
+        form = NganhDaoTaoForm(instance=instance)
+    return render(request, 'admin_mofi/pages/nganh_form.html', {
+        'form': form,
+        'instance': instance,
+    })
+
+
+@staff_member_required
+def mofi_nganh_delete(request, pk):
+    nganh = get_object_or_404(NganhDaoTao, pk=pk)
+    ten_nganh = nganh.ten_nganh
+    nganh.delete()
+    messages.success(request, f'Đã xóa ngành đào tạo: {ten_nganh}')
+    return redirect('students:mofi_nganh_list')
+
+
+@staff_member_required
 def mofi_chungchi_list(request):
     query = request.GET.get('q', '').strip()
     danh_sach = DanhMucChungChi.objects.all().order_by('-id')
@@ -1083,7 +1371,7 @@ def _get_thongbao_student_recipients(thong_bao):
     Ưu tiên email trường; nếu không có thì dùng email cá nhân.
     Danh sách email được loại trùng và chuẩn hóa chữ thường.
     """
-    students = SinhVien.objects.select_related('khoa').all()
+    students = SinhVien.objects.select_related('khoa', 'nganh_dao_tao').all()
     recipients = []
 
     for sv in students:
@@ -1217,7 +1505,7 @@ Trường Đại học Mỏ - Địa chất
 @staff_member_required
 def mofi_export_chua_dat_chuan(request):
     """Xuất danh sách sinh viên chưa đạt chuẩn đầu ra để cán bộ chăm sóc/nhắc việc."""
-    students = SinhVien.objects.select_related('khoa').all().order_by('khoa__ten_khoa', 'lop', 'mssv')
+    students = SinhVien.objects.select_related('khoa', 'nganh_dao_tao').all().order_by('khoa__ten_khoa', 'lop', 'mssv')
     rows = []
 
     for sv in students:

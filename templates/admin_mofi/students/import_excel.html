@@ -1,160 +1,81 @@
 {% extends 'admin_mofi/base.html' %}
-
-{% block title %}Import Excel | HUMG CRM{% endblock %}
-{% block page_title %}Nhập Dữ liệu từ Excel{% endblock %}
+{% block title %}Import sinh viên Office 365 | HUMG CRM{% endblock %}
 
 {% block content %}
-
-<!-- KHỐI THÔNG BÁO TOAST (TỰ ĐỘNG BIẾN MẤT) -->
-{% if messages %}
-<div class="toast-container position-fixed top-0 end-0 p-4" style="z-index: 1055;">
-    {% for message in messages %}
-    <div class="toast align-items-center text-white bg-dark border-0 shadow-lg d-flex hide-after-delay" role="alert">
-        <div class="toast-body fw-bold py-3 px-4 small">
-            <i class="fa {% if message.tags == 'error' %}fa-exclamation-triangle text-danger{% else %}fa-check-circle text-success{% endif %} me-2"></i>
-            {{ message }}
-        </div>
-        <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
-    </div>
-    {% endfor %}
-</div>
-
-<style>
-    .toast.hide-after-delay {
-        animation: fadeOut 0.5s ease-in-out 4s forwards;
-    }
-    @keyframes fadeOut {
-        0% { opacity: 1; transform: translateX(0); }
-        100% { opacity: 0; transform: translateX(100%); display: none; }
-    }
-</style>
-{% endif %}
-
 <div class="container-fluid">
-    <!-- TIÊU ĐỀ TRANG -->
     <div class="page-title mb-4">
         <div class="row align-items-center">
             <div class="col-6">
-                <h4 class="fw-bold mb-0 text-dark">
-                    <i class="fa fa-file-excel-o text-muted me-2"></i>Tải lên danh sách Sinh viên
+                <h4 class="fw-bold mb-0">
+                    <i class="fa fa-file-excel-o text-success me-2"></i>Import sinh viên từ Office 365
                 </h4>
             </div>
             <div class="col-6 text-end">
-                <a href="{% url 'students:student_list' %}" class="btn btn-white fw-bold border shadow-sm rounded-3 px-3">
+                <a href="{% url 'students:student_list' %}" class="btn btn-outline-secondary fw-bold bg-white shadow-sm rounded-3">
                     <i class="fa fa-arrow-left me-2"></i>Quay lại danh sách
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- KHỐI FORM IMPORT -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
     <div class="row justify-content-center">
-        <div class="col-xl-6 col-lg-8">
-            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-                <!-- Header trắng sang trọng -->
-                <div class="card-header bg-white pt-4 px-4 pb-3 border-bottom">
-                    <h5 class="fw-bold mb-1 text-dark">Đồng bộ dữ liệu hàng loạt</h5>
-                    <p class="mb-0 text-muted small">Cập nhật hồ sơ sinh viên nhanh chóng thông qua tệp tin Excel.</p>
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white pt-4 px-5 pb-4 border-bottom-0">
+                    <h5 class="fw-bold text-white mb-1">
+                        <i class="fa fa-cloud-upload me-2"></i>Nạp danh sách sinh viên
+                    </h5>
+                    <p class="mb-0 text-white-50 small">
+                        Dùng trực tiếp file Excel tạo tài khoản Microsoft Office 365 của sinh viên.
+                    </p>
                 </div>
-                
-                <form method="POST" action="{% url 'students:import_sinh_vien' %}" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="card-body p-4 bg-white">
-                        
-                        <!-- Input File -->
+
+                <div class="card-body px-5 py-4 bg-white">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-secondary small text-uppercase mb-2">Chọn file Excel nguồn (.xlsx, .xls)</label>
-                            <input class="form-control custom-input" type="file" name="excel_file" accept=".xlsx, .xls" required>
+                            <label class="form-label fw-bold text-dark fs-6 mb-2">
+                                <span class="badge bg-primary rounded-circle me-1">1</span> Chọn file Excel <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group input-group-lg shadow-sm rounded-3 overflow-hidden">
+                                <span class="input-group-text bg-light border-light">
+                                    <i class="fa fa-file-excel-o text-success fs-4"></i>
+                                </span>
+                                <input type="file" name="excel_file" class="form-control border-light bg-light" accept=".xlsx,.xls,.csv" required>
+                            </div>
+                            <small class="text-muted mt-2 d-block">
+                                Chấp nhận định dạng: .xlsx, .xls, .csv
+                            </small>
                         </div>
 
-                        <!-- Ghi chú cấu trúc File -->
-                        <div class="p-3 mt-2 rounded-3 border bg-light d-flex align-items-start shadow-none">
-                            <i class="fa fa-info-circle text-primary fs-5 me-3 mt-1"></i>
+                        <div class="alert alert-light border-start border-4 border-primary rounded-3 p-3 mb-4">
+                            <h6 class="fw-bold text-primary mb-2">Cột dữ liệu được nhận diện</h6>
                             <div class="small text-dark">
-                                <b>Yêu cầu Cấu trúc cột:</b> <br>
-                                File Excel tải lên cần đảm bảo có các cột bắt buộc sau: <code>MSSV</code>, <code>HoTen</code>, <code>Khoa</code>, <code>Lop</code>, <code>Email</code>.
+                                <div><b>MaSV</b> → lấy mã khoa từ MSSV → tra bảng Khoa.</div>
+                                <div><b>NgÀNH</b> → tạo/gán Ngành đào tạo thuộc Khoa.</div>
+                                <div><b>Mã lớp</b> → lấy khóa tuyển sinh → tính năm nhập học và năm dự kiến tốt nghiệp.</div>
+                                <div><b>UserPrincipalName</b> → email trường.</div>
+                                <div><b>DisplayName</b> → họ tên sinh viên.</div>
                             </div>
                         </div>
 
-                    </div>
-                    
-                    <div class="card-footer bg-light-subtle border-top py-3 px-4 text-end">
-                        <a href="{% url 'students:student_list' %}" class="btn btn-white fw-bold border shadow-sm rounded-3 me-2 px-3">Hủy bỏ</a>
-                        <button type="submit" class="btn btn-dark fw-bold shadow-sm rounded-3 px-4 btn-submit-import">
-                            <i class="fa fa-cloud-upload me-2"></i> Tải lên hệ thống
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold shadow mt-2">
+                            <i class="fa fa-magic me-2"></i>TIẾN HÀNH IMPORT DỮ LIỆU
                         </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    /* Chỉnh Form Input sắc nét chuẩn White Edition */
-    .custom-input {
-        font-size: 14px !important;
-        color: #333 !important;
-        border: 1px solid #ddd !important;
-        background-color: #fff !important;
-        padding: 10px 15px !important;
-        border-radius: 8px !important;
-        transition: all 0.2s ease;
-    }
-    .custom-input:focus {
-        border-color: #222 !important;
-        box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.05) !important;
-    }
-    /* Chỉnh nút "Choose File" mặc định của trình duyệt */
-    input[type="file"]::file-selector-button {
-        background-color: #f8f9fa;
-        color: #333;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        padding: 0.3rem 0.8rem;
-        margin-right: 1rem;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    input[type="file"]::file-selector-button:hover {
-        background-color: #e9ecef;
-    }
-</style>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Tự động kích hoạt Toast
-        const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-        toastElList.map(function (toastEl) {
-            toastEl.classList.add('show');
-            setTimeout(() => { toastEl.remove(); }, 4500);
-        });
-
-        // Xử lý chống click 2 lần và hiển thị hiệu ứng Loading
-        const uploadForms = document.querySelectorAll("form");
-        uploadForms.forEach(form => {
-            form.addEventListener("submit", function() {
-                const btn = this.querySelector('.btn-submit-import');
-                if(btn) {
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Đang xử lý dữ liệu...';
-                    btn.classList.add("disabled");
-                    btn.style.pointerEvents = "none";
-                }
-            });
-        });
-
-        // Cảnh báo ngay nếu chọn sai đuôi file
-        const fileInputs = document.querySelectorAll('input[type="file"]');
-        fileInputs.forEach(input => {
-            input.addEventListener('change', function(e) {
-                const fileName = this.value.toLowerCase();
-                if(fileName && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-                    alert('❌ LỖI: Vui lòng chỉ tải lên tệp tin định dạng Excel (.xlsx hoặc .xls)!');
-                    this.value = '';
-                }
-            });
-        });
-    });
-</script>
 {% endblock %}

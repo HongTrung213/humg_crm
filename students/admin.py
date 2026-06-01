@@ -1,6 +1,6 @@
 
 from django.contrib import admin
-from .models import ChungChi, DangKyLop, DanhMucChungChi, DotThi, Khoa, LichSuThi, LopBoiDuong, SinhVien, ThongBao
+from .models import ChungChi, DangKyLop, DanhMucChungChi, DotThi, Khoa, NganhDaoTao, LichSuThi, LopBoiDuong, SinhVien, ThongBao
 
 
 @admin.register(Khoa)
@@ -8,6 +8,17 @@ class KhoaAdmin(admin.ModelAdmin):
     list_display = ('id', 'ma_khoa', 'ten_khoa')
     search_fields = ('ma_khoa', 'ten_khoa')
     ordering = ('ma_khoa', 'ten_khoa')
+
+
+
+
+@admin.register(NganhDaoTao)
+class NganhDaoTaoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'ma_nganh', 'ten_nganh', 'khoa', 'loai_nganh', 'thoi_gian_dao_tao_nam', 'is_active')
+    list_filter = ('khoa', 'loai_nganh', 'is_active')
+    search_fields = ('ma_nganh', 'ten_nganh', 'khoa__ma_khoa', 'khoa__ten_khoa')
+    list_editable = ('is_active',)
+    ordering = ('khoa__ma_khoa', 'ten_nganh')
 
 
 @admin.register(DanhMucChungChi)
@@ -19,9 +30,9 @@ class DanhMucChungChiAdmin(admin.ModelAdmin):
 
 @admin.register(SinhVien)
 class SinhVienAdmin(admin.ModelAdmin):
-    list_display = ('mssv', 'ho_ten', 'khoa', 'lop', 'email_truong', 'dat_chuan_dau_ra')
-    list_filter = ('khoa', 'lop')
-    search_fields = ('mssv', 'ho_ten', 'email_truong', 'email_ca_nhan')
+    list_display = ('mssv', 'ho_ten', 'khoa', 'nganh_dao_tao', 'lop', 'khoa_tuyen_sinh', 'nam_du_kien_tot_nghiep', 'email_truong', 'dat_chuan_dau_ra')
+    list_filter = ('khoa', 'nganh_dao_tao', 'khoa_tuyen_sinh', 'chuong_trinh_dao_tao', 'lop')
+    search_fields = ('mssv', 'ho_ten', 'email_truong', 'email_ca_nhan', 'nganh_dao_tao__ten_nganh')
     readonly_fields = ('dat_chuan_dau_ra', 'check_dat_ngoai_ngu', 'check_dat_tin_hoc')
 
 

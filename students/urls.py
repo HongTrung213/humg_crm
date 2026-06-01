@@ -31,6 +31,7 @@ urlpatterns = [
     # ==========================================
     path('admin-panel/', views.admin_mofi_dashboard, name='admin_mofi_dashboard'),
     path('admin-panel/import-sinh-vien/', views.import_sinh_vien, name='import_sinh_vien'),
+    path('quan-tri/sinh-vien/import-office365/', views.import_students_office365, name='import_students_office365'),
 
     # Quản lý Hồ sơ Sinh viên
     path('admin-panel/students/', views.student_list, name='student_list'),
@@ -63,6 +64,11 @@ urlpatterns = [
     path('quan-tri/khoa/them/', views.mofi_khoa_form, name='mofi_khoa_add'),
     path('quan-tri/khoa/sua/<int:pk>/', views.mofi_khoa_form, name='mofi_khoa_edit'),
     path('he-thong/khoa/xoa/<int:pk>/', views.mofi_khoa_delete, name='mofi_khoa_delete'),
+
+    path('quan-tri/nganh-dao-tao/', views.mofi_nganh_list, name='mofi_nganh_list'),
+    path('quan-tri/nganh-dao-tao/them/', views.mofi_nganh_form, name='mofi_nganh_add'),
+    path('quan-tri/nganh-dao-tao/sua/<int:pk>/', views.mofi_nganh_form, name='mofi_nganh_edit'),
+    path('he-thong/nganh-dao-tao/xoa/<int:pk>/', views.mofi_nganh_delete, name='mofi_nganh_delete'),
 
     path('quan-tri/chung-chi/', views.mofi_chungchi_list, name='mofi_chungchi_list'),
     path('quan-tri/chung-chi/them/', views.mofi_chungchi_form, name='mofi_chungchi_add'),

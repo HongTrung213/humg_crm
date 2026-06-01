@@ -1,0 +1,117 @@
+{% extends 'admin_mofi/base.html' %}
+{% load static %}
+
+{% block title %}Danh mục Ngành đào tạo | HUMG CRM{% endblock %}
+{% block page_title %}Danh mục Ngành đào tạo{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="fw-bold mb-0">
+                    <i class="fa fa-graduation-cap text-primary me-2"></i>
+                    Danh mục Ngành đào tạo
+                </h4>
+            </div>
+            <div class="col-6 text-end">
+                <a href="{% url 'students:mofi_nganh_add' %}" class="btn btn-primary fw-bold shadow-sm rounded-3">
+                    <i class="fa fa-plus-circle me-1"></i> Thêm ngành
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white border-bottom">
+            <form method="GET" class="row g-2 align-items-center">
+                <div class="col-md-10">
+                    <input type="text" name="q" value="{{ query }}" class="form-control"
+                           placeholder="Tìm theo mã ngành, tên ngành, mã khoa hoặc tên khoa...">
+                </div>
+                <div class="col-md-2 text-end">
+                    <button class="btn btn-outline-primary w-100" type="submit">
+                        <i class="fa fa-search me-1"></i> Tìm kiếm
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 70px;">#</th>
+                            <th style="width: 140px;">Mã ngành</th>
+                            <th>Tên ngành</th>
+                            <th style="width: 220px;">Khoa</th>
+                            <th style="width: 180px;">Loại ngành</th>
+                            <th class="text-center" style="width: 120px;">Thời gian</th>
+                            <th class="text-center" style="width: 110px;">Trạng thái</th>
+                            <th class="text-center" style="width: 150px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nganh in ds_nganh %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                {% if nganh.ma_nganh %}
+                                    <span class="badge bg-light text-primary border fw-bold">{{ nganh.ma_nganh }}</span>
+                                {% else %}
+                                    <span class="text-muted small">Chưa có</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-bold text-dark">{{ nganh.ten_nganh }}</td>
+                            <td>
+                                {% if nganh.khoa %}
+                                    <span class="fw-bold">{{ nganh.khoa.ten_khoa }}</span>
+                                    {% if nganh.khoa.ma_khoa %}<br><small class="text-muted">Mã khoa: {{ nganh.khoa.ma_khoa }}</small>{% endif %}
+                                {% else %}
+                                    <span class="text-muted">Chưa gán khoa</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ nganh.get_loai_nganh_display }}</td>
+                            <td class="text-center">{{ nganh.thoi_gian_dao_tao_nam }} năm</td>
+                            <td class="text-center">
+                                {% if nganh.is_active %}
+                                    <span class="badge bg-success">Đang áp dụng</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Tạm khóa</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'students:mofi_nganh_edit' nganh.pk %}" class="btn btn-warning btn-sm" title="Sửa">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <a href="{% url 'students:mofi_nganh_delete' nganh.pk %}" class="btn btn-danger btn-sm" title="Xóa"
+                                   onclick="return confirm('Bạn có chắc chắn muốn xóa ngành đào tạo này?');">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="fa fa-graduation-cap d-block mb-2" style="font-size: 2rem; opacity: 0.4;"></i>
+                                Chưa có ngành đào tạo nào trong hệ thống.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
