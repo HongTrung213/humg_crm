@@ -176,9 +176,20 @@ def get_float_first(row, keys):
     return None
 
 
+# Mapping mã khoa HUMG suy từ MSSV trong file Office 365.
+# Lưu ý: đây là mapping mặc định để tạo dữ liệu ban đầu.
+# Sau khi đã có dữ liệu trong CSDL, cán bộ có thể sửa trực tiếp tại Danh mục Khoa.
 DEFAULT_KHOA_BY_CODE = {
     '100': 'Khoa Khoa học cơ bản',
+    '101': 'Khoa Dầu khí',
+    '102': 'Khoa Địa chất',
+    '103': 'Khoa Trắc địa - Bản đồ và Quản lý đất đai',
+    '104': 'Khoa Mỏ',
     '105': 'Khoa Công nghệ thông tin',
+    '106': 'Khoa Cơ - Điện',
+    '107': 'Khoa Xây dựng',
+    '108': 'Khoa Môi trường',
+    '401': 'Khoa Kinh tế - Quản trị kinh doanh',
 }
 
 
@@ -215,15 +226,32 @@ def extract_ma_khoa_from_mssv(mssv):
 
 
 def get_or_create_khoa_by_mssv(mssv):
-    """Lấy hoặc tạo Khoa theo mã khoa trích từ MSSV."""
+    """
+    Lấy hoặc tạo Khoa theo mã khoa trích từ MSSV.
+
+    Nếu trong CSDL đang tồn tại bản ghi placeholder dạng "Khoa mã 101",
+    hàm sẽ tự sửa về tên khoa đúng theo DEFAULT_KHOA_BY_CODE.
+    Không ghi đè những tên khoa đã được cán bộ sửa thủ công.
+    """
     ma_khoa = extract_ma_khoa_from_mssv(mssv)
     if not ma_khoa:
         return None
+
     ten_khoa_mac_dinh = DEFAULT_KHOA_BY_CODE.get(ma_khoa, f'Khoa mã {ma_khoa}')
-    khoa, _ = Khoa.objects.get_or_create(
+    khoa, created = Khoa.objects.get_or_create(
         ma_khoa=ma_khoa,
         defaults={'ten_khoa': ten_khoa_mac_dinh},
     )
+
+    # Sửa dữ liệu cũ đã bị sinh tự động sai kiểu "Khoa mã xxx".
+    if (
+        not created
+        and ma_khoa in DEFAULT_KHOA_BY_CODE
+        and (not khoa.ten_khoa or khoa.ten_khoa.strip().lower() == f'khoa mã {ma_khoa}'.lower())
+    ):
+        khoa.ten_khoa = ten_khoa_mac_dinh
+        khoa.save(update_fields=['ten_khoa'])
+
     return khoa
 
 
