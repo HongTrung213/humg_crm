@@ -1939,3 +1939,126 @@ def mofi_import_diem_cntt(request):
         template_name='admin_mofi/pages/import_diem_cntt.html',
         success_label='CĐR Tin học',
     )
+from django.shortcuts import render
+from django.db.models import Count, Q
+from .models import SinhVien
+
+
+def dashboard_bao_cao(request):
+    """
+    Dashboard báo cáo HUMG CRM
+    """
+
+    khoa_filter = request.GET.get('khoa')
+    khoa_tsv_filter = request.GET.get('khoa_tsv')
+
+    qs = SinhVien.objects.all()
+
+    # =====================
+    # FILTER
+    # =====================
+    if khoa_filter:
+        qs = qs.filter(khoa__ma_khoa=khoa_filter)
+
+    if khoa_tsv_filter:
+        qs = qs.filter(khoa_tuyen_sinh=khoa_tsv_filter)
+
+    # =====================
+    # TỔNG
+    # =====================
+    tong_sinh_vien = qs.count()
+
+    # =====================
+    # THEO KHOA
+    # =====================
+    theo_khoa = (
+        qs.values('khoa__ma_khoa', 'khoa__ten_khoa')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    # =====================
+    # THEO KHÓA
+    # =====================
+    theo_khoa_tuyen_sinh = (
+        qs.values('khoa_tuyen_sinh')
+        .annotate(total=Count('id'))
+        .order_by('khoa_tuyen_sinh')
+    )
+
+    # =====================
+    # KHOA + KHÓA
+    # =====================
+    theo_khoa_va_khoa = (
+        qs.values('khoa__ten_khoa', 'khoa_tuyen_sinh')
+        .annotate(total=Count('id'))
+        .order_by('khoa__ten_khoa', '-khoa_tuyen_sinh')
+    )
+
+    # =====================
+    # NGÀNH
+    # =====================
+    theo_nganh = (
+        qs.values('nganh_dao_tao__ten_nganh')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+    )
+
+    # =====================
+    # TOP KHOA
+    # =====================
+    top_khoa = (
+        qs.values('khoa__ten_khoa')
+        .annotate(total=Count('id'))
+        .order_by('-total')[:5]
+    )
+
+    # =====================
+    # TOP NGÀNH
+    # =====================
+    top_nganh = (
+        qs.values('nganh_dao_tao__ten_nganh')
+        .annotate(total=Count('id'))
+        .order_by('-total')[:5]
+    )
+
+    # =====================
+    # EMAIL STATS
+    # =====================
+    co_email = qs.filter(
+        Q(email_truong__isnull=False) & ~Q(email_truong='')
+    ).count()
+
+    khong_email = tong_sinh_vien - co_email
+
+    # =====================
+    # NGÀNH STATS
+    # =====================
+    co_nganh = qs.filter(nganh_dao_tao__isnull=False).count()
+    khong_nganh = tong_sinh_vien - co_nganh
+
+    # =====================
+    # CONTEXT
+    # =====================
+    context = {
+        'tong_sinh_vien': tong_sinh_vien,
+
+        'theo_khoa': theo_khoa,
+        'theo_khoa_tuyen_sinh': theo_khoa_tuyen_sinh,
+        'theo_khoa_va_khoa': theo_khoa_va_khoa,
+        'theo_nganh': theo_nganh,
+
+        'top_khoa': top_khoa,
+        'top_nganh': top_nganh,
+
+        'co_email': co_email,
+        'khong_email': khong_email,
+
+        'co_nganh': co_nganh,
+        'khong_nganh': khong_nganh,
+
+        'khoa_filter': khoa_filter,
+        'khoa_tsv_filter': khoa_tsv_filter,
+    }
+
+    return render(request, 'admin_mofi/reports/dashboard.html', context)

@@ -1,0 +1,224 @@
+{% extends 'admin_mofi/base.html' %}
+{% block content %}
+
+<div class="container-fluid">
+
+    <h3 class="mb-3">Dashboard Báo cáo HUMG CRM</h3>
+
+    <!-- ================= FILTER ================= -->
+    <form method="GET" class="mb-4">
+        <div class="row">
+
+            <div class="col-md-4">
+                <input type="text"
+                       name="khoa"
+                       value="{{ khoa_filter }}"
+                       class="form-control"
+                       placeholder="Mã khoa (100,105,401...)">
+            </div>
+
+            <div class="col-md-4">
+                <input type="text"
+                       name="khoa_tsv"
+                       value="{{ khoa_tsv_filter }}"
+                       class="form-control"
+                       placeholder="Khóa (69,70,71...)">
+            </div>
+
+            <div class="col-md-4">
+                <button class="btn btn-primary w-100">
+                    Lọc dữ liệu
+                </button>
+            </div>
+
+        </div>
+    </form>
+
+    <!-- ================= SUMMARY ================= -->
+    <div class="row mb-4">
+
+        <div class="col-md-3">
+            <div class="card p-3">
+                <h6>Tổng sinh viên</h6>
+                <h3>{{ tong_sinh_vien }}</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3">
+                <h6>Có email</h6>
+                <h3 class="text-success">{{ co_email }}</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3">
+                <h6>Không email</h6>
+                <h3 class="text-danger">{{ khong_email }}</h3>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card p-3">
+                <h6>Có ngành</h6>
+                <h3 class="text-primary">{{ co_nganh }}</h3>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ================= TOP KHOA ================= -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Top 5 Khoa đông sinh viên</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Khoa</th>
+                        <th>Số lượng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in top_khoa %}
+                    <tr>
+                        <td>{{ item.khoa__ten_khoa }}</td>
+                        <td>{{ item.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ================= TOP NGÀNH ================= -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Top 5 Ngành đào tạo</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Ngành</th>
+                        <th>Số lượng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in top_nganh %}
+                    <tr>
+                        <td>{{ item.nganh_dao_tao__ten_nganh }}</td>
+                        <td>{{ item.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ================= KHOA ================= -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Thống kê theo Khoa</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Khoa</th>
+                        <th>Số lượng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in theo_khoa %}
+                    <tr>
+                        <td>{{ item.khoa__ten_khoa }}</td>
+                        <td>{{ item.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ================= KHÓA ================= -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Thống kê theo Khóa tuyển sinh</h5>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Khóa</th>
+                        <th>Số lượng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in theo_khoa_tuyen_sinh %}
+                    <tr>
+                        <td>{{ item.khoa_tuyen_sinh }}</td>
+                        <td>{{ item.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ================= KHOA + KHÓA ================= -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Khoa + Khóa</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Khoa</th>
+                        <th>Khóa</th>
+                        <th>Số lượng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in theo_khoa_va_khoa %}
+                    <tr>
+                        <td>{{ item.khoa__ten_khoa }}</td>
+                        <td>{{ item.khoa_tuyen_sinh }}</td>
+                        <td>{{ item.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ================= NGÀNH ================= -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Thống kê theo Ngành</h5>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Ngành</th>
+                        <th>Số lượng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in theo_nganh %}
+                    <tr>
+                        <td>{{ item.nganh_dao_tao__ten_nganh }}</td>
+                        <td>{{ item.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

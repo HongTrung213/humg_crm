@@ -108,4 +108,10 @@ urlpatterns = [
     path('quan-tri/dot-thi/import-lich-thi-tdnn/', views.mofi_import_lich_thi_tdnn, name='mofi_import_lich_thi_tdnn'),
     path('quan-tri/dot-thi/sua-diem/<int:lich_thi_id>/', views.mofi_sua_diem_thi, name='mofi_sua_diem_thi'),
     path('quan-tri/dot-thi/xuat-excel/<int:dot_thi_id>/', views.mofi_export_bang_diem, name='mofi_export_bang_diem'),
+    
+    path(
+    'quan-tri/bao-cao/',
+    views.dashboard_bao_cao,
+    name='dashboard_bao_cao'
+),
 ]
