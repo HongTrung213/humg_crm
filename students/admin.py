@@ -1,6 +1,6 @@
 
 from django.contrib import admin
-from .models import ChungChi, DangKyLop, DanhMucChungChi, DotThi, Khoa, NganhDaoTao, LichSuThi, LopBoiDuong, SinhVien, ThongBao
+from .models import CauHinhVaiTro, ChungChi, DangKyLop, DanhMucChungChi, DotThi, Khoa, NganhDaoTao, LichSuThi, LopBoiDuong, SinhVien, ThongBao, TieuChiChuanDauRa
 
 
 @admin.register(Khoa)
@@ -26,6 +26,31 @@ class DanhMucChungChiAdmin(admin.ModelAdmin):
     list_display = ('ten_chung_chi', 'loai')
     list_filter = ('loai',)
     search_fields = ('ten_chung_chi',)
+
+
+@admin.register(CauHinhVaiTro)
+class CauHinhVaiTroAdmin(admin.ModelAdmin):
+    list_display = ('user', 'vai_tro', 'duoc_xem_toan_bo', 'is_active', 'updated_at')
+    list_filter = ('vai_tro', 'duoc_xem_toan_bo', 'is_active')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'ghi_chu')
+    filter_horizontal = ('khoas_phu_trach',)
+
+
+@admin.register(TieuChiChuanDauRa)
+class TieuChiChuanDauRaAdmin(admin.ModelAdmin):
+    list_display = (
+        'ten_tieu_chi',
+        'loai_chuan',
+        'pham_vi_loai_nganh',
+        'pham_vi_chuong_trinh',
+        'bac_ngoai_ngu_toi_thieu',
+        'thoi_han_hieu_luc_thang',
+        'uu_tien',
+        'is_active',
+    )
+    list_filter = ('loai_chuan', 'pham_vi_loai_nganh', 'pham_vi_chuong_trinh', 'is_active')
+    search_fields = ('ten_tieu_chi', 'ghi_chu')
+    list_editable = ('is_active', 'uu_tien')
 
 
 @admin.register(SinhVien)

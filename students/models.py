@@ -97,6 +97,150 @@ class DanhMucChungChi(models.Model):
         return f"[{self.get_loai_display()}] {self.ten_chung_chi}"
 
 
+class CauHinhVaiTro(models.Model):
+    VAI_TRO = [
+        ('ADMIN', 'Quản trị hệ thống'),
+        ('TRUNG_TAM', 'Cán bộ Trung tâm NN-TH'),
+        ('KHOA', 'Quản lý khoa'),
+        ('PHONG_BAN', 'Phòng ban liên quan'),
+        ('GIANG_VIEN', 'Giảng viên'),
+        ('CO_VAN', 'Cố vấn học tập'),
+        ('SINH_VIEN', 'Sinh viên'),
+    ]
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='vai_tro_nghiep_vu',
+        verbose_name='Tài khoản',
+    )
+    vai_tro = models.CharField('Vai trò nghiệp vụ', max_length=20, choices=VAI_TRO, default='SINH_VIEN')
+    duoc_xem_toan_bo = models.BooleanField('Được xem toàn bộ dữ liệu', default=False)
+    khoas_phu_trach = models.ManyToManyField(
+        Khoa,
+        blank=True,
+        related_name='nguoi_phu_trach',
+        verbose_name='Các khoa phụ trách',
+    )
+    ghi_chu = models.CharField('Ghi chú', max_length=255, null=True, blank=True)
+    is_active = models.BooleanField('Đang áp dụng', default=True)
+    updated_at = models.DateTimeField('Cập nhật lần cuối', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Cấu hình vai trò'
+        verbose_name_plural = '0. Cấu hình Vai trò người dùng'
+        ordering = ['user__username']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_vai_tro_display()}"
+
+    @property
+    def khoa_ids(self):
+        return list(self.khoas_phu_trach.values_list('id', flat=True))
+
+
+class TieuChiChuanDauRa(models.Model):
+    LOAI_CHUAN = [
+        ('NGOAI_NGU', 'Chuẩn đầu ra Ngoại ngữ'),
+        ('TIN_HOC', 'Chuẩn đầu ra Tin học'),
+    ]
+    PHAM_VI_NGANH = [
+        ('ALL', 'Tất cả ngành'),
+        ('THUONG', 'Ngành thông thường'),
+        ('NGON_NGU_ANH', 'Ngôn ngữ Anh'),
+        ('NGON_NGU_TRUNG', 'Ngôn ngữ Trung Quốc'),
+    ]
+    PHAM_VI_CHUONG_TRINH = [
+        ('ALL', 'Tất cả chương trình'),
+        ('DAI_TRA', 'Đại trà'),
+        ('CHAT_LUONG_CAO', 'Chất lượng cao'),
+        ('TIEN_TIEN', 'Tiên tiến'),
+        ('KHAC', 'Khác'),
+    ]
+
+    ten_tieu_chi = models.CharField('Tên tiêu chí', max_length=255)
+    loai_chuan = models.CharField('Loại chuẩn', max_length=20, choices=LOAI_CHUAN)
+    pham_vi_loai_nganh = models.CharField(
+        'Phạm vi loại ngành',
+        max_length=30,
+        choices=PHAM_VI_NGANH,
+        default='ALL',
+    )
+    pham_vi_chuong_trinh = models.CharField(
+        'Phạm vi chương trình đào tạo',
+        max_length=30,
+        choices=PHAM_VI_CHUONG_TRINH,
+        default='ALL',
+    )
+    khoa_tuyen_sinh_tu = models.PositiveSmallIntegerField('Khóa tuyển sinh từ', null=True, blank=True)
+    khoa_tuyen_sinh_den = models.PositiveSmallIntegerField('Khóa tuyển sinh đến', null=True, blank=True)
+    bac_ngoai_ngu_toi_thieu = models.PositiveSmallIntegerField(
+        'Bậc ngoại ngữ tối thiểu',
+        null=True,
+        blank=True,
+        help_text='Chỉ áp dụng cho chuẩn Ngoại ngữ.',
+    )
+    thoi_han_hieu_luc_thang = models.PositiveSmallIntegerField(
+        'Thời hạn hiệu lực (tháng)',
+        default=60,
+    )
+    so_chung_chi_mos_toi_thieu = models.PositiveSmallIntegerField(
+        'Số module MOS tối thiểu',
+        default=3,
+        help_text='Chỉ áp dụng cho chuẩn Tin học.',
+    )
+    uu_tien = models.PositiveSmallIntegerField(
+        'Độ ưu tiên',
+        default=100,
+        help_text='Số càng nhỏ thì càng được ưu tiên khi nhiều tiêu chí cùng khớp.',
+    )
+    ngay_hieu_luc_tu = models.DateField('Hiệu lực từ ngày', null=True, blank=True)
+    ngay_hieu_luc_den = models.DateField('Hiệu lực đến ngày', null=True, blank=True)
+    is_active = models.BooleanField('Đang áp dụng', default=True)
+    ghi_chu = models.TextField('Ghi chú', null=True, blank=True)
+    created_at = models.DateTimeField('Ngày tạo', auto_now_add=True)
+    updated_at = models.DateTimeField('Cập nhật lần cuối', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Tiêu chí chuẩn đầu ra'
+        verbose_name_plural = '3. Cấu hình Tiêu chí chuẩn đầu ra'
+        ordering = ['loai_chuan', 'uu_tien', 'id']
+
+    def __str__(self):
+        return f"{self.ten_tieu_chi} - {self.get_loai_chuan_display()}"
+
+    def matches_student(self, sinh_vien, ref_date=None):
+        ref_date = ref_date or timezone.now().date()
+        if not self.is_active:
+            return False
+        if self.ngay_hieu_luc_tu and ref_date < self.ngay_hieu_luc_tu:
+            return False
+        if self.ngay_hieu_luc_den and ref_date > self.ngay_hieu_luc_den:
+            return False
+        if (
+            self.khoa_tuyen_sinh_tu is not None
+            and sinh_vien.khoa_tuyen_sinh is not None
+            and sinh_vien.khoa_tuyen_sinh < self.khoa_tuyen_sinh_tu
+        ):
+            return False
+        if (
+            self.khoa_tuyen_sinh_den is not None
+            and sinh_vien.khoa_tuyen_sinh is not None
+            and sinh_vien.khoa_tuyen_sinh > self.khoa_tuyen_sinh_den
+        ):
+            return False
+
+        loai_nganh = getattr(sinh_vien.nganh_dao_tao, 'loai_nganh', 'THUONG') or 'THUONG'
+        if self.pham_vi_loai_nganh != 'ALL' and self.pham_vi_loai_nganh != loai_nganh:
+            return False
+
+        chuong_trinh = sinh_vien.chuong_trinh_dao_tao or 'DAI_TRA'
+        if self.pham_vi_chuong_trinh != 'ALL' and self.pham_vi_chuong_trinh != chuong_trinh:
+            return False
+
+        return True
+
+
 # ==============================================================================
 # PHÂN HỆ 1: QUẢN LÝ HỒ SƠ SINH VIÊN & CHỨNG CHỈ
 # ==============================================================================
@@ -209,9 +353,31 @@ class SinhVien(models.Model):
 
         super().save(*args, **kwargs)
 
+    def get_tieu_chi_chuan(self, loai_chuan):
+        ref_date = timezone.now().date()
+        configs = TieuChiChuanDauRa.objects.filter(
+            loai_chuan=loai_chuan,
+            is_active=True,
+        ).order_by('uu_tien', 'id')
+        for config in configs:
+            if config.matches_student(self, ref_date=ref_date):
+                return config
+        return None
+
+    def get_hieu_luc_thang(self, loai_chuan):
+        config = self.get_tieu_chi_chuan(loai_chuan)
+        return config.thoi_han_hieu_luc_thang if config else 60
+
     # --- LOGIC LẤY ĐIỂM THI CAO NHẤT TRONG 60 THÁNG ---
     def _get_max_score(self, loai_mon):
-        five_years_ago = timezone.now() - relativedelta(months=60)
+        if loai_mon == 'CDR_NGOAI_NGU':
+            loai_chuan = 'NGOAI_NGU'
+        elif loai_mon == 'CDR_TIN_HOC':
+            loai_chuan = 'TIN_HOC'
+        else:
+            loai_chuan = 'NGOAI_NGU'
+        hieu_luc_thang = self.get_hieu_luc_thang(loai_chuan)
+        five_years_ago = timezone.now() - relativedelta(months=hieu_luc_thang)
         max_val = self.lich_su_thi.filter(
             mon_thi=loai_mon,
             ngay_cap_nhat__gte=five_years_ago,
@@ -232,7 +398,8 @@ class SinhVien(models.Model):
 
     # --- LOGIC KIỂM TRA CHỨNG CHỈ HỢP LỆ ---
     def _has_valid_cert(self, loai_cc):
-        five_years_ago = timezone.now().date() - relativedelta(months=60)
+        hieu_luc_thang = self.get_hieu_luc_thang(loai_cc)
+        five_years_ago = timezone.now().date() - relativedelta(months=hieu_luc_thang)
         qs = self.cac_chung_chi.filter(
             danh_muc__loai=loai_cc,
             trang_thai='DAT',
@@ -240,6 +407,8 @@ class SinhVien(models.Model):
         )
 
         if loai_cc == 'TIN_HOC':
+            config = self.get_tieu_chi_chuan('TIN_HOC')
+            so_module_mos_toi_thieu = config.so_chung_chi_mos_toi_thieu if config else 3
             # Nếu có chứng chỉ Tin học khác MOS thì đạt luôn.
             if qs.exclude(danh_muc__ten_chung_chi__icontains='MOS').exists():
                 return True
@@ -247,7 +416,7 @@ class SinhVien(models.Model):
             so_luong_mos = qs.filter(
                 danh_muc__ten_chung_chi__icontains='MOS'
             ).values('danh_muc').distinct().count()
-            return so_luong_mos >= 3
+            return so_luong_mos >= so_module_mos_toi_thieu
 
         return qs.exists()
 
@@ -260,7 +429,12 @@ class SinhVien(models.Model):
         return self._has_valid_cert('TIN_HOC')
 
     def _has_passed_exam(self, loai_mon):
-        five_years_ago = timezone.now() - relativedelta(months=60)
+        if loai_mon == 'CDR_TIN_HOC':
+            loai_chuan = 'TIN_HOC'
+        else:
+            loai_chuan = 'NGOAI_NGU'
+        hieu_luc_thang = self.get_hieu_luc_thang(loai_chuan)
+        five_years_ago = timezone.now() - relativedelta(months=hieu_luc_thang)
         return self.lich_su_thi.filter(
             mon_thi=loai_mon,
             ngay_cap_nhat__gte=five_years_ago,
@@ -306,6 +480,9 @@ class SinhVien(models.Model):
         - Tiên tiến: tạm tính Bậc 4
         - Ngôn ngữ Anh / Ngôn ngữ Trung Quốc: ngoại ngữ thứ hai Bậc 5
         """
+        config = self.get_tieu_chi_chuan('NGOAI_NGU')
+        if config and config.bac_ngoai_ngu_toi_thieu:
+            return config.bac_ngoai_ngu_toi_thieu
         if self.nganh_dao_tao and self.nganh_dao_tao.loai_nganh in ['NGON_NGU_ANH', 'NGON_NGU_TRUNG']:
             return 5
         if self.chuong_trinh_dao_tao in ['CHAT_LUONG_CAO', 'TIEN_TIEN']:

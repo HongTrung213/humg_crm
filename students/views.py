@@ -39,6 +39,7 @@ from .models import (
     SinhVien,
     ThongBao,
 )
+from .permissions import can_manage_student, get_student_queryset_for_user, get_user_role_scope
 
 
 # ==============================================================================
@@ -754,7 +755,10 @@ def admin_mofi_dashboard(request):
 @staff_member_required
 def student_list(request):
     query = request.GET.get('q', '').strip()
-    sinhviens = SinhVien.objects.select_related('khoa', 'nganh_dao_tao').all().order_by('-mssv')
+    sinhviens = get_student_queryset_for_user(
+        request.user,
+        SinhVien.objects.select_related('khoa', 'nganh_dao_tao').all(),
+    ).order_by('-mssv')
     if query:
         sinhviens = sinhviens.filter(Q(mssv__icontains=query) | Q(ho_ten__icontains=query) | Q(lop__icontains=query))
     return render(request, 'admin_mofi/students/student_list.html', {'sinhviens': sinhviens, 'query': query})
@@ -763,6 +767,9 @@ def student_list(request):
 @staff_member_required
 def student_detail(request, id):
     student = get_object_or_404(SinhVien.objects.select_related('khoa', 'nganh_dao_tao'), id=id)
+    if not can_manage_student(request.user, student):
+        messages.error(request, 'Bạn không có quyền truy cập hồ sơ sinh viên này.')
+        return redirect('students:student_list')
     return render(request, 'admin_mofi/students/student_detail.html', {
         'student': student,
         'ds_dang_ky': student.ds_dang_ky_lop.select_related('lop_hoc').all().order_by('-thoi_gian_dk'),
@@ -799,6 +806,9 @@ def student_add(request):
 @staff_member_required
 def student_edit(request, id):
     student = get_object_or_404(SinhVien, id=id)
+    if not can_manage_student(request.user, student):
+        messages.error(request, 'Bạn không có quyền chỉnh sửa hồ sơ sinh viên này.')
+        return redirect('students:student_list')
     if request.method == 'POST':
         student.khoa_id = request.POST.get('khoa') or None
         student.ho_ten = request.POST.get('ho_ten', student.ho_ten).strip()
@@ -823,6 +833,9 @@ def student_edit(request, id):
 @staff_member_required
 def student_delete(request, id):
     student = get_object_or_404(SinhVien, id=id)
+    if not can_manage_student(request.user, student):
+        messages.error(request, 'Bạn không có quyền xóa hồ sơ sinh viên này.')
+        return redirect('students:student_list')
     ten_sv = student.ho_ten
     student.delete()
     messages.success(request, f'Đã xóa hồ sơ của: {ten_sv}')
@@ -1023,7 +1036,10 @@ def class_export_students(request, pk):
 
 @staff_member_required
 def registration_list(request):
-    regs = DangKyLop.objects.select_related('sinh_vien', 'lop_hoc').all().order_by(
+    regs = DangKyLop.objects.select_related('sinh_vien', 'lop_hoc').all()
+    regs = regs.filter(
+        sinh_vien_id__in=get_student_queryset_for_user(request.user, SinhVien.objects.all()).values_list('id', flat=True)
+    ).order_by(
         Case(
             When(trang_thai='CHO_DUYET', then=Value(0)),
             default=Value(1),
@@ -1037,6 +1053,9 @@ def registration_list(request):
 @staff_member_required
 def approve_registration(request, id):
     reg = get_object_or_404(DangKyLop, id=id)
+    if not can_manage_student(request.user, reg.sinh_vien):
+        messages.error(request, 'Bạn không có quyền xử lý đăng ký của sinh viên này.')
+        return redirect('students:registration_list')
     if request.method == 'POST':
         action = request.POST.get('action')
         reg.trang_thai = 'THANH_CONG' if action == 'approve' else 'DA_HUY'
@@ -1106,13 +1125,20 @@ def quick_add_chung_chi(request, student_id):
 
 @staff_member_required
 def certificate_verification_list(request):
-    pending_certs = ChungChi.objects.filter(trang_thai='CHO').select_related('sinh_vien', 'danh_muc').order_by('ngay_nop')
+    allowed_students = get_student_queryset_for_user(request.user, SinhVien.objects.all()).values_list('id', flat=True)
+    pending_certs = ChungChi.objects.filter(
+        trang_thai='CHO',
+        sinh_vien_id__in=allowed_students,
+    ).select_related('sinh_vien', 'danh_muc').order_by('ngay_nop')
     return render(request, 'admin_mofi/certificates/cert_list.html', {'pending_certs': pending_certs})
 
 
 @staff_member_required
 def verify_certificate(request, cert_id):
     cert = get_object_or_404(ChungChi, id=cert_id)
+    if not can_manage_student(request.user, cert.sinh_vien):
+        messages.error(request, 'Bạn không có quyền xử lý chứng chỉ của sinh viên này.')
+        return redirect('students:certificate_verification_list')
     if request.method == 'POST':
         action = request.POST.get('action')
         ghi_chu = request.POST.get('ghi_chu', '').strip()
@@ -1138,6 +1164,9 @@ def verify_certificate(request, cert_id):
 @staff_member_required
 def delete_certificate(request, cert_id):
     cert = get_object_or_404(ChungChi, id=cert_id)
+    if not can_manage_student(request.user, cert.sinh_vien):
+        messages.error(request, 'Bạn không có quyền xóa chứng chỉ của sinh viên này.')
+        return redirect('students:certificate_verification_list')
     ten_sv = cert.sinh_vien.ho_ten
     if cert.file_minh_chung:
         cert.file_minh_chung.delete(save=False)
@@ -1952,7 +1981,8 @@ def dashboard_bao_cao(request):
     khoa_filter = request.GET.get('khoa')
     khoa_tsv_filter = request.GET.get('khoa_tsv')
 
-    qs = SinhVien.objects.all()
+    qs = get_student_queryset_for_user(request.user, SinhVien.objects.all())
+    scope = get_user_role_scope(request.user)
 
     # =====================
     # FILTER
@@ -2059,6 +2089,7 @@ def dashboard_bao_cao(request):
 
         'khoa_filter': khoa_filter,
         'khoa_tsv_filter': khoa_tsv_filter,
+        'pham_vi_vai_tro': scope.get_vai_tro_display() if scope else ('Staff' if request.user.is_staff else 'Không xác định'),
     }
 
     return render(request, 'admin_mofi/reports/dashboard.html', context)

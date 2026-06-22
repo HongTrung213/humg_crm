@@ -2,7 +2,7 @@
 from django import forms
 from django.contrib.auth.models import Group, Permission, User
 
-from .models import ChungChi, DanhMucChungChi, Khoa, NganhDaoTao, LopBoiDuong, ThongBao
+from .models import CauHinhVaiTro, ChungChi, DanhMucChungChi, Khoa, NganhDaoTao, LopBoiDuong, ThongBao, TieuChiChuanDauRa
 
 
 # ==============================
@@ -201,3 +201,67 @@ class GroupForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'VD: Quản trị viên, Giảng viên, Giáo vụ...'}),
         }
+
+
+class CauHinhVaiTroForm(forms.ModelForm):
+    class Meta:
+        model = CauHinhVaiTro
+        fields = ['user', 'vai_tro', 'duoc_xem_toan_bo', 'khoas_phu_trach', 'ghi_chu', 'is_active']
+        widgets = {
+            'user': forms.Select(attrs={'class': 'form-select'}),
+            'vai_tro': forms.Select(attrs={'class': 'form-select'}),
+            'duoc_xem_toan_bo': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'khoas_phu_trach': forms.SelectMultiple(attrs={'class': 'form-select', 'size': 8}),
+            'ghi_chu': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mô tả ngắn phạm vi quyền...'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+        }
+
+
+class TieuChiChuanDauRaForm(forms.ModelForm):
+    class Meta:
+        model = TieuChiChuanDauRa
+        fields = [
+            'ten_tieu_chi',
+            'loai_chuan',
+            'pham_vi_loai_nganh',
+            'pham_vi_chuong_trinh',
+            'khoa_tuyen_sinh_tu',
+            'khoa_tuyen_sinh_den',
+            'bac_ngoai_ngu_toi_thieu',
+            'thoi_han_hieu_luc_thang',
+            'so_chung_chi_mos_toi_thieu',
+            'uu_tien',
+            'ngay_hieu_luc_tu',
+            'ngay_hieu_luc_den',
+            'is_active',
+            'ghi_chu',
+        ]
+        widgets = {
+            'ten_tieu_chi': forms.TextInput(attrs={'class': 'form-control'}),
+            'loai_chuan': forms.Select(attrs={'class': 'form-select'}),
+            'pham_vi_loai_nganh': forms.Select(attrs={'class': 'form-select'}),
+            'pham_vi_chuong_trinh': forms.Select(attrs={'class': 'form-select'}),
+            'khoa_tuyen_sinh_tu': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'khoa_tuyen_sinh_den': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'bac_ngoai_ngu_toi_thieu': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'thoi_han_hieu_luc_thang': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'so_chung_chi_mos_toi_thieu': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'uu_tien': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'ngay_hieu_luc_tu': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'ngay_hieu_luc_den': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input', 'role': 'switch'}),
+            'ghi_chu': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        start = cleaned.get('ngay_hieu_luc_tu')
+        end = cleaned.get('ngay_hieu_luc_den')
+        khoa_tu = cleaned.get('khoa_tuyen_sinh_tu')
+        khoa_den = cleaned.get('khoa_tuyen_sinh_den')
+
+        if start and end and end < start:
+            raise forms.ValidationError('Ngày kết thúc hiệu lực không được nhỏ hơn ngày bắt đầu.')
+        if khoa_tu is not None and khoa_den is not None and khoa_den < khoa_tu:
+            raise forms.ValidationError('Khóa tuyển sinh đến không được nhỏ hơn khóa tuyển sinh từ.')
+        return cleaned
