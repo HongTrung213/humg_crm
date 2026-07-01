@@ -2,97 +2,83 @@
 {% load static %}
 
 {% block title %}Dashboard Quản trị | HUMG CRM{% endblock %}
-{% block page_title %}Tổng Quan Hệ Thống{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Tiêu đề trang -->
+
+    <!-- ======= BREADCRUMB & TIÊU ĐỀ ======= -->
     <div class="page-title mb-4">
         <div class="row align-items-center">
-            <div class="col-12">
-                <h4 class="fw-bold mb-0">
-                    <i class="fa fa-tachometer text-primary me-2"></i>Bảng Điều Khiển Trung Tâm
+            <div class="col-6">
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-tachometer text-primary me-2"></i>Bảng Điều Khiển
                 </h4>
             </div>
+            <div class="col-6">
+                <ol class="breadcrumb justify-content-end mb-0 bg-transparent p-0">
+                    <li class="breadcrumb-item active small fw-bold">Tổng quan</li>
+                </ol>
+            </div>
         </div>
     </div>
 
-    <!-- KHỐI 4 WIDGET THỐNG KÊ NHANH -->
-    <div class="row">
-        <div class="col-xl-3 col-sm-6 mb-4">
-            <div class="card widget-1 border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                <div class="card-body p-4">
-                    <div class="widget-content d-flex align-items-center justify-content-between">
-                        <div> 
-                            <h3 class="fw-bold text-dark mb-1">{{ total_students|default:"0" }}</h3>
-                            <span class="text-muted fw-medium">Tổng Sinh Viên</span>
-                        </div>
-                        <div class="widget-round bg-light-primary text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
-                            <i class="fa fa-users fs-3"></i>
-                        </div>
-                    </div>
+    <!-- ======= 4 WIDGET THỐNG KÊ ======= -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card bg-white border-0 shadow-sm rounded-4 p-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Tổng SV</h6>
+                    <h2 class="fw-bold text-dark mb-0">{{ total_students|default:"0" }}</h2>
+                </div>
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa fa-users fs-3"></i>
                 </div>
             </div>
         </div>
-        
-        <div class="col-xl-3 col-sm-6 mb-4">
-            <div class="card widget-1 border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                <div class="card-body p-4">
-                    <div class="widget-content d-flex align-items-center justify-content-between">
-                        <div> 
-                            <h3 class="fw-bold text-dark mb-1">{{ active_classes|default:"0" }}</h3>
-                            <span class="text-muted fw-medium">Lớp Đang Mở</span>
-                        </div>
-                        <div class="widget-round bg-light-info text-info rounded-circle d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
-                            <i class="fa fa-graduation-cap fs-3"></i>
-                        </div>
-                    </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card bg-white border-0 shadow-sm rounded-4 p-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Lớp đang mở</h6>
+                    <h2 class="fw-bold text-dark mb-0">{{ active_classes|default:"0" }}</h2>
+                </div>
+                <div class="bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa fa-graduation-cap fs-3"></i>
                 </div>
             </div>
         </div>
-        
-        <div class="col-xl-3 col-sm-6 mb-4">
-            <div class="card widget-1 border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                <div class="card-body p-4">
-                    <div class="widget-content d-flex align-items-center justify-content-between">
-                        <div> 
-                            <h3 class="fw-bold text-dark mb-1">{{ pending_registrations|default:"0" }}</h3>
-                            <span class="text-muted fw-medium">Đang Chờ Duyệt</span>
-                        </div>
-                        <div class="widget-round bg-light-warning text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
-                            <i class="fa fa-hourglass-half fs-3"></i>
-                        </div>
-                    </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card bg-white border-0 shadow-sm rounded-4 p-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Chờ duyệt</h6>
+                    <h2 class="fw-bold text-dark mb-0">{{ pending_registrations|default:"0" }}</h2>
+                </div>
+                <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa fa-hourglass-half fs-3"></i>
                 </div>
             </div>
         </div>
-        
-        <div class="col-xl-3 col-sm-6 mb-4">
-            <div class="card widget-1 border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                <div class="card-body p-4">
-                    <div class="widget-content d-flex align-items-center justify-content-between">
-                        <div> 
-                            <h3 class="fw-bold text-dark mb-1">{{ certificates_issued|default:"0" }}</h3>
-                            <span class="text-muted fw-medium">Bản Ghi Chứng Chỉ</span>
-                        </div>
-                        <div class="widget-round bg-light-success text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 55px; height: 55px;">
-                            <i class="fa fa-certificate fs-3"></i>
-                        </div>
-                    </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="stat-card bg-white border-0 shadow-sm rounded-4 p-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Chứng chỉ</h6>
+                    <h2 class="fw-bold text-dark mb-0">{{ certificates_issued|default:"0" }}</h2>
+                </div>
+                <div class="bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa fa-certificate fs-3"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- KHỐI BIỂU ĐỒ -->
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-bar-chart text-primary me-2"></i>Biểu Đồ Tiến Độ Đạt Chuẩn Theo Khoa</h5>
+    <!-- ======= BIỂU ĐỒ ======= -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-bar-chart text-primary me-2"></i>Thống kê đạt chuẩn theo Khoa</h5>
                 </div>
-                <div class="card-body p-4">
-                    <div style="height: 400px; width: 100%;">
+                <div class="card-body">
+                    <div style="height: 340px; width: 100%;">
                         <canvas id="khoaChart"></canvas>
                     </div>
                 </div>
@@ -100,42 +86,38 @@
         </div>
     </div>
 
-    <!-- KHỐI BẢNG SỐ LIỆU TỔNG HỢP -->
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-table text-success me-2"></i>Bảng Số Liệu Tổng Hợp Chi Tiết</h5>
-                    <button class="btn btn-outline-success btn-sm fw-bold"><i class="fa fa-download me-1"></i> Xuất Excel</button>
+    <!-- ======= BẢNG CHI TIẾT & CẢNH BÁO ======= -->
+    <div class="row g-4">
+        <!-- Bảng thống kê khoa -->
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-table text-success me-2"></i>Chi tiết theo Khoa</h5>
+                    <span class="badge bg-light text-dark border rounded-pill px-3 py-2">{{ thong_ke_khoa|length }} khoa</span>
                 </div>
                 <div class="card-body p-0">
-                    <div class="table-responsive custom-scrollbar">
+                    <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr class="text-center text-secondary">
-                                    <th class="text-start ps-4">Đơn vị (Khoa)</th>
-                                    <th width="15%">Tổng số SV</th>
-                                    <th width="18%">Đạt CĐR Tin học</th>
-                                    <th width="18%">Đạt CĐR Ngoại ngữ</th>
-                                    <th width="18%">Đạt TA Đầu vào</th>
+                                    <th class="text-start ps-4">Khoa</th>
+                                    <th>Tổng SV</th>
+                                    <th>Đạt Tin học</th>
+                                    <th>Đạt Ngoại ngữ</th>
+                                    <th>Đạt TA đầu vào</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for khoa in thong_ke_khoa %}
                                 <tr class="text-center">
                                     <td class="text-start ps-4 fw-bold text-dark">{{ khoa.ten_khoa }}</td>
-                                    <td><span class="badge bg-light text-dark border px-3 py-2 fs-6 shadow-sm">{{ khoa.tong_sv }}</span></td>
-                                    <td><span class="badge bg-success px-3 py-2 rounded-pill shadow-sm">{{ khoa.dat_cntt }}</span></td>
-                                    <td><span class="badge bg-primary px-3 py-2 rounded-pill shadow-sm">{{ khoa.dat_nn_ra }}</span></td>
-                                    <td><span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">{{ khoa.dat_nn_vao }}</span></td>
+                                    <td><span class="badge bg-light text-dark border px-3 py-2">{{ khoa.tong_sv }}</span></td>
+                                    <td><span class="badge bg-success px-3 py-2 rounded-pill">{{ khoa.dat_cntt }}</span></td>
+                                    <td><span class="badge bg-primary px-3 py-2 rounded-pill">{{ khoa.dat_nn_ra }}</span></td>
+                                    <td><span class="badge bg-warning text-dark px-3 py-2 rounded-pill">{{ khoa.dat_nn_vao }}</span></td>
                                 </tr>
                                 {% empty %}
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-5">
-                                        <i class="fa fa-database fa-3x mb-3 text-light-muted"></i>
-                                        <h6>Chưa có dữ liệu thống kê sinh viên trên hệ thống.</h6>
-                                    </td>
-                                </tr>
+                                <tr><td colspan="5" class="text-center text-muted py-4">Chưa có dữ liệu</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -143,162 +125,149 @@
                 </div>
             </div>
         </div>
+
+        <!-- Cảnh báo sinh viên năm cuối chưa đạt -->
+        <div class="col-xl-4">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-exclamation-triangle text-danger me-2"></i>Cảnh báo</h5>
+                    <span class="badge bg-danger rounded-pill px-3">{{ so_luong_canh_bao }}</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for sv in top_canh_bao|slice:":8" %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center border-0 border-bottom py-3 px-4">
+                            <div>
+                                <span class="fw-bold text-dark">{{ sv.ho_ten }}</span>
+                                <br><small class="text-muted">{{ sv.mssv }} – {{ sv.khoa.ten_khoa|default:"Chưa phân khoa" }}</small>
+                            </div>
+                            <span class="badge bg-light text-danger border">Chưa đạt CĐR</span>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item text-center text-muted py-4">Không có cảnh báo</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer bg-white text-center border-0 py-2">
+                    <a href="{% url 'students:mofi_export_chua_dat_chuan' %}" class="text-primary fw-bold small text-decoration-none">
+                        <i class="fa fa-download me-1"></i>Xuất danh sách
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- KHỐI HOẠT ĐỘNG & THÔNG BÁO -->
-    <div class="row">
-        <!-- Hoạt động đăng ký lớp -->
-        <div class="col-xl-8 col-md-12 mb-4">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                <div class="card-header bg-white border-bottom py-3">
-                    <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-history text-warning me-2"></i>Hoạt Động Đăng Ký Gần Đây</h5>
+    <!-- ======= HOẠT ĐỘNG GẦN ĐÂY ======= -->
+    <div class="row g-4 mt-1">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-history text-warning me-2"></i>Đăng ký lớp gần đây</h5>
+                    <a href="{% url 'students:registration_list' %}" class="btn btn-outline-primary btn-sm fw-bold">Xem tất cả</a>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-4 text-secondary">Sinh Viên</th>
-                                    <th class="text-secondary">Thời Gian</th>
-                                    <th class="text-secondary">Lớp Học Đăng Ký</th>
-                                    <th class="text-center text-secondary pe-4">Trạng Thái</th>
+                                    <th class="ps-4">Sinh viên</th>
+                                    <th>Lớp học</th>
+                                    <th>Thời gian</th>
+                                    <th class="pe-4 text-center">Trạng thái</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for dk in recent_activities %}
                                 <tr>
                                     <td class="ps-4 fw-bold text-dark">{{ dk.sinh_vien.ho_ten }}</td>
-                                    <td class="text-muted f-14">{{ dk.thoi_gian_dk|date:"d/m/Y H:i" }}</td>
-                                    <td><span class="badge bg-light text-dark border">{{ dk.lop_hoc.ten_lop }}</span></td>
-                                    <td class="text-center pe-4"> 
-                                        <span class="badge bg-info rounded-pill px-3 py-1 shadow-sm">Chờ xếp lớp</span>
+                                    <td>{{ dk.lop_hoc.ten_lop }}</td>
+                                    <td class="text-muted small">{{ dk.thoi_gian_dk|date:"d/m/Y H:i" }}</td>
+                                    <td class="text-center pe-4">
+                                        <span class="badge bg-info bg-opacity-25 text-dark rounded-pill px-3 py-1">Chờ xếp lớp</span>
                                     </td>
                                 </tr>
                                 {% empty %}
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-5">
-                                        <i class="fa fa-folder-open-o fs-1 mb-3 d-block text-light-muted"></i>
-                                        Chưa có hoạt động đăng ký nào gần đây.
-                                    </td>
-                                </tr>
+                                <tr><td colspan="4" class="text-center text-muted py-4">Chưa có hoạt động đăng ký nào</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
                 </div>
-                <div class="card-footer bg-white text-center border-top py-2">
-                    <a href="#" class="text-primary fw-bold text-decoration-none small">Xem tất cả <i class="fa fa-angle-right ms-1"></i></a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Thông báo hệ thống -->
-        <div class="col-xl-4 col-md-12 mb-4">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="fw-bold mb-0 text-dark"><i class="fa fa-bell-o text-danger me-2"></i>Hệ Thống</h5>
-                    <a href="/admin/cms/post/add/" class="btn btn-outline-primary btn-sm fw-bold"><i class="fa fa-pencil me-1"></i>Đăng tin</a>
-                </div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-start mb-4">
-                        <div class="bg-light-success text-success rounded-circle d-flex justify-content-center align-items-center shadow-sm" style="width: 40px; height: 40px; flex-shrink: 0;">
-                            <i class="fa fa-check"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h6 class="fw-bold mb-1 text-dark">Đồng bộ Dữ liệu Real-time</h6>
-                            <p class="mb-1 text-muted small">Các chỉ số trên Dashboard đang được kết nối trực tiếp với Database.</p>
-                            <span class="text-success fw-bold f-12"><i class="fa fa-clock-o me-1"></i>Vừa xong</span>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex align-items-start">
-                        <div class="bg-light-info text-info rounded-circle d-flex justify-content-center align-items-center shadow-sm" style="width: 40px; height: 40px; flex-shrink: 0;">
-                            <i class="fa fa-code"></i>
-                        </div>
-                        <div class="ms-3">
-                            <h6 class="fw-bold mb-1 text-dark">Cập nhật Giao diện (v1.2)</h6>
-                            <p class="mb-1 text-muted small">Hệ thống vừa được nâng cấp UI/UX theo chuẩn SaaS hiện đại.</p>
-                            <span class="text-info fw-bold f-12"><i class="fa fa-user-circle me-1"></i>Quản trị viên</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
+
 </div>
+{% endblock %}
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block extra_js %}
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-      const ctx = document.getElementById('khoaChart').getContext('2d');
-      
-      const labels = [
-          {% for khoa in thong_ke_khoa %}
-              "{{ khoa.ten_khoa|escapejs|truncatechars:25 }}", 
-          {% endfor %}
-      ];
-      
-      const tong_sv = [{% for khoa in thong_ke_khoa %}{{ khoa.tong_sv }},{% endfor %}];
-      const dat_cntt = [{% for khoa in thong_ke_khoa %}{{ khoa.dat_cntt }},{% endfor %}];
-      const dat_nn_ra = [{% for khoa in thong_ke_khoa %}{{ khoa.dat_nn_ra }},{% endfor %}];
-      const dat_nn_vao = [{% for khoa in thong_ke_khoa %}{{ khoa.dat_nn_vao }},{% endfor %}];
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('khoaChart').getContext('2d');
 
-      new Chart(ctx, {
-          type: 'bar',
-          data: {
-              labels: labels,
-              datasets: [
-                  {
-                      label: 'Tổng SV',
-                      data: tong_sv,
-                      backgroundColor: 'rgba(200, 200, 200, 0.4)',
-                      borderColor: 'rgba(200, 200, 200, 1)',
-                      borderWidth: 1,
-                      borderRadius: 4
-                  },
-                  {
-                      label: 'Đạt CĐR Tin học',
-                      data: dat_cntt,
-                      backgroundColor: 'rgba(25, 135, 84, 0.8)', // Đồng bộ màu Success
-                      borderColor: 'rgba(25, 135, 84, 1)',
-                      borderWidth: 1,
-                      borderRadius: 4
-                  },
-                  {
-                      label: 'Đạt CĐR Ngoại ngữ',
-                      data: dat_nn_ra,
-                      backgroundColor: 'rgba(13, 110, 253, 0.8)', // Đồng bộ màu Primary
-                      borderColor: 'rgba(13, 110, 253, 1)',
-                      borderWidth: 1,
-                      borderRadius: 4
-                  },
-                  {
-                      label: 'Đạt TA Đầu vào',
-                      data: dat_nn_vao,
-                      backgroundColor: 'rgba(255, 193, 7, 0.8)', // Đồng bộ màu Warning
-                      borderColor: 'rgba(255, 193, 7, 1)',
-                      borderWidth: 1,
-                      borderRadius: 4
-                  }
-              ]
-          },
-          options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                  legend: { position: 'top', labels: { font: { family: "'Inter', sans-serif" } } },
-                  tooltip: { mode: 'index', intersect: false }
-              },
-              scales: {
-                  x: {
-                      stacked: false,
-                      ticks: { autoSkip: false, maxRotation: 45, minRotation: 45, font: { family: "'Inter', sans-serif" } }
-                  },
-                  y: { stacked: false, beginAtZero: true, ticks: { font: { family: "'Inter', sans-serif" } } }
-              },
-              interaction: { mode: 'nearest', axis: 'x', intersect: false }
-          }
-      });
-  });
+    const labels = [
+        {% for khoa in thong_ke_khoa %}
+            "{{ khoa.ten_khoa|escapejs|truncatechars:30 }}",
+        {% endfor %}
+    ];
+    const tong = [{% for khoa in thong_ke_khoa %}{{ khoa.tong_sv }},{% endfor %}];
+    const dat_cntt = [{% for khoa in thong_ke_khoa %}{{ khoa.dat_cntt }},{% endfor %}];
+    const dat_nn_ra = [{% for khoa in thong_ke_khoa %}{{ khoa.dat_nn_ra }},{% endfor %}];
+    const dat_nn_vao = [{% for khoa in thong_ke_khoa %}{{ khoa.dat_nn_vao }},{% endfor %}];
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Tổng SV',
+                    data: tong,
+                    backgroundColor: 'rgba(200, 200, 200, 0.3)',
+                    borderColor: 'rgba(200, 200, 200, 0.8)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Đạt Tin học',
+                    data: dat_cntt,
+                    backgroundColor: 'rgba(25, 135, 84, 0.8)',
+                    borderColor: 'rgba(25, 135, 84, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Đạt Ngoại ngữ',
+                    data: dat_nn_ra,
+                    backgroundColor: 'rgba(13, 110, 253, 0.8)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Đạt TA đầu vào',
+                    data: dat_nn_vao,
+                    backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                    borderColor: 'rgba(255, 193, 7, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { font: { family: "'Inter', sans-serif" } } },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+                x: { ticks: { autoSkip: false, maxRotation: 40, minRotation: 40, font: { size: 11 } } },
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            },
+            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+        }
+    });
+});
 </script>
 {% endblock %}

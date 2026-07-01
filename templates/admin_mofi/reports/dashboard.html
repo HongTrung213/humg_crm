@@ -1,224 +1,350 @@
 {% extends 'admin_mofi/base.html' %}
-{% block content %}
+{% load static %}
 
+{% block title %}Báo cáo thống kê | HUMG CRM{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-radius: 12px;
+        padding: 20px;
+        transition: transform 0.2s;
+        background: #fff;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.07);
+    }
+    .stat-icon {
+        font-size: 2.2rem;
+        opacity: 0.7;
+    }
+    .chart-container {
+        position: relative;
+        height: 260px;
+        width: 100%;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .filter-form .form-control, .filter-form .btn {
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
 <div class="container-fluid">
 
-    <h3 class="mb-3">Dashboard Báo cáo HUMG CRM</h3>
-
-    <!-- ================= FILTER ================= -->
-    <form method="GET" class="mb-4">
-        <div class="row">
-
-            <div class="col-md-4">
-                <input type="text"
-                       name="khoa"
-                       value="{{ khoa_filter }}"
-                       class="form-control"
-                       placeholder="Mã khoa (100,105,401...)">
+    <!-- ============ BREADCRUMB & TIÊU ĐỀ ============ -->
+    <div class="page-title mb-4">
+        <div class="row align-items-center">
+            <div class="col-6">
+                <h4 class="fw-bold mb-0 text-dark">
+                    <i class="fa fa-bar-chart text-primary me-2"></i>Dashboard Báo cáo
+                </h4>
             </div>
-
-            <div class="col-md-4">
-                <input type="text"
-                       name="khoa_tsv"
-                       value="{{ khoa_tsv_filter }}"
-                       class="form-control"
-                       placeholder="Khóa (69,70,71...)">
-            </div>
-
-            <div class="col-md-4">
-                <button class="btn btn-primary w-100">
-                    Lọc dữ liệu
-                </button>
-            </div>
-
-        </div>
-    </form>
-
-    <!-- ================= SUMMARY ================= -->
-    <div class="row mb-4">
-
-        <div class="col-md-3">
-            <div class="card p-3">
-                <h6>Tổng sinh viên</h6>
-                <h3>{{ tong_sinh_vien }}</h3>
+            <div class="col-6">
+                <ol class="breadcrumb justify-content-end mb-0 bg-transparent p-0">
+                    <li class="breadcrumb-item"><a href="{% url 'students:admin_mofi_dashboard' %}"><i class="fa fa-home text-muted"></i></a></li>
+                    <li class="breadcrumb-item active small fw-bold">Báo cáo</li>
+                </ol>
             </div>
         </div>
-
-        <div class="col-md-3">
-            <div class="card p-3">
-                <h6>Có email</h6>
-                <h3 class="text-success">{{ co_email }}</h3>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card p-3">
-                <h6>Không email</h6>
-                <h3 class="text-danger">{{ khong_email }}</h3>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card p-3">
-                <h6>Có ngành</h6>
-                <h3 class="text-primary">{{ co_nganh }}</h3>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- ================= TOP KHOA ================= -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Top 5 Khoa đông sinh viên</h5>
-        </div>
-        <div class="card-body">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Khoa</th>
-                        <th>Số lượng</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in top_khoa %}
-                    <tr>
-                        <td>{{ item.khoa__ten_khoa }}</td>
-                        <td>{{ item.total }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="mt-1">
+            <small class="text-muted">Phạm vi quyền: <span class="fw-bold text-dark">{{ pham_vi_vai_tro|default:"Toàn hệ thống" }}</span></small>
         </div>
     </div>
 
-    <!-- ================= TOP NGÀNH ================= -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Top 5 Ngành đào tạo</h5>
-        </div>
+    <!-- ============ BỘ LỌC ============ -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Ngành</th>
-                        <th>Số lượng</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in top_nganh %}
-                    <tr>
-                        <td>{{ item.nganh_dao_tao__ten_nganh }}</td>
-                        <td>{{ item.total }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <form method="GET" class="row g-3 filter-form">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-secondary text-uppercase">Mã khoa</label>
+                    <input type="text" name="khoa" value="{{ khoa_filter }}" class="form-control" placeholder="VD: 105, 401...">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-secondary text-uppercase">Khóa tuyển sinh</label>
+                    <input type="text" name="khoa_tsv" value="{{ khoa_tsv_filter }}" class="form-control" placeholder="VD: 69, 70, 71...">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button class="btn btn-primary w-100 fw-bold" type="submit">
+                        <i class="fa fa-filter me-1"></i> Lọc dữ liệu
+                    </button>
+                    <a href="{% url 'students:dashboard_bao_cao' %}" class="btn btn-outline-secondary ms-2 w-50">
+                        <i class="fa fa-undo"></i>
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- ================= KHOA ================= -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Thống kê theo Khoa</h5>
+    <!-- ============ 4 THỐNG KÊ NHANH ============ -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Tổng SV</h6>
+                    <h2 class="fw-bold mb-0 text-dark">{{ tong_sinh_vien }}</h2>
+                </div>
+                <div class="stat-icon text-primary"><i class="fa fa-users"></i></div>
+            </div>
         </div>
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Khoa</th>
-                        <th>Số lượng</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in theo_khoa %}
-                    <tr>
-                        <td>{{ item.khoa__ten_khoa }}</td>
-                        <td>{{ item.total }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Có Email</h6>
+                    <h2 class="fw-bold mb-0 text-success">{{ co_email }}</h2>
+                </div>
+                <div class="stat-icon text-success"><i class="fa fa-envelope"></i></div>
+            </div>
         </div>
-    </div>
-
-    <!-- ================= KHÓA ================= -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Thống kê theo Khóa tuyển sinh</h5>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Thiếu Email</h6>
+                    <h2 class="fw-bold mb-0 text-danger">{{ khong_email }}</h2>
+                </div>
+                <div class="stat-icon text-danger"><i class="fa fa-exclamation-triangle"></i></div>
+            </div>
         </div>
-        <div class="card-body">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Khóa</th>
-                        <th>Số lượng</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in theo_khoa_tuyen_sinh %}
-                    <tr>
-                        <td>{{ item.khoa_tuyen_sinh }}</td>
-                        <td>{{ item.total }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Có Ngành</h6>
+                    <h2 class="fw-bold mb-0 text-info">{{ co_nganh }}</h2>
+                </div>
+                <div class="stat-icon text-info"><i class="fa fa-graduation-cap"></i></div>
+            </div>
         </div>
     </div>
 
-    <!-- ================= KHOA + KHÓA ================= -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Khoa + Khóa</h5>
+    <!-- ============ HÀNG BIỂU ĐỒ ============ -->
+    <div class="row g-4 mb-4">
+        <!-- Biểu đồ cột: Khoa -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-building text-primary me-2"></i>Thống kê theo Khoa</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartKhoa"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Khoa</th>
-                        <th>Khóa</th>
-                        <th>Số lượng</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in theo_khoa_va_khoa %}
-                    <tr>
-                        <td>{{ item.khoa__ten_khoa }}</td>
-                        <td>{{ item.khoa_tuyen_sinh }}</td>
-                        <td>{{ item.total }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+        <!-- Biểu đồ tròn: Ngành -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-book text-success me-2"></i>Phân bố Ngành đào tạo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chartNganh"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ================= NGÀNH ================= -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5>Thống kê theo Ngành</h5>
+    <!-- Biểu đồ đường: Khóa tuyển sinh -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-calendar text-warning me-2"></i>Số lượng SV theo Khóa tuyển sinh</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 220px;">
+                        <canvas id="chartKhoaTS"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Ngành</th>
-                        <th>Số lượng</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in theo_nganh %}
-                    <tr>
-                        <td>{{ item.nganh_dao_tao__ten_nganh }}</td>
-                        <td>{{ item.total }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    </div>
+
+    <!-- ============ BẢNG CHI TIẾT ============ -->
+    <div class="row g-4">
+        <!-- Bảng Khoa + Khóa -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-table text-secondary me-2"></i>Chi tiết Khoa &amp; Khóa</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Khoa</th>
+                                    <th>Khóa</th>
+                                    <th class="text-end">Số lượng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in theo_khoa_va_khoa %}
+                                <tr>
+                                    <td>{{ item.khoa__ten_khoa|default:"Chưa phân" }}</td>
+                                    <td>{{ item.khoa_tuyen_sinh|default:"?" }}</td>
+                                    <td class="text-end fw-bold">{{ item.total }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted py-4">Không có dữ liệu</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bảng Ngành (Top + Full) -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-3 pb-0">
+                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-list text-secondary me-2"></i>Danh sách Ngành đào tạo</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Ngành</th>
+                                    <th class="text-end">Số lượng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in theo_nganh %}
+                                <tr>
+                                    <td>{{ item.nganh_dao_tao__ten_nganh|default:"Chưa xác định" }}</td>
+                                    <td class="text-end fw-bold">{{ item.total }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="2" class="text-center text-muted py-4">Chưa có dữ liệu</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
 </div>
+{% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lấy dữ liệu từ context (đã được chuyển thành JSON)
+    const khoaData = {{ theo_khoa|safe }};
+    const nganhData = {{ theo_nganh|safe }};
+    const khoaTSData = {{ theo_khoa_tuyen_sinh|safe }};
+
+    // Hàm tạo mảng màu
+    function getColors(count) {
+        const palette = ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b', '#858796', '#6f42c1', '#fd7e14', '#20c9a6', '#5a5c69'];
+        return palette.slice(0, count);
+    }
+
+    // ---- Biểu đồ Khoa (cột) ----
+    const ctxKhoa = document.getElementById('chartKhoa').getContext('2d');
+    const labelsKhoa = khoaData.map(item => item.khoa__ten_khoa || 'Chưa phân');
+    const dataKhoa = khoaData.map(item => item.total);
+    new Chart(ctxKhoa, {
+        type: 'bar',
+        data: {
+            labels: labelsKhoa,
+            datasets: [{
+                label: 'Số sinh viên',
+                data: dataKhoa,
+                backgroundColor: getColors(dataKhoa.length),
+                borderColor: '#2c3e50',
+                borderWidth: 1,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.raw} sinh viên` } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                x: { ticks: { maxRotation: 40, font: { size: 11 } } }
+            }
+        }
+    });
+
+    // ---- Biểu đồ Ngành (tròn) ----
+    const ctxNganh = document.getElementById('chartNganh').getContext('2d');
+    const labelsNganh = nganhData.map(item => item.nganh_dao_tao__ten_nganh || 'Khác');
+    const dataNganh = nganhData.map(item => item.total);
+    new Chart(ctxNganh, {
+        type: 'doughnut',
+        data: {
+            labels: labelsNganh,
+            datasets: [{
+                data: dataNganh,
+                backgroundColor: getColors(dataNganh.length),
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 12 } } },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.raw} sinh viên` } }
+            },
+            cutout: '65%'
+        }
+    });
+
+    // ---- Biểu đồ Khóa tuyển sinh (đường) ----
+    const ctxTS = document.getElementById('chartKhoaTS').getContext('2d');
+    // Sắp xếp theo khóa tăng dần
+    const sortedTS = [...khoaTSData].sort((a, b) => (a.khoa_tuyen_sinh || 0) - (b.khoa_tuyen_sinh || 0));
+    const labelsTS = sortedTS.map(item => item.khoa_tuyen_sinh);
+    const dataTS = sortedTS.map(item => item.total);
+    new Chart(ctxTS, {
+        type: 'line',
+        data: {
+            labels: labelsTS,
+            datasets: [{
+                label: 'Số lượng',
+                data: dataTS,
+                backgroundColor: 'rgba(78, 115, 223, 0.15)',
+                borderColor: '#4e73df',
+                borderWidth: 3,
+                tension: 0.3,
+                fill: true,
+                pointBackgroundColor: '#4e73df',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx) => `Khóa ${ctx.label}: ${ctx.raw} sinh viên` } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                x: { title: { display: true, text: 'Khóa tuyển sinh' } }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

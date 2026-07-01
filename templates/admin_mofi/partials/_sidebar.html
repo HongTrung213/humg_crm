@@ -43,7 +43,13 @@
               <span class="fw-bold text-dark">Tổng quan (Dashboard)</span>
             </a>
           </li>
-          
+          <!-- ✅ THÊM MỤC BÁO CÁO THỐNG KÊ -->
+          <li class="sidebar-list">
+              <a class="sidebar-link sidebar-title link-nav" href="{% url 'students:dashboard_bao_cao' %}">
+                  <i class="fa fa-bar-chart" style="font-size: 18px; width: 20px; text-align: center; margin-right: 6px;"></i>
+                  <span class="fw-bold text-dark">Báo cáo thống kê</span>
+              </a>
+          </li>
           <!-- 2. ĐÀO TẠO & KHẢO THÍ -->
           <li class="sidebar-main-title mt-2">
             <div><h6 class="fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #555;">Đào tạo & Khảo thí</h6></div>
