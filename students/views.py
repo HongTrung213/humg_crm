@@ -719,38 +719,100 @@ def lich_thi(request):
 # ==============================================================================
 # 2. PHÂN HỆ QUẢN TRỊ: DASHBOARD & HỒ SƠ SINH VIÊN
 # ==============================================================================
+from django.db.models import Exists, OuterRef, Q
+from .models import Khoa, LichSuThi
+
 @staff_member_required
 def admin_mofi_dashboard(request):
+    # ---- THỐNG KÊ CHUNG ----
     tat_ca_sv = SinhVien.objects.select_related('khoa', 'nganh_dao_tao').all()
-    sv_canh_bao_nam_cuoi = [sv for sv in tat_ca_sv if getattr(sv, 'tien_do_nam_tu', False)]
+    total_students = tat_ca_sv.count()
+    active_classes = LopBoiDuong.objects.filter(trang_thai=True).count()
+    pending_registrations = DangKyLop.objects.filter(trang_thai='CHO_DUYET').count()
+    certificates_issued = ChungChi.objects.count()
+    recent_activities = DangKyLop.objects.select_related('sinh_vien', 'lop_hoc').order_by('-thoi_gian_dk')[:5]
 
-    thong_ke_khoa = {}
+    # ---- CẢNH BÁO NĂM CUỐI CHƯA ĐẠT (giữ nguyên) ----
+    sv_canh_bao_nam_cuoi = [sv for sv in tat_ca_sv if getattr(sv, 'tien_do_nam_tu', False)]
     danh_sach_chua_dat = []
     for sv in sv_canh_bao_nam_cuoi:
-        ten_khoa = sv.khoa.ten_khoa if sv.khoa else 'Chưa phân khoa'
-        thong_ke_khoa.setdefault(ten_khoa, {'tong': 0, 'dat': 0, 'chua_dat': 0})
-        thong_ke_khoa[ten_khoa]['tong'] += 1
         if getattr(sv, 'chua_dat_chuan_dau_ra', False):
-            thong_ke_khoa[ten_khoa]['chua_dat'] += 1
             danh_sach_chua_dat.append(sv)
-        else:
-            thong_ke_khoa[ten_khoa]['dat'] += 1
-
-    list_thong_ke_khoa = [{'ten_khoa': k, **v} for k, v in thong_ke_khoa.items()]
-    list_thong_ke_khoa.sort(key=lambda x: x['tong'], reverse=True)
     danh_sach_chua_dat.sort(key=lambda x: getattr(x, 'nam_nhap_hoc', 9999) or 9999)
 
-    return render(request, 'admin_mofi/pages/dashboard.html', {
-        'total_students': tat_ca_sv.count(),
-        'active_classes': LopBoiDuong.objects.filter(trang_thai=True).count(),
-        'pending_registrations': DangKyLop.objects.filter(trang_thai='CHO_DUYET').count(),
-        'certificates_issued': ChungChi.objects.count(),
-        'recent_activities': DangKyLop.objects.select_related('sinh_vien', 'lop_hoc').order_by('-thoi_gian_dk')[:5],
-        'thong_ke_khoa': list_thong_ke_khoa,
+    # ---- THỐNG KÊ ĐIỂM THEO KHOA (MỚI) ----
+    def count_status(khoa_sv_qs, mon_thi_code, status):
+        """
+        status: 'chua_co', 'chua_dat', 'da_dat'
+        """
+        if status == 'chua_co':
+            # Sinh viên không có bất kỳ bản ghi điểm nào cho môn này
+            return khoa_sv_qs.filter(
+                ~Exists(LichSuThi.objects.filter(
+                    sinh_vien=OuterRef('pk'),
+                    mon_thi=mon_thi_code
+                ))
+            ).count()
+        elif status == 'chua_dat':
+            # Sinh viên có ít nhất 1 bản ghi, nhưng không có bản ghi nào đạt
+            return khoa_sv_qs.filter(
+                Exists(LichSuThi.objects.filter(
+                    sinh_vien=OuterRef('pk'),
+                    mon_thi=mon_thi_code
+                ))
+            ).filter(
+                ~Exists(LichSuThi.objects.filter(
+                    sinh_vien=OuterRef('pk'),
+                    mon_thi=mon_thi_code,
+                    ket_qua_dat=True
+                ))
+            ).count()
+        elif status == 'da_dat':
+            # Sinh viên có ít nhất 1 bản ghi đạt
+            return khoa_sv_qs.filter(
+                Exists(LichSuThi.objects.filter(
+                    sinh_vien=OuterRef('pk'),
+                    mon_thi=mon_thi_code,
+                    ket_qua_dat=True
+                ))
+            ).count()
+        return 0
+
+    thong_ke_khoa = []
+    for khoa in Khoa.objects.all().order_by('ten_khoa'):
+        sv_qs = SinhVien.objects.filter(khoa=khoa)
+        tong = sv_qs.count()
+        if tong == 0:
+            continue  # bỏ qua khoa không có sinh viên
+
+        thong_ke_khoa.append({
+            'ten_khoa': khoa.ten_khoa,
+            'tong_sv': tong,
+            # Tiếng Anh đầu vào
+            'tdnn_chua_co_diem': count_status(sv_qs, 'TA_DAU_VAO', 'chua_co'),
+            'tdnn_co_diem_chua_dat': count_status(sv_qs, 'TA_DAU_VAO', 'chua_dat'),
+            'tdnn_da_dat': count_status(sv_qs, 'TA_DAU_VAO', 'da_dat'),
+            # CĐR Ngoại ngữ
+            'cdr_nn_chua_co_diem': count_status(sv_qs, 'CDR_NGOAI_NGU', 'chua_co'),
+            'cdr_nn_co_diem_chua_dat': count_status(sv_qs, 'CDR_NGOAI_NGU', 'chua_dat'),
+            'cdr_nn_da_dat': count_status(sv_qs, 'CDR_NGOAI_NGU', 'da_dat'),
+            # CĐR Tin học
+            'cdr_th_chua_co_diem': count_status(sv_qs, 'CDR_TIN_HOC', 'chua_co'),
+            'cdr_th_co_diem_chua_dat': count_status(sv_qs, 'CDR_TIN_HOC', 'chua_dat'),
+            'cdr_th_da_dat': count_status(sv_qs, 'CDR_TIN_HOC', 'da_dat'),
+        })
+
+    context = {
+        'total_students': total_students,
+        'active_classes': active_classes,
+        'pending_registrations': pending_registrations,
+        'certificates_issued': certificates_issued,
+        'recent_activities': recent_activities,
+        'thong_ke_khoa': thong_ke_khoa,
         'so_luong_canh_bao': len(danh_sach_chua_dat),
         'top_canh_bao': danh_sach_chua_dat[:10],
-    })
-
+    }
+    return render(request, 'admin_mofi/pages/dashboard.html', context)
 
 @staff_member_required
 def student_list(request):
