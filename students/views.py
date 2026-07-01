@@ -720,7 +720,7 @@ def lich_thi(request):
 # 2. PHÂN HỆ QUẢN TRỊ: DASHBOARD & HỒ SƠ SINH VIÊN
 # ==============================================================================
 from django.db.models import Exists, OuterRef, Q
-from .models import Khoa, LichSuThi
+from .models import Khoa, LichSuThi, ChungChi
 
 @staff_member_required
 def admin_mofi_dashboard(request):
@@ -732,26 +732,35 @@ def admin_mofi_dashboard(request):
     certificates_issued = ChungChi.objects.count()
     recent_activities = DangKyLop.objects.select_related('sinh_vien', 'lop_hoc').order_by('-thoi_gian_dk')[:5]
 
-    # ---- CẢNH BÁO NĂM CUỐI CHƯA ĐẠT ----
+    # ---- CẢNH BÁO NĂM CUỐI ----
     sv_canh_bao_nam_cuoi = [sv for sv in tat_ca_sv if getattr(sv, 'tien_do_nam_tu', False)]
     danh_sach_chua_dat = [sv for sv in sv_canh_bao_nam_cuoi if getattr(sv, 'chua_dat_chuan_dau_ra', False)]
     danh_sach_chua_dat.sort(key=lambda x: getattr(x, 'nam_nhap_hoc', 9999) or 9999)
 
-    # ---- THỐNG KÊ ĐIỂM THEO KHOA (MỚI) ----
+    # ---- HÀM ĐẾM TRẠNG THÁI ----
     def count_status(khoa_sv_qs, mon_thi_code, status):
         """
-        status: 'chua_co', 'chua_dat', 'da_dat'
+        status: 'chua_co' -> chưa có lịch sử thi
+                'chua_dat' -> có điểm thi nhưng chưa đạt (không có chứng chỉ)
+                'da_dat'   -> có điểm thi đạt hoặc có chứng chỉ hợp lệ
         """
+        # Xác định loại chứng chỉ tương ứng
+        if mon_thi_code in ['TA_DAU_VAO', 'CDR_NGOAI_NGU']:
+            loai_cc = 'NGOAI_NGU'
+        else:  # CDR_TIN_HOC
+            loai_cc = 'TIN_HOC'
+
         if status == 'chua_co':
-            # Sinh viên không có bất kỳ bản ghi điểm nào cho môn này
+            # Chưa có bất kỳ bản ghi điểm thi nào
             return khoa_sv_qs.filter(
                 ~Exists(LichSuThi.objects.filter(
                     sinh_vien=OuterRef('pk'),
                     mon_thi=mon_thi_code
                 ))
             ).count()
+
         elif status == 'chua_dat':
-            # Có ít nhất 1 bản ghi, nhưng không có bản ghi nào đạt
+            # Có điểm thi nhưng chưa đạt (không có điểm đạt, không có chứng chỉ đạt)
             return khoa_sv_qs.filter(
                 Exists(LichSuThi.objects.filter(
                     sinh_vien=OuterRef('pk'),
@@ -763,41 +772,76 @@ def admin_mofi_dashboard(request):
                     mon_thi=mon_thi_code,
                     ket_qua_dat=True
                 ))
+            ).filter(
+                ~Exists(ChungChi.objects.filter(
+                    sinh_vien=OuterRef('pk'),
+                    trang_thai='DAT',
+                    danh_muc__loai=loai_cc
+                ))
             ).count()
+
         elif status == 'da_dat':
-            # Có ít nhất 1 bản ghi đạt
+            # Đạt: có điểm thi đạt hoặc có chứng chỉ đạt
             return khoa_sv_qs.filter(
-                Exists(LichSuThi.objects.filter(
+                Q(Exists(LichSuThi.objects.filter(
                     sinh_vien=OuterRef('pk'),
                     mon_thi=mon_thi_code,
                     ket_qua_dat=True
-                ))
+                ))) |
+                Q(Exists(ChungChi.objects.filter(
+                    sinh_vien=OuterRef('pk'),
+                    trang_thai='DAT',
+                    danh_muc__loai=loai_cc
+                )))
             ).count()
+
         return 0
 
+    # ---- LẤY DỮ LIỆU THEO KHOA ----
     thong_ke_khoa = []
     for khoa in Khoa.objects.all().order_by('ten_khoa'):
         sv_qs = SinhVien.objects.filter(khoa=khoa)
         tong = sv_qs.count()
         if tong == 0:
-            continue  # bỏ qua khoa không có sinh viên
+            continue
 
         thong_ke_khoa.append({
             'ten_khoa': khoa.ten_khoa,
             'tong_sv': tong,
             # Tiếng Anh đầu vào
-            'tdnn_chua_co_diem': count_status(sv_qs, 'TA_DAU_VAO', 'chua_co'),
-            'tdnn_co_diem_chua_dat': count_status(sv_qs, 'TA_DAU_VAO', 'chua_dat'),
+            'tdnn_chua_co': count_status(sv_qs, 'TA_DAU_VAO', 'chua_co'),
+            'tdnn_chua_dat': count_status(sv_qs, 'TA_DAU_VAO', 'chua_dat'),
             'tdnn_da_dat': count_status(sv_qs, 'TA_DAU_VAO', 'da_dat'),
             # CĐR Ngoại ngữ
-            'cdr_nn_chua_co_diem': count_status(sv_qs, 'CDR_NGOAI_NGU', 'chua_co'),
-            'cdr_nn_co_diem_chua_dat': count_status(sv_qs, 'CDR_NGOAI_NGU', 'chua_dat'),
+            'cdr_nn_chua_co': count_status(sv_qs, 'CDR_NGOAI_NGU', 'chua_co'),
+            'cdr_nn_chua_dat': count_status(sv_qs, 'CDR_NGOAI_NGU', 'chua_dat'),
             'cdr_nn_da_dat': count_status(sv_qs, 'CDR_NGOAI_NGU', 'da_dat'),
             # CĐR Tin học
-            'cdr_th_chua_co_diem': count_status(sv_qs, 'CDR_TIN_HOC', 'chua_co'),
-            'cdr_th_co_diem_chua_dat': count_status(sv_qs, 'CDR_TIN_HOC', 'chua_dat'),
+            'cdr_th_chua_co': count_status(sv_qs, 'CDR_TIN_HOC', 'chua_co'),
+            'cdr_th_chua_dat': count_status(sv_qs, 'CDR_TIN_HOC', 'chua_dat'),
             'cdr_th_da_dat': count_status(sv_qs, 'CDR_TIN_HOC', 'da_dat'),
         })
+
+    # ---- CHUẨN BỊ DỮ LIỆU CHO BIỂU ĐỒ ----
+    labels = [khoa['ten_khoa'] for khoa in thong_ke_khoa]
+    chart_data = {
+        'labels': labels,
+        'tdnn': {
+            'chua_co': [khoa['tdnn_chua_co'] for khoa in thong_ke_khoa],
+            'chua_dat': [khoa['tdnn_chua_dat'] for khoa in thong_ke_khoa],
+            'da_dat': [khoa['tdnn_da_dat'] for khoa in thong_ke_khoa],
+        },
+        'cdr_nn': {
+            'chua_co': [khoa['cdr_nn_chua_co'] for khoa in thong_ke_khoa],
+            'chua_dat': [khoa['cdr_nn_chua_dat'] for khoa in thong_ke_khoa],
+            'da_dat': [khoa['cdr_nn_da_dat'] for khoa in thong_ke_khoa],
+        },
+        'cdr_th': {
+            'chua_co': [khoa['cdr_th_chua_co'] for khoa in thong_ke_khoa],
+            'chua_dat': [khoa['cdr_th_chua_dat'] for khoa in thong_ke_khoa],
+            'da_dat': [khoa['cdr_th_da_dat'] for khoa in thong_ke_khoa],
+        }
+    }
 
     context = {
         'total_students': total_students,
@@ -808,6 +852,8 @@ def admin_mofi_dashboard(request):
         'thong_ke_khoa': thong_ke_khoa,
         'so_luong_canh_bao': len(danh_sach_chua_dat),
         'top_canh_bao': danh_sach_chua_dat[:10],
+        'chart_data': chart_data,
+        'labels': labels,
     }
     return render(request, 'admin_mofi/pages/dashboard.html', context)
 

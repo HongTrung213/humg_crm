@@ -90,14 +90,14 @@
                         <tr class="text-center text-secondary">
                             <th></th>
                             <th></th>
-                            <th class="text-danger">Chưa có</th>
-                            <th class="text-warning">Chưa đạt</th>
+                            <th class="text-danger">Chưa có<br><small>lịch sử thi</small></th>
+                            <th class="text-warning">Đã thi<br><small>chưa đạt</small></th>
                             <th class="text-success">Đạt</th>
-                            <th class="text-danger">Chưa có</th>
-                            <th class="text-warning">Chưa đạt</th>
+                            <th class="text-danger">Chưa có<br><small>lịch sử thi</small></th>
+                            <th class="text-warning">Đã thi<br><small>chưa đạt</small></th>
                             <th class="text-success">Đạt</th>
-                            <th class="text-danger">Chưa có</th>
-                            <th class="text-warning">Chưa đạt</th>
+                            <th class="text-danger">Chưa có<br><small>lịch sử thi</small></th>
+                            <th class="text-warning">Đã thi<br><small>chưa đạt</small></th>
                             <th class="text-success">Đạt</th>
                         </tr>
                     </thead>
@@ -107,16 +107,16 @@
                             <td class="text-start ps-4 fw-bold text-dark">{{ khoa.ten_khoa }}</td>
                             <td><span class="badge bg-light text-dark border px-3 py-2">{{ khoa.tong_sv }}</span></td>
                             <!-- TDNN -->
-                            <td>{{ khoa.tdnn_chua_co_diem }}</td>
-                            <td>{{ khoa.tdnn_co_diem_chua_dat }}</td>
+                            <td>{{ khoa.tdnn_chua_co }}</td>
+                            <td>{{ khoa.tdnn_chua_dat }}</td>
                             <td class="fw-bold text-success">{{ khoa.tdnn_da_dat }}</td>
                             <!-- CĐR NN -->
-                            <td>{{ khoa.cdr_nn_chua_co_diem }}</td>
-                            <td>{{ khoa.cdr_nn_co_diem_chua_dat }}</td>
+                            <td>{{ khoa.cdr_nn_chua_co }}</td>
+                            <td>{{ khoa.cdr_nn_chua_dat }}</td>
                             <td class="fw-bold text-success">{{ khoa.cdr_nn_da_dat }}</td>
                             <!-- CĐR TH -->
-                            <td>{{ khoa.cdr_th_chua_co_diem }}</td>
-                            <td>{{ khoa.cdr_th_co_diem_chua_dat }}</td>
+                            <td>{{ khoa.cdr_th_chua_co }}</td>
+                            <td>{{ khoa.cdr_th_chua_dat }}</td>
                             <td class="fw-bold text-success">{{ khoa.cdr_th_da_dat }}</td>
                         </tr>
                         {% empty %}
@@ -128,16 +128,50 @@
         </div>
     </div>
 
-    <!-- ======= BIỂU ĐỒ TỔNG HỢP (CĐR Ngoại ngữ) ======= -->
+    <!-- ======= BIỂU ĐỒ VỚI TAB ======= -->
     <div class="row g-4 mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header bg-white border-0 pt-3 pb-0">
-                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-bar-chart text-primary me-2"></i>Biểu đồ tỷ lệ đạt CĐR Ngoại ngữ theo Khoa</h5>
+                <div class="card-header bg-white border-0 pt-3 pb-0 d-flex justify-content-between align-items-center flex-wrap">
+                    <h5 class="card-title fw-bold mb-0"><i class="fa fa-bar-chart text-primary me-2"></i>Biểu đồ thống kê điểm theo Khoa</h5>
+                    <ul class="nav nav-tabs card-header-tabs" id="chartTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="tab-tdnn" data-bs-toggle="tab" data-bs-target="#chart-tdnn" type="button" role="tab">
+                                <i class="fa fa-language me-1"></i> Tiếng Anh đầu vào
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-cdr-nn" data-bs-toggle="tab" data-bs-target="#chart-cdr-nn" type="button" role="tab">
+                                <i class="fa fa-certificate me-1"></i> CĐR Ngoại ngữ
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tab-cdr-th" data-bs-toggle="tab" data-bs-target="#chart-cdr-th" type="button" role="tab">
+                                <i class="fa fa-laptop me-1"></i> CĐR Tin học
+                            </button>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body">
-                    <div style="height: 340px; width: 100%;">
-                        <canvas id="khoaChart"></canvas>
+                    <div class="tab-content">
+                        <!-- Tab 1: Tiếng Anh đầu vào -->
+                        <div class="tab-pane fade show active" id="chart-tdnn" role="tabpanel">
+                            <div style="height: 340px; width: 100%;">
+                                <canvas id="chartTDNN"></canvas>
+                            </div>
+                        </div>
+                        <!-- Tab 2: CĐR Ngoại ngữ -->
+                        <div class="tab-pane fade" id="chart-cdr-nn" role="tabpanel">
+                            <div style="height: 340px; width: 100%;">
+                                <canvas id="chartCDRNN"></canvas>
+                            </div>
+                        </div>
+                        <!-- Tab 3: CĐR Tin học -->
+                        <div class="tab-pane fade" id="chart-cdr-th" role="tabpanel">
+                            <div style="height: 340px; width: 100%;">
+                                <canvas id="chartCDRTH"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -235,62 +269,67 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('khoaChart').getContext('2d');
+    // Dữ liệu từ context
+    const labels = {{ labels|safe }};
+    const chartData = {{ chart_data|safe }};
 
-    const labels = [
-        {% for khoa in thong_ke_khoa %}
-            "{{ khoa.ten_khoa|escapejs|truncatechars:30 }}",
-        {% endfor %}
-    ];
-    const chua_co = [{% for khoa in thong_ke_khoa %}{{ khoa.cdr_nn_chua_co_diem }},{% endfor %}];
-    const chua_dat = [{% for khoa in thong_ke_khoa %}{{ khoa.cdr_nn_co_diem_chua_dat }},{% endfor %}];
-    const da_dat = [{% for khoa in thong_ke_khoa %}{{ khoa.cdr_nn_da_dat }},{% endfor %}];
+    // Hàm tạo biểu đồ
+    function createChart(ctx, data, labelPrefix) {
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Chưa có lịch sử thi',
+                        data: data.chua_co,
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Đã thi - Chưa đạt',
+                        data: data.chua_dat,
+                        backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Đạt (thi/chứng chỉ)',
+                        data: data.da_dat,
+                        backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    x: { ticks: { autoSkip: false, maxRotation: 40, minRotation: 40 } },
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                },
+                interaction: { mode: 'nearest', axis: 'x', intersect: false }
+            }
+        });
+    }
 
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Chưa có điểm',
-                    data: chua_co,
-                    backgroundColor: 'rgba(220, 53, 69, 0.7)',
-                    borderColor: 'rgba(220, 53, 69, 1)',
-                    borderWidth: 1,
-                    borderRadius: 4
-                },
-                {
-                    label: 'Chưa đạt',
-                    data: chua_dat,
-                    backgroundColor: 'rgba(255, 193, 7, 0.7)',
-                    borderColor: 'rgba(255, 193, 7, 1)',
-                    borderWidth: 1,
-                    borderRadius: 4
-                },
-                {
-                    label: 'Đạt',
-                    data: da_dat,
-                    backgroundColor: 'rgba(25, 135, 84, 0.7)',
-                    borderColor: 'rgba(25, 135, 84, 1)',
-                    borderWidth: 1,
-                    borderRadius: 4
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'top' },
-                tooltip: { mode: 'index', intersect: false }
-            },
-            scales: {
-                x: { ticks: { autoSkip: false, maxRotation: 40, minRotation: 40 } },
-                y: { beginAtZero: true, ticks: { stepSize: 1 } }
-            },
-            interaction: { mode: 'nearest', axis: 'x', intersect: false }
-        }
-    });
+    // Tạo 3 biểu đồ
+    const ctxTDNN = document.getElementById('chartTDNN').getContext('2d');
+    const ctxCDRNN = document.getElementById('chartCDRNN').getContext('2d');
+    const ctxCDRTH = document.getElementById('chartCDRTH').getContext('2d');
+
+    createChart(ctxTDNN, chartData.tdnn);
+    createChart(ctxCDRNN, chartData.cdr_nn);
+    createChart(ctxCDRTH, chartData.cdr_th);
 });
 </script>
 {% endblock %}
