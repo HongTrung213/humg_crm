@@ -732,12 +732,9 @@ def admin_mofi_dashboard(request):
     certificates_issued = ChungChi.objects.count()
     recent_activities = DangKyLop.objects.select_related('sinh_vien', 'lop_hoc').order_by('-thoi_gian_dk')[:5]
 
-    # ---- CẢNH BÁO NĂM CUỐI CHƯA ĐẠT (giữ nguyên) ----
+    # ---- CẢNH BÁO NĂM CUỐI CHƯA ĐẠT ----
     sv_canh_bao_nam_cuoi = [sv for sv in tat_ca_sv if getattr(sv, 'tien_do_nam_tu', False)]
-    danh_sach_chua_dat = []
-    for sv in sv_canh_bao_nam_cuoi:
-        if getattr(sv, 'chua_dat_chuan_dau_ra', False):
-            danh_sach_chua_dat.append(sv)
+    danh_sach_chua_dat = [sv for sv in sv_canh_bao_nam_cuoi if getattr(sv, 'chua_dat_chuan_dau_ra', False)]
     danh_sach_chua_dat.sort(key=lambda x: getattr(x, 'nam_nhap_hoc', 9999) or 9999)
 
     # ---- THỐNG KÊ ĐIỂM THEO KHOA (MỚI) ----
@@ -754,7 +751,7 @@ def admin_mofi_dashboard(request):
                 ))
             ).count()
         elif status == 'chua_dat':
-            # Sinh viên có ít nhất 1 bản ghi, nhưng không có bản ghi nào đạt
+            # Có ít nhất 1 bản ghi, nhưng không có bản ghi nào đạt
             return khoa_sv_qs.filter(
                 Exists(LichSuThi.objects.filter(
                     sinh_vien=OuterRef('pk'),
@@ -768,7 +765,7 @@ def admin_mofi_dashboard(request):
                 ))
             ).count()
         elif status == 'da_dat':
-            # Sinh viên có ít nhất 1 bản ghi đạt
+            # Có ít nhất 1 bản ghi đạt
             return khoa_sv_qs.filter(
                 Exists(LichSuThi.objects.filter(
                     sinh_vien=OuterRef('pk'),
