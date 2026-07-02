@@ -521,6 +521,135 @@ def ensure_student(mssv, ho_ten='', lop='', khoa_name='', email='', phone='', te
             sv.save(update_fields=fields_to_update.keys())
     return sv
 
+def parse_tdnn_row(row):
+    """Parse dòng dữ liệu từ file TĐNN (Tiếng Anh đầu vào)"""
+    mssv = extract_mssv(get_first(row, ['mssv', 'ma sinh vien', 'masinhvien', 'ma sv']))
+    if not mssv:
+        return None
+
+    ho_ten = get_first(row, ['hoten', 'ho ten', 'hovaten', 'ten sinh vien'])
+    nghe = get_float_first(row, ['nghe'])
+    doc = get_float_first(row, ['doc'])
+    viet = get_float_first(row, ['viet'])
+    noi = get_float_first(row, ['noi'])
+    diem_tong = get_float_first(row, ['diem danh gia', 'diemtong', 'tongdiem'])
+    xep_loai = get_first(row, ['xeploai', 'xep loai'])
+    ghi_chu = get_first(row, ['ghichu', 'ghi chu'])
+
+    # Xử lý ghi chú: nếu có "Vắng thi", "Vắng TM", "Vắng VĐ", "VPQC" thì set điểm về 0
+    if ghi_chu:
+        gc_lower = ghi_chu.lower()
+        if any(k in gc_lower for k in ['vắng thi', 'vang thi', 'vpqc', 'vắng tm', 'vắng vđ']):
+            nghe = doc = viet = noi = 0
+            diem_tong = 0
+            xep_loai = 'Không đạt'
+
+    return {
+        'mssv': mssv,
+        'ho_ten': ho_ten,
+        'd1': nghe,
+        'd2': doc,
+        'd3': viet,
+        'd4': noi,
+        'diem_tong': diem_tong,
+        'xep_loai': xep_loai,
+        'ghi_chu': ghi_chu,
+        'co_bao_luu': False,
+        'sbd': '',
+    }
+
+
+def parse_cdr_nn_row(row):
+    """Parse dòng dữ liệu từ file CĐR Ngoại ngữ"""
+    mssv = extract_mssv(get_first(row, ['mssv', 'ma sinh vien', 'masinhvien', 'ma sv']))
+    if not mssv:
+        return None
+
+    ho_ten = get_first(row, ['hoten', 'ho ten', 'hovaten', 'ten sinh vien'])
+    nghe = get_float_first(row, ['nghe'])
+    doc = get_float_first(row, ['doc'])
+    viet = get_float_first(row, ['viet'])
+    noi = get_float_first(row, ['noi'])
+    diem_tong = get_float_first(row, ['diem danh gia', 'diemtong', 'tongdiem'])
+    xep_loai = get_first(row, ['xeploai', 'xep loai'])
+    ghi_chu = get_first(row, ['ghichu', 'ghi chu'])
+    bao_luu = get_first(row, ['bao luu', 'baoluu'])
+
+    co_bao_luu = bool(bao_luu and str(bao_luu).strip() not in ['', '0', 'false', 'no'])
+    if co_bao_luu:
+        if ghi_chu:
+            ghi_chu = f"{ghi_chu} | Bảo lưu: {bao_luu}"
+        else:
+            ghi_chu = f"Bảo lưu: {bao_luu}"
+
+    # Xử lý ghi chú vắng thi
+    if ghi_chu:
+        gc_lower = ghi_chu.lower()
+        if any(k in gc_lower for k in ['vắng thi', 'vang thi', 'vpqc', 'vắng tm', 'vắng vđ']):
+            nghe = doc = viet = noi = 0
+            diem_tong = 0
+            xep_loai = 'Không đạt'
+
+    return {
+        'mssv': mssv,
+        'ho_ten': ho_ten,
+        'd1': nghe,
+        'd2': doc,
+        'd3': viet,
+        'd4': noi,
+        'diem_tong': diem_tong,
+        'xep_loai': xep_loai,
+        'ghi_chu': ghi_chu,
+        'co_bao_luu': co_bao_luu,
+        'sbd': '',
+    }
+
+
+def parse_cntt_row(row):
+    """Parse dòng dữ liệu từ file CĐR Tin học"""
+    mssv = extract_mssv(get_first(row, ['mssv', 'ma sinh vien', 'masinhvien', 'ma sv']))
+    if not mssv:
+        return None
+
+    ho_ten = get_first(row, ['hoten', 'ho ten', 'hovaten', 'ten sinh vien'])
+    tn = get_float_first(row, ['trac nghiem', 'tracnghiem'])
+    th = get_float_first(row, ['thuc hanh', 'thuchanh'])
+    diem_tong = get_float_first(row, ['diem danh gia', 'diemtong', 'tongdiem'])
+    xep_loai = get_first(row, ['xeploai', 'xep loai'])
+    ghi_chu = get_first(row, ['ghichu', 'ghi chu'])
+    bao_luu = get_first(row, ['bao luu', 'baoluu'])
+
+    co_bao_luu = bool(bao_luu and str(bao_luu).strip() not in ['', '0', 'false', 'no'])
+    if co_bao_luu:
+        if ghi_chu:
+            ghi_chu = f"{ghi_chu} | Bảo lưu: {bao_luu}"
+        else:
+            ghi_chu = f"Bảo lưu: {bao_luu}"
+
+    if ghi_chu:
+        gc_lower = ghi_chu.lower()
+        if any(k in gc_lower for k in ['vắng thi', 'vang thi', 'vpqc', 'vắng tm', 'vắng vđ']):
+            tn = th = 0
+            diem_tong = 0
+            xep_loai = 'Không đạt'
+
+    return {
+        'mssv': mssv,
+        'ho_ten': ho_ten,
+        'd1': tn,
+        'd2': th,
+        'd3': None,
+        'd4': None,
+        'diem_tong': diem_tong,
+        'xep_loai': xep_loai,
+        'ghi_chu': ghi_chu,
+        'co_bao_luu': co_bao_luu,
+        'sbd': '',
+    }
+
+
+
+
 
 # ==============================================================================
 # 1. PHÂN HỆ CÔNG CỘNG & SINH VIÊN
