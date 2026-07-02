@@ -79,6 +79,15 @@ class DanhMucChungChi(models.Model):
         ('NGOAI_NGU', 'Chuẩn đầu ra Ngoại ngữ'),
         ('TIN_HOC', 'Chuẩn đầu ra Tin học'),
     ]
+    BAC_CHOICES = [
+        (0, 'Không xác định'),
+        (1, 'Bậc 1'),
+        (2, 'Bậc 2'),
+        (3, 'Bậc 3'),
+        (4, 'Bậc 4'),
+        (5, 'Bậc 5'),
+        (6, 'Bậc 6'),
+    ]
 
     loai = models.CharField('Phân loại', max_length=20, choices=LOAI_CC)
     ten_chung_chi = models.CharField(
@@ -87,6 +96,12 @@ class DanhMucChungChi(models.Model):
         unique=True,
         help_text='VD: IELTS, TOEIC, MOS Word...',
     )
+    bac = models.PositiveSmallIntegerField(
+        'Bậc tương ứng (Khung năng lực ngoại ngữ VN)',
+        choices=BAC_CHOICES,
+        default=0,
+        help_text='Chỉ áp dụng cho chứng chỉ Ngoại ngữ. 0 = không phân hạng.'
+    )
 
     class Meta:
         verbose_name = 'Danh mục Chứng chỉ'
@@ -94,8 +109,9 @@ class DanhMucChungChi(models.Model):
         ordering = ['loai', 'ten_chung_chi']
 
     def __str__(self):
+        if self.bac and self.loai == 'NGOAI_NGU':
+            return f"[{self.get_loai_display()} - Bậc {self.bac}] {self.ten_chung_chi}"
         return f"[{self.get_loai_display()}] {self.ten_chung_chi}"
-
 
 class CauHinhVaiTro(models.Model):
     VAI_TRO = [
@@ -422,7 +438,8 @@ class SinhVien(models.Model):
 
     @property
     def has_valid_cert_ngoai_ngu(self):
-        return self._has_valid_cert('NGOAI_NGU')
+        required_level = self.get_required_foreign_language_level()
+        return self._has_valid_cert('NGOAI_NGU', required_level)
 
     @property
     def has_valid_cert_tin_hoc(self):
@@ -496,6 +513,55 @@ class SinhVien(models.Model):
     @property
     def chua_dat_chuan_dau_ra(self):
         return not self.dat_chuan_dau_ra
+    def get_required_foreign_language_level(self):
+        """
+        Xác định bậc ngoại ngữ yêu cầu theo ngành và chương trình đào tạo.
+        - Đại trà: Bậc 3
+        - Chất lượng cao: Bậc 4
+        - Tiên tiến: Bậc 4 (theo chứng chỉ IELTS/TOEIC... tương đương)
+        - Ngôn ngữ Anh / Ngôn ngữ Trung Quốc: Bậc 5
+        """
+        config = self.get_tieu_chi_chuan('NGOAI_NGU')
+        if config and config.bac_ngoai_ngu_toi_thieu:
+            return config.bac_ngoai_ngu_toi_thieu
+        if self.nganh_dao_tao and self.nganh_dao_tao.loai_nganh in ['NGON_NGU_ANH', 'NGON_NGU_TRUNG']:
+            return 5
+        if self.chuong_trinh_dao_tao in ['CHAT_LUONG_CAO', 'TIEN_TIEN']:
+            return 4
+        return 3
+
+    def _has_valid_cert(self, loai_cc, required_level=None):
+        """
+        Kiểm tra sinh viên có chứng chỉ hợp lệ cho loại chuẩn.
+        Nếu required_level được cung cấp (chỉ cho ngoại ngữ), yêu cầu bậc >= required_level.
+        """
+        hieu_luc_thang = self.get_hieu_luc_thang(loai_cc)
+        five_years_ago = timezone.now().date() - relativedelta(months=hieu_luc_thang)
+        qs = self.cac_chung_chi.filter(
+            danh_muc__loai=loai_cc,
+            trang_thai='DAT',
+            ngay_cap__gte=five_years_ago,
+        )
+
+        # ✅ Chỉ áp dụng bậc cho NGOAI_NGU
+        if loai_cc == 'NGOAI_NGU' and required_level is not None:
+            qs = qs.filter(danh_muc__bac__gte=required_level)
+
+        # Tin học giữ nguyên logic cũ
+        if loai_cc == 'TIN_HOC':
+            config = self.get_tieu_chi_chuan('TIN_HOC')
+            so_module_mos_toi_thieu = config.so_chung_chi_mos_toi_thieu if config else 3
+            if qs.exclude(danh_muc__ten_chung_chi__icontains='MOS').exists():
+                return True
+            so_luong_mos = qs.filter(
+                danh_muc__ten_chung_chi__icontains='MOS'
+            ).values('danh_muc').distinct().count()
+            return so_luong_mos >= so_module_mos_toi_thieu
+
+        return qs.exists()
+
+
+
 
 
 class ChungChi(models.Model):

@@ -536,7 +536,7 @@ def parse_tdnn_row(row):
     xep_loai = get_first(row, ['xeploai', 'xep loai'])
     ghi_chu = get_first(row, ['ghichu', 'ghi chu'])
 
-    # Xử lý ghi chú: nếu có "Vắng thi", "Vắng TM", "Vắng VĐ", "VPQC" thì set điểm về 0
+    # Xử lý ghi chú vắng thi
     if ghi_chu:
         gc_lower = ghi_chu.lower()
         if any(k in gc_lower for k in ['vắng thi', 'vang thi', 'vpqc', 'vắng tm', 'vắng vđ']):
@@ -646,9 +646,6 @@ def parse_cntt_row(row):
         'co_bao_luu': co_bao_luu,
         'sbd': '',
     }
-
-
-
 
 
 # ==============================================================================
@@ -2158,7 +2155,7 @@ def mofi_import_lich_thi_cntt(request):
     )
 
 
-def import_diem_generic(request, mon_thi_code, template_name, success_label):
+def import_diem_generic(request, mon_thi_code, template_name, success_label, file_type='cntt'):
     if request.method == 'POST':
         dot_thi_id = request.POST.get('dot_thi')
         excel_file = request.FILES.get('excel_file')
@@ -2176,52 +2173,54 @@ def import_diem_generic(request, mon_thi_code, template_name, success_label):
                 for sheet in sheets:
                     excel_file.seek(0)
                     df = read_excel_with_smart_header(excel_file, sheet_name=sheet)
+                    # Chuẩn hóa tên cột
+                    df.columns = [normalize_key(c) for c in df.columns]
+
                     for _, row in df.iterrows():
-                        mssv = extract_mssv(get_first(row, ['mssv', 'ma sinh vien', 'masinhvien', 'ma sv']))
+                        # Chọn parser theo loại file
+                        if file_type == 'tdnn':
+                            parsed = parse_tdnn_row(row)
+                        elif file_type == 'cdr_nn':
+                            parsed = parse_cdr_nn_row(row)
+                        else:  # cntt
+                            parsed = parse_cntt_row(row)
+
+                        if not parsed:
+                            continue
+
+                        mssv = parsed.get('mssv')
                         if not mssv:
                             continue
 
-                        ho_ten = get_first(row, ['hoten', 'ho ten', 'hovaten', 'ten sinh vien'])
-                        lop = get_first(row, ['lop', 'lop sinh hoat'])
-                        khoa = get_first(row, ['khoa', 'khoa vien'])
-                        sv = ensure_student(mssv, ho_ten=ho_ten, lop=lop, khoa_name=khoa)
+                        # Tìm hoặc tạo sinh viên
+                        sv = SinhVien.objects.filter(mssv=mssv).first()
+                        if not sv:
+                            ho_ten = parsed.get('ho_ten', '')
+                            if ho_ten:
+                                sv = ensure_student(mssv, ho_ten=ho_ten)
+                            else:
+                                continue
                         if not sv:
                             continue
 
-                        d1 = get_float_first(row, ['diemtp1', 'tp1', 'nghe', 'tracnghiem', 'lythuyet', 'diem nghe', 'diem tn'])
-                        d2 = get_float_first(row, ['diemtp2', 'tp2', 'doc', 'thuchanh', 'diem doc', 'diem th'])
-                        d3 = get_float_first(row, ['diemtp3', 'tp3', 'viet', 'diem viet'])
-                        d4 = get_float_first(row, ['diemtp4', 'tp4', 'noi', 'diem noi'])
-                        diem_tong = get_float_first(row, ['diemtong', 'tongdiem', 'tong', 'diemthi', 'diem'])
-                        xep_loai = get_first(row, ['xeploai', 'xep loai', 'ketqua', 'ket qua'])
-                        ghi_chu = get_first(row, ['ghichu', 'ghi chu'])
-
-                        bl_parts = []
-                        dot_bl = get_first(row, ['dotbaoluu', 'dotbl', 'bao luu dot'])
-                        phan_bl = get_first(row, ['phanbaoluu', 'phan bl', 'noi dung bao luu'])
-                        if dot_bl:
-                            bl_parts.append(f'BL: {dot_bl}')
-                        if phan_bl:
-                            bl_parts.append(f'Phần: {phan_bl}')
-                        co_bao_luu = bool(bl_parts)
-                        if co_bao_luu:
-                            ghi_chu = ' | '.join(bl_parts + ([ghi_chu] if ghi_chu else []))
+                        # Tạo hoặc cập nhật LichSuThi
+                        defaults = {
+                            'sbd': parsed.get('sbd', ''),
+                            'diem_thanh_phan_1': parsed.get('d1'),
+                            'diem_thanh_phan_2': parsed.get('d2'),
+                            'diem_thanh_phan_3': parsed.get('d3'),
+                            'diem_thanh_phan_4': parsed.get('d4'),
+                            'diem_tong': parsed.get('diem_tong'),
+                            'xep_loai': parsed.get('xep_loai'),
+                            'ghi_chu': parsed.get('ghi_chu'),
+                            'co_bao_luu': parsed.get('co_bao_luu', False),
+                        }
 
                         LichSuThi.objects.update_or_create(
                             sinh_vien=sv,
                             dot_thi=dot_thi,
                             mon_thi=mon_thi_code,
-                            defaults={
-                                'sbd': get_first(row, ['sbd', 'so bao danh', 'sobaodanh']),
-                                'diem_thanh_phan_1': d1,
-                                'diem_thanh_phan_2': d2,
-                                'diem_thanh_phan_3': d3,
-                                'diem_thanh_phan_4': d4,
-                                'diem_tong': diem_tong,
-                                'xep_loai': xep_loai or None,
-                                'ghi_chu': ghi_chu or None,
-                                'co_bao_luu': co_bao_luu,
-                            },
+                            defaults=defaults
                         )
                         total_count += 1
 
@@ -2233,7 +2232,6 @@ def import_diem_generic(request, mon_thi_code, template_name, success_label):
 
     return render(request, template_name, {'dot_this': DotThi.objects.all().order_by('-id')})
 
-
 @staff_member_required
 def mofi_import_diem_tdnn(request):
     return import_diem_generic(
@@ -2241,8 +2239,8 @@ def mofi_import_diem_tdnn(request):
         mon_thi_code='TA_DAU_VAO',
         template_name='admin_mofi/pages/import_diem_tdnn.html',
         success_label='Tiếng Anh đầu vào',
+        file_type='tdnn'
     )
-
 
 @staff_member_required
 def mofi_import_diem_cdr_nn(request):
@@ -2251,8 +2249,8 @@ def mofi_import_diem_cdr_nn(request):
         mon_thi_code='CDR_NGOAI_NGU',
         template_name='admin_mofi/pages/import_diem_cdr_nn.html',
         success_label='CĐR Ngoại ngữ',
+        file_type='cdr_nn'
     )
-
 
 @staff_member_required
 def mofi_import_diem_cntt(request):
@@ -2261,7 +2259,10 @@ def mofi_import_diem_cntt(request):
         mon_thi_code='CDR_TIN_HOC',
         template_name='admin_mofi/pages/import_diem_cntt.html',
         success_label='CĐR Tin học',
+        file_type='cntt'
     )
+
+
 from django.shortcuts import render
 from django.db.models import Count, Q
 from .models import SinhVien

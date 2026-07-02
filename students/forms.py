@@ -67,12 +67,12 @@ class NganhDaoTaoForm(forms.ModelForm):
 class DanhMucChungChiForm(forms.ModelForm):
     class Meta:
         model = DanhMucChungChi
-        fields = ['ten_chung_chi', 'loai']
+        fields = ['ten_chung_chi', 'loai', 'bac']
         widgets = {
-            'ten_chung_chi': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'VD: TOEIC, IELTS, MOS Word...'}),
+            'ten_chung_chi': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'VD: TOEIC, IELTS...'}),
             'loai': forms.Select(attrs={'class': 'form-select'}),
+            'bac': forms.Select(attrs={'class': 'form-select'}),
         }
-
 
 # ==============================
 # FORM CHỨNG CHỈ (SINH VIÊN NỘP)

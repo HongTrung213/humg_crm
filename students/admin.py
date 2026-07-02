@@ -20,11 +20,10 @@ class NganhDaoTaoAdmin(admin.ModelAdmin):
     list_editable = ('is_active',)
     ordering = ('khoa__ma_khoa', 'ten_nganh')
 
-
 @admin.register(DanhMucChungChi)
 class DanhMucChungChiAdmin(admin.ModelAdmin):
-    list_display = ('ten_chung_chi', 'loai')
-    list_filter = ('loai',)
+    list_display = ('ten_chung_chi', 'loai', 'bac')
+    list_filter = ('loai', 'bac')
     search_fields = ('ten_chung_chi',)
 
 
