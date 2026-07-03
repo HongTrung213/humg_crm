@@ -112,6 +112,11 @@ urlpatterns = [
     path(
     'quan-tri/bao-cao/',
     views.dashboard_bao_cao,
-    name='dashboard_bao_cao'
-),
+    name='dashboard_bao_cao'),
+
+    path('quan-tri/phan-loai-sv/', views.phan_loai_sinh_vien, name='phan_loai_sinh_vien'),
+    path('quan-tri/danh-sach-canh-bao/', views.danh_sach_canh_bao, name='danh_sach_canh_bao'),
+    path('quan-tri/gui-canh-bao/', views.gui_canh_bao, name='gui_canh_bao'),
+    path('quan-tri/bao-luu-diem/', views.bao_luu_diem_list, name='bao_luu_diem_list'),
+    path('quan-tri/tieu-chi-chuan-dau-ra/', views.mofi_tieu_chi_list, name='mofi_tieu_chi_list'),
 ]

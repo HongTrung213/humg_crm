@@ -1,10 +1,10 @@
 {% load static %}
 <div class="sidebar-wrapper" data-layout="stroke-svg">
   <div>
-    <!-- LOGO CHÍNH -->
+    <!-- LOGO (đầy đủ) -->
     <div class="logo-wrapper">
       <a href="{% url 'students:admin_mofi_dashboard' %}">
-        <img class="img-fluid" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG CRM" style="max-height: 42px; object-fit: contain;">
+        <img class="img-fluid" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG CRM" style="max-height: 40px; object-fit: contain; border-radius: 6px;">
       </a>
       <div class="back-btn"><i class="fa fa-angle-left"></i></div>
       <div class="toggle-sidebar">
@@ -17,146 +17,146 @@
     <!-- LOGO THU GỌN -->
     <div class="logo-icon-wrapper">
       <a href="{% url 'students:admin_mofi_dashboard' %}">
-        <img class="img-fluid border shadow-sm" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG CRM" style="height: 35px; width: 35px; object-fit: cover; border-radius: 8px;">
+        <img class="img-fluid border shadow-sm" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG CRM" style="height: 32px; width: 32px; object-fit: cover; border-radius: 6px;">
       </a>
     </div>
-    
+
     <nav class="sidebar-main">
       <div class="left-arrow" id="left-arrow"><i data-feather="arrow-left"></i></div>
       <div id="sidebar-menu">
         <ul class="sidebar-links" id="simple-bar">
           <li class="back-btn">
             <a href="{% url 'students:admin_mofi_dashboard' %}">
-              <img class="img-fluid" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG CRM" style="height: 30px; border-radius: 5px;">
+              <img class="img-fluid" src="{% static 'img/logo/logo.jpg' %}" alt="HUMG CRM" style="height: 28px; border-radius: 4px;">
             </a>
-            <div class="mobile-back text-end"><span>Back</span><i class="fa fa-angle-right ps-2" aria-hidden="true"></i></div>
+            <div class="mobile-back text-end"><span>Back</span><i class="fa fa-angle-right ps-2"></i></div>
           </li>
-          
-          <!-- 1. HỆ THỐNG -->
+
+          <!-- ====== NHÓM 1: TỔNG QUAN ====== -->
           <li class="sidebar-main-title">
-            <div><h6 class="fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #555;">Hệ thống</h6></div>
+            <div><h6 class="fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #6b7b8d; font-size: 11px;">Tổng quan</h6></div>
           </li>
-          
           <li class="sidebar-list">
             <a class="sidebar-link sidebar-title link-nav" href="{% url 'students:admin_mofi_dashboard' %}">
-              <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-home"></use></svg>
-              <span class="fw-bold text-dark">Tổng quan (Dashboard)</span>
+              <i class="fa fa-dashboard" style="font-size: 18px; width: 20px; text-align: center;"></i>
+              <span class="fw-bold text-dark">Dashboard</span>
             </a>
           </li>
-          <!-- ✅ THÊM MỤC BÁO CÁO THỐNG KÊ -->
           <li class="sidebar-list">
-              <a class="sidebar-link sidebar-title link-nav" href="{% url 'students:dashboard_bao_cao' %}">
-                  <i class="fa fa-bar-chart" style="font-size: 18px; width: 20px; text-align: center; margin-right: 6px;"></i>
-                  <span class="fw-bold text-dark">Báo cáo thống kê</span>
-              </a>
+            <a class="sidebar-link sidebar-title link-nav" href="{% url 'students:dashboard_bao_cao' %}">
+              <i class="fa fa-bar-chart" style="font-size: 18px; width: 20px; text-align: center;"></i>
+              <span class="fw-bold text-dark">Báo cáo thống kê</span>
+            </a>
           </li>
-          <!-- 2. ĐÀO TẠO & KHẢO THÍ -->
+
+          <!-- ====== NHÓM 2: QUẢN LÝ SINH VIÊN ====== -->
           <li class="sidebar-main-title mt-2">
-            <div><h6 class="fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #555;">Đào tạo & Khảo thí</h6></div>
+            <div><h6 class="fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #6b7b8d; font-size: 11px;">Quản lý sinh viên</h6></div>
           </li>
-
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <li class="sidebar-list">
             <a class="sidebar-link sidebar-title" href="javascript:void(0)">
-              <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-user"></use></svg>
-              <span class="fw-bold text-dark">Hồ sơ Sinh viên</span>
+              <i class="fa fa-users" style="font-size: 18px; width: 20px; text-align: center;"></i>
+              <span class="fw-bold text-dark">Hồ sơ sinh viên</span>
             </a>
             <ul class="sidebar-submenu">
-              <li><a href="{% url 'students:student_list' %}">Danh sách Sinh viên</a></li>
-              <li><a href="{% url 'students:student_add' %}">Thêm Sinh viên mới</a></li>
-              <li><a href="{% url 'students:import_sinh_vien' %}">Nhập file Excel SV</a></li>
-              <li><a href="{% url 'students:mofi_khoa_list' %}">Quản lý Khoa</a></li>
+              <li><a href="{% url 'students:student_list' %}">Danh sách sinh viên</a></li>
+              <li><a href="{% url 'students:student_add' %}">Thêm sinh viên</a></li>
+              <li><a href="{% url 'students:import_sinh_vien' %}">Import Excel</a></li>
+            </ul>
+          </li>
+          <li class="sidebar-list">
+            <a class="sidebar-link sidebar-title" href="javascript:void(0)">
+              <i class="fa fa-tasks" style="font-size: 18px; width: 20px; text-align: center;"></i>
+              <span class="fw-bold text-dark">Phân loại & hỗ trợ</span>
+            </a>
+            <ul class="sidebar-submenu">
+              <li><a href="{% url 'students:phan_loai_sinh_vien' %}">Phân loại theo trạng thái</a></li>
+              <li><a href="{% url 'students:danh_sach_canh_bao' %}">Danh sách cảnh báo</a></li>
+              <li><a href="{% url 'students:gui_canh_bao' %}">Gửi cảnh báo</a></li>
             </ul>
           </li>
 
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-            <a class="sidebar-link sidebar-title" href="javascript:void(0)">
-              <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-learning"></use></svg>
-              <span class="fw-bold text-dark">Tổ chức Lớp học</span>
-            </a>
-            <ul class="sidebar-submenu">
-              <li><a href="{% url 'students:class_list' %}">Quản lý Lớp Bồi dưỡng</a></li>
-              <li><a href="{% url 'students:mofi_import_class_list' %}">Import Danh sách</a></li>
-            </ul>
-          </li>
-          
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-            <a class="sidebar-link sidebar-title" href="javascript:void(0)">
-              <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-file"></use></svg>
-              <span class="fw-bold text-dark">Khảo thí & Điểm thi</span>
-            </a>
-            <ul class="sidebar-submenu">
-              <li><a href="{% url 'students:mofi_dot_thi_list' %}">Quản lý Đợt thi</a></li>
-              <li><a href="{% url 'students:mofi_import_diem_tdnn' %}">Tiếng Anh Đầu Vào</a></li>
-              <li><a href="{% url 'students:mofi_import_diem_cdr_nn' %}">CĐR Ngoại Ngữ</a></li>
-              <li><a href="{% url 'students:mofi_import_diem_cntt' %}">CĐR Tin Học</a></li>
-            </ul>
-          </li>
-
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
-            <a class="sidebar-link sidebar-title" href="javascript:void(0)">
-              <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-board"></use></svg>
-              <span class="fw-bold text-dark">Quản lý Chứng chỉ</span>
-            </a>
-            <ul class="sidebar-submenu">
-              <li><a href="{% url 'students:certificate_verification_list' %}">Xét duyệt Chứng chỉ</a></li>
-              <li><a href="{% url 'students:mofi_chungchi_list' %}">Danh mục Chứng chỉ</a></li>
-            </ul>
-          </li>
-          
-          <!-- 3. NỘI DUNG WEBSITE -->
+          <!-- ====== NHÓM 3: CHUẨN ĐẦU RA ====== -->
           <li class="sidebar-main-title mt-2">
-            <div><h6 class="fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #555;">Nội dung Website</h6></div>
+            <div><h6 class="fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #6b7b8d; font-size: 11px;">Chuẩn đầu ra</h6></div>
           </li>
-
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <li class="sidebar-list">
             <a class="sidebar-link sidebar-title" href="javascript:void(0)">
-              <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-form"></use></svg>
-              <span class="fw-bold text-dark">Quản trị CMS</span>
+              <i class="fa fa-file-text" style="font-size: 18px; width: 20px; text-align: center;"></i>
+              <span class="fw-bold text-dark">Điểm thi & Kết quả</span>
             </a>
             <ul class="sidebar-submenu">
-              <!-- Nhóm Bài viết -->
-              <li>
-                <a class="submenu-title fw-medium" href="javascript:void(0)">Bài viết & Tin tức<span class="sub-arrow"><i class="fa fa-angle-right"></i></span></a>
-                <ul class="nav-sub-childmenu submenu-content">
-                  <li><a href="{% url 'cms:mofi_post_list' %}">Danh sách bài viết</a></li>
-                  <li><a href="{% url 'cms:mofi_post_add' %}">Viết bài mới</a></li>
-                  <li><a href="{% url 'cms:mofi_category_list' %}">Danh mục tin tức</a></li>
-                </ul>
-              </li>
-              <!-- Nhóm Slider -->
-              <li>
-                <a class="submenu-title fw-medium" href="javascript:void(0)">Slider trang chủ<span class="sub-arrow"><i class="fa fa-angle-right"></i></span></a>
-                <ul class="nav-sub-childmenu submenu-content">
-                  <li><a href="{% url 'cms:mofi_slider_list' %}">Danh sách Slider</a></li>
-                  <li><a href="{% url 'cms:mofi_slider_add' %}">Thêm Slider mới</a></li>
-                </ul>
-              </li>
-              <!-- Nhóm Liên kết nhanh -->
-              <li>
-                <a class="submenu-title fw-medium" href="javascript:void(0)">Liên kết nhanh<span class="sub-arrow"><i class="fa fa-angle-right"></i></span></a>
-                <ul class="nav-sub-childmenu submenu-content">
-                  <li><a href="{% url 'cms:mofi_quicklink_list' %}">Danh sách liên kết</a></li>
-                  <li><a href="{% url 'cms:mofi_quicklink_add' %}">Thêm liên kết mới</a></li>
-                </ul>
-              </li>
+              <li><a href="{% url 'students:mofi_dot_thi_list' %}">Quản lý đợt thi</a></li>
+              <li><a href="{% url 'students:mofi_import_diem_tdnn' %}">Import Tiếng Anh đầu vào</a></li>
+              <li><a href="{% url 'students:mofi_import_diem_cdr_nn' %}">Import CĐR Ngoại ngữ</a></li>
+              <li><a href="{% url 'students:mofi_import_diem_cntt' %}">Import CĐR Tin học</a></li>
+            </ul>
+          </li>
+          <li class="sidebar-list">
+            <a class="sidebar-link sidebar-title" href="javascript:void(0)">
+              <i class="fa fa-certificate" style="font-size: 18px; width: 20px; text-align: center;"></i>
+              <span class="fw-bold text-dark">Chứng chỉ & Bảo lưu</span>
+            </a>
+            <ul class="sidebar-submenu">
+              <li><a href="{% url 'students:certificate_verification_list' %}">Xét duyệt chứng chỉ</a></li>
+              <li><a href="{% url 'students:mofi_chungchi_list' %}">Danh mục chứng chỉ</a></li>
+              <li><a href="{% url 'students:bao_luu_diem_list' %}">Bảo lưu điểm</a></li>
+            </ul>
+          </li>
+          <li class="sidebar-list">
+            <a class="sidebar-link sidebar-title" href="javascript:void(0)">
+              <i class="fa fa-graduation-cap" style="font-size: 18px; width: 20px; text-align: center;"></i>
+              <span class="fw-bold text-dark">Lớp bồi dưỡng</span>
+            </a>
+            <ul class="sidebar-submenu">
+              <li><a href="{% url 'students:class_list' %}">Quản lý lớp</a></li>
+              <li><a href="{% url 'students:mofi_import_class_list' %}">Import danh sách</a></li>
+              <li><a href="{% url 'students:registration_list' %}">Đăng ký lớp</a></li>
             </ul>
           </li>
 
-          <!-- 4. CẤU HÌNH & BẢO MẬT -->
+          <!-- ====== NHÓM 4: CẤU HÌNH HỆ THỐNG ====== -->
           <li class="sidebar-main-title mt-2">
-            <div><h6 class="fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #555;">Cấu hình & Bảo mật</h6></div>
+            <div><h6 class="fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #6b7b8d; font-size: 11px;">Hệ thống & Cấu hình</h6></div>
           </li>
-
-          <li class="sidebar-list"><i class="fa fa-thumb-tack"></i>
+          <li class="sidebar-list">
             <a class="sidebar-link sidebar-title" href="javascript:void(0)">
-              <svg class="stroke-icon"><use href="{% static 'mofi/svg/icon-sprite.svg' %}#stroke-task"></use></svg>
-              <span class="fw-bold text-dark">Phân quyền Hệ thống</span>
+              <i class="fa fa-database" style="font-size: 18px; width: 20px; text-align: center;"></i>
+              <span class="fw-bold text-dark">Danh mục</span>
             </a>
             <ul class="sidebar-submenu">
-              <li><a href="{% url 'students:mofi_user_list' %}">Tài khoản Cán bộ</a></li>
-              <li><a href="{% url 'students:mofi_group_list' %}">Nhóm Quyền (Roles)</a></li>
+              <li><a href="{% url 'students:mofi_khoa_list' %}">Khoa</a></li>
+              <li><a href="{% url 'students:mofi_nganh_list' %}">Ngành đào tạo</a></li>
+              <li><a href="{% url 'students:mofi_chungchi_list' %}">Chứng chỉ</a></li>
+              <li><a href="{% url 'students:mofi_tieu_chi_list' %}">Tiêu chí CĐR</a></li>
             </ul>
           </li>
+          <li class="sidebar-list">
+            <a class="sidebar-link sidebar-title" href="javascript:void(0)">
+              <i class="fa fa-lock" style="font-size: 18px; width: 20px; text-align: center;"></i>
+              <span class="fw-bold text-dark">Phân quyền</span>
+            </a>
+            <ul class="sidebar-submenu">
+              <li><a href="{% url 'students:mofi_user_list' %}">Tài khoản cán bộ</a></li>
+              <li><a href="{% url 'students:mofi_group_list' %}">Nhóm quyền (Roles)</a></li>
+            </ul>
+          </li>
+
+          <!-- ====== NHÓM 5: CHĂM SÓC SINH VIÊN ====== -->
+          <li class="sidebar-main-title mt-2">
+            <div><h6 class="fw-bold text-uppercase" style="letter-spacing: 0.5px; color: #6b7b8d; font-size: 11px;">Chăm sóc sinh viên</h6></div>
+          </li>
+          <li class="sidebar-list">
+            <a class="sidebar-link sidebar-title" href="javascript:void(0)">
+              <i class="fa fa-bell" style="font-size: 18px; width: 20px; text-align: center;"></i>
+              <span class="fw-bold text-dark">Thông báo & Cảnh báo</span>
+            </a>
+            <ul class="sidebar-submenu">
+              <li><a href="{% url 'students:mofi_thongbao_list' %}">Thông báo</a></li>
+              <li><a href="{% url 'students:mofi_export_chua_dat_chuan' %}">DS chưa đạt CĐR</a></li>
+            </ul>
+          </li>
+
         </ul>
       </div>
       <div class="right-arrow" id="right-arrow"><i data-feather="arrow-right"></i></div>
@@ -165,9 +165,10 @@
 </div>
 
 <style>
-  /* Hiệu chỉnh nhẹ để Sidebar gọn gàng và font chữ nét hơn */
   .sidebar-main-title h6 {
     font-size: 11px !important;
+    color: #6b7b8d !important;
+    margin-left: 4px;
   }
   .sidebar-link span {
     font-size: 14px;
@@ -175,13 +176,18 @@
   }
   .sidebar-submenu li a {
     color: #555 !important;
+    font-size: 13px !important;
     transition: all 0.2s ease;
   }
   .sidebar-submenu li a:hover {
     color: #0d6efd !important;
     transform: translateX(4px);
   }
-  .nav-sub-childmenu li a {
-    font-size: 13px !important;
+  .sidebar-list i {
+    color: #6b7b8d;
+    margin-right: 6px;
+  }
+  .sidebar-list .sidebar-title.active i {
+    color: #0d6efd;
   }
 </style>

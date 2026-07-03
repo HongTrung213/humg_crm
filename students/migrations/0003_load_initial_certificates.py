@@ -100,7 +100,7 @@ def remove_initial_chungchi(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('students', '000X_add_bac_to_danhmuchungchi'),  # THAY X BẰNG SỐ MIGRATION TRƯỚC
+        ('students', '0004_add_bac_to_danhmuchungchi')
     ]
     operations = [
         migrations.RunPython(create_initial_chungchi, remove_initial_chungchi),
