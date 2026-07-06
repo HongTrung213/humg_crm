@@ -2417,3 +2417,153 @@ def mofi_tieu_chi_list(request):
     return render(request, 'admin_mofi/pages/tieu_chi_list.html', {
         'tieu_chi_list': [],  # thay bằng queryset thực tế
     })
+
+@staff_member_required
+def phan_loai_sinh_vien(request):
+    """Phân loại sinh viên theo trạng thái đạt chuẩn."""
+    loai = request.GET.get('loai', 'tat_ca')
+    khoa_id = request.GET.get('khoa')
+    search = request.GET.get('search', '').strip()
+    
+    qs = SinhVien.objects.select_related('khoa', 'nganh_dao_tao').all()
+    
+    # Lọc theo khoa
+    if khoa_id:
+        qs = qs.filter(khoa_id=khoa_id)
+    
+    # Tìm kiếm
+    if search:
+        qs = qs.filter(Q(mssv__icontains=search) | Q(ho_ten__icontains=search))
+    
+    # Phân loại
+    if loai == 'da_dat':
+        qs = [sv for sv in qs if sv.dat_chuan_dau_ra]
+    elif loai == 'chua_dat':
+        qs = [sv for sv in qs if not sv.dat_chuan_dau_ra]
+    elif loai == 'canh_bao':
+        qs = [sv for sv in qs if sv.tien_do_nam_tu and not sv.dat_chuan_dau_ra]
+    else:
+        qs = list(qs)
+    
+    # Thêm trạng thái cho từng sinh viên (để hiển thị trong template)
+    for sv in qs:
+        sv.trang_thai_nn = 'Đạt' if sv.check_dat_ngoai_ngu else 'Chưa đạt'
+        sv.trang_thai_th = 'Đạt' if sv.check_dat_tin_hoc else 'Chưa đạt'
+        sv.trang_thai_cdr = 'Đạt' if sv.dat_chuan_dau_ra else 'Chưa đạt'
+    
+    # Thống kê
+    tong = len(qs)
+    dat = len([sv for sv in qs if sv.dat_chuan_dau_ra])
+    chua_dat = tong - dat
+    canh_bao = len([sv for sv in qs if sv.tien_do_nam_tu and not sv.dat_chuan_dau_ra])
+    
+    return render(request, 'admin_mofi/reports/phan_loai_sv.html', {
+        'students': qs,
+        'loai': loai,
+        'khoa_id': khoa_id,
+        'search': search,
+        'tong': tong,
+        'dat': dat,
+        'chua_dat': chua_dat,
+        'canh_bao': canh_bao,
+        'khoas': Khoa.objects.all().order_by('ten_khoa'),
+    })
+
+@staff_member_required
+def danh_sach_canh_bao(request):
+    """Danh sách sinh viên cần cảnh báo (năm cuối chưa đạt)."""
+    students = SinhVien.objects.select_related('khoa', 'nganh_dao_tao').all()
+    canh_bao = [sv for sv in students if sv.tien_do_nam_tu and not sv.dat_chuan_dau_ra]
+    
+    # Phân loại theo mức độ
+    chua_dat_nn = [sv for sv in canh_bao if not sv.check_dat_ngoai_ngu]
+    chua_dat_th = [sv for sv in canh_bao if not sv.check_dat_tin_hoc]
+    chua_dat_ca_2 = [sv for sv in canh_bao if not sv.check_dat_ngoai_ngu and not sv.check_dat_tin_hoc]
+    
+    return render(request, 'admin_mofi/reports/danh_sach_canh_bao.html', {
+        'students': canh_bao,
+        'tong': len(canh_bao),
+        'chua_dat_nn': len(chua_dat_nn),
+        'chua_dat_th': len(chua_dat_th),
+        'chua_dat_ca_2': len(chua_dat_ca_2),
+    })
+
+@staff_member_required
+def gui_canh_bao(request):
+    """Gửi cảnh báo đến sinh viên chưa đạt chuẩn."""
+    if request.method == 'POST':
+        loai_canh_bao = request.POST.get('loai_canh_bao')
+        noi_dung = request.POST.get('noi_dung')
+        gui_email = request.POST.get('gui_email') == 'on'
+        
+        # Lấy danh sách sinh viên cần cảnh báo
+        students = SinhVien.objects.all()
+        if loai_canh_bao == 'nam_cuoi':
+            targets = [sv for sv in students if sv.tien_do_nam_tu and not sv.dat_chuan_dau_ra]
+        elif loai_canh_bao == 'chua_dat_nn':
+            targets = [sv for sv in students if not sv.check_dat_ngoai_ngu]
+        elif loai_canh_bao == 'chua_dat_th':
+            targets = [sv for sv in students if not sv.check_dat_tin_hoc]
+        else:
+            targets = [sv for sv in students if not sv.dat_chuan_dau_ra]
+        
+        if targets:
+            # Lưu thông báo vào hệ thống
+            thong_bao = ThongBao.objects.create(
+                loai='CANH_BAO_CDR',
+                tieu_de=f'Cảnh báo chuẩn đầu ra - {timezone.now().strftime("%d/%m/%Y")}',
+                noi_dung=noi_dung or 'Bạn chưa đạt chuẩn đầu ra ngoại ngữ/tin học. Vui lòng liên hệ Trung tâm để được hỗ trợ.',
+                is_active=True,
+                created_by=request.user,
+            )
+            messages.success(request, f'Đã tạo cảnh báo cho {len(targets)} sinh viên.')
+            
+            # Nếu có gửi email (tích hợp sau)
+            if gui_email:
+                messages.info(request, 'Chức năng gửi email đang được phát triển.')
+        
+        return redirect('students:danh_sach_canh_bao')
+    
+    # Lấy thống kê để hiển thị trên form
+    students = SinhVien.objects.all()
+    stats = {
+        'tat_ca': len([sv for sv in students if not sv.dat_chuan_dau_ra]),
+        'nam_cuoi': len([sv for sv in students if sv.tien_do_nam_tu and not sv.dat_chuan_dau_ra]),
+        'chua_dat_nn': len([sv for sv in students if not sv.check_dat_ngoai_ngu]),
+        'chua_dat_th': len([sv for sv in students if not sv.check_dat_tin_hoc]),
+    }
+    
+    return render(request, 'admin_mofi/reports/gui_canh_bao.html', {'stats': stats})
+
+
+@staff_member_required
+def bao_luu_diem_list(request):
+    """Quản lý bảo lưu điểm."""
+    from .models import BaoLuuDiem
+    
+    bao_luus = BaoLuuDiem.objects.select_related('sinh_vien').all().order_by('-ngay_bat_dau')
+    student_id = request.GET.get('sinh_vien')
+    
+    if student_id:
+        bao_luus = bao_luus.filter(sinh_vien_id=student_id)
+    
+    return render(request, 'admin_mofi/reports/bao_luu_diem_list.html', {
+        'bao_luus': bao_luus,
+        'tong': bao_luus.count(),
+        'student_id': student_id,
+    })
+
+
+@staff_member_required
+def mofi_tieu_chi_list(request):
+    """Danh sách tiêu chí chuẩn đầu ra."""
+    from .models import TieuChiChuanDauRa
+    
+    tieu_chi_list = TieuChiChuanDauRa.objects.all().order_by('loai_chuan', 'uu_tien')
+    
+    return render(request, 'admin_mofi/pages/tieu_chi_list.html', {
+        'tieu_chi_list': tieu_chi_list,
+        'tong': tieu_chi_list.count(),
+    })
+
+    

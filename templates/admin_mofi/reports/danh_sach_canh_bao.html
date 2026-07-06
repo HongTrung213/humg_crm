@@ -1,7 +1,106 @@
 {% extends 'admin_mofi/base.html' %}
+{% load static %}
+
+{% block page_title %}Danh sách cảnh báo{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item text-white-50"><a href="{% url 'students:admin_mofi_dashboard' %}" class="text-white-50">Trang chủ</a></li>
+<li class="breadcrumb-item active text-white">Cảnh báo</li>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid px-4 py-3">
-    <h4 class="fw-bold">Trang đang được phát triển</h4>
-    <p>Chức năng này sẽ sớm hoàn thiện.</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold text-dark">
+            <i class="fa fa-exclamation-triangle text-danger me-2"></i>Danh sách sinh viên cần cảnh báo
+        </h4>
+        <a href="{% url 'students:gui_canh_bao' %}" class="btn btn-danger btn-sm">
+            <i class="fa fa-bell me-1"></i>Gửi cảnh báo
+        </a>
+    </div>
+
+    <!-- Thống kê -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <h6 class="text-muted">Tổng SV cần cảnh báo</h6>
+                <h2 class="fw-bold text-danger">{{ tong }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <h6 class="text-muted">Chưa đạt Ngoại ngữ</h6>
+                <h2 class="fw-bold text-warning">{{ chua_dat_nn }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <h6 class="text-muted">Chưa đạt Tin học</h6>
+                <h2 class="fw-bold text-warning">{{ chua_dat_th }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 text-center">
+                <h6 class="text-muted">Chưa đạt cả 2</h6>
+                <h2 class="fw-bold text-danger">{{ chua_dat_ca_2 }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng danh sách -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">MSSV</th>
+                            <th>Họ tên</th>
+                            <th>Khoa</th>
+                            <th>Ngành</th>
+                            <th>Khóa</th>
+                            <th class="text-center">Ngoại ngữ</th>
+                            <th class="text-center">Tin học</th>
+                            <th class="text-center pe-4">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sv in students %}
+                        <tr>
+                            <td class="ps-4 fw-bold">{{ sv.mssv }}</td>
+                            <td>{{ sv.ho_ten }}</td>
+                            <td>{{ sv.khoa.ten_khoa|default:"Chưa phân" }}</td>
+                            <td>{{ sv.nganh_dao_tao.ten_nganh|default:"-" }}</td>
+                            <td>{{ sv.khoa_tuyen_sinh|default:"?" }}</td>
+                            <td class="text-center">
+                                {% if sv.check_dat_ngoai_ngu %}
+                                    <span class="badge bg-success">Đạt</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Chưa đạt</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if sv.check_dat_tin_hoc %}
+                                    <span class="badge bg-success">Đạt</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Chưa đạt</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center pe-4">
+                                {% if not sv.check_dat_ngoai_ngu and not sv.check_dat_tin_hoc %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-1">⚠️ Cần hỗ trợ gấp</span>
+                                {% else %}
+                                    <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-1">⚠️ Cần nhắc việc</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="8" class="text-center text-success py-4">✅ Không có sinh viên cần cảnh báo</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

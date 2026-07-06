@@ -1,7 +1,67 @@
 {% extends 'admin_mofi/base.html' %}
+{% load static %}
+
+{% block page_title %}Tiêu chí chuẩn đầu ra{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item text-white-50"><a href="{% url 'students:admin_mofi_dashboard' %}" class="text-white-50">Trang chủ</a></li>
+<li class="breadcrumb-item active text-white">Tiêu chí CĐR</li>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid px-4 py-3">
-    <h4 class="fw-bold"><i class="fa fa-list me-2"></i>Tiêu chí chuẩn đầu ra</h4>
-    <p class="text-muted">Trang này đang được phát triển. Sẽ hiển thị danh sách các tiêu chí CĐR.</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold text-dark">
+            <i class="fa fa-list text-primary me-2"></i>Tiêu chí chuẩn đầu ra
+        </h4>
+        <span class="badge bg-primary p-2">Tổng: {{ tong }} tiêu chí</span>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">STT</th>
+                            <th>Tên tiêu chí</th>
+                            <th>Loại</th>
+                            <th>Phạm vi ngành</th>
+                            <th>Bậc NN tối thiểu</th>
+                            <th>MOS tối thiểu</th>
+                            <th>Ưu tiên</th>
+                            <th class="text-center pe-4">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tc in tieu_chi_list %}
+                        <tr>
+                            <td class="ps-4">{{ forloop.counter }}</td>
+                            <td class="fw-bold">{{ tc.ten_tieu_chi }}</td>
+                            <td>
+                                <span class="badge {% if tc.loai_chuan == 'NGOAI_NGU' %}bg-info{% else %}bg-success{% endif %}">
+                                    {{ tc.get_loai_chuan_display }}
+                                </span>
+                            </td>
+                            <td>{{ tc.get_pham_vi_loai_nganh_display }}</td>
+                            <td>{{ tc.bac_ngoai_ngu_toi_thieu|default:"-" }}</td>
+                            <td>{{ tc.so_chung_chi_mos_toi_thieu|default:"-" }}</td>
+                            <td>{{ tc.uu_tien }}</td>
+                            <td class="text-center pe-4">
+                                {% if tc.is_active %}
+                                    <span class="badge bg-success">Đang áp dụng</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Tạm dừng</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="8" class="text-center text-muted py-4">Chưa có tiêu chí nào</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
