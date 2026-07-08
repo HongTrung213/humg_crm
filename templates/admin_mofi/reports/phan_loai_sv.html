@@ -37,7 +37,7 @@
                     <select name="khoa" class="form-select form-select-sm">
                         <option value="">Tất cả khoa</option>
                         {% for k in khoas %}
-                        <option value="{{ k.id }}" {% if khoa_id|add:"0" == k.id %}selected{% endif %}>{{ k.ten_khoa }}</option>
+                        <option value="{{ k.id }}" {% if khoa_id == k.id|stringformat:"s" %}selected{% endif %}>{{ k.ten_khoa }}</option>
                         {% endfor %}
                     </select>
                 </div>

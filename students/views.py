@@ -2392,34 +2392,6 @@ def dashboard_bao_cao(request):
 
 @staff_member_required
 def phan_loai_sinh_vien(request):
-    """Phân loại sinh viên theo trạng thái đạt chuẩn (placeholder)."""
-    # TODO: triển khai đầy đủ
-    return render(request, 'admin_mofi/reports/phan_loai_sv.html', {'students': []})
-
-@staff_member_required
-def danh_sach_canh_bao(request):
-    """Danh sách sinh viên cần cảnh báo (placeholder)."""
-    return render(request, 'admin_mofi/reports/danh_sach_canh_bao.html', {'students': []})
-
-@staff_member_required
-def gui_canh_bao(request):
-    """Gửi cảnh báo đến sinh viên chưa đạt chuẩn (placeholder)."""
-    return render(request, 'admin_mofi/reports/gui_canh_bao.html')
-
-@staff_member_required
-def bao_luu_diem_list(request):
-    """Quản lý bảo lưu điểm (placeholder)."""
-    return render(request, 'admin_mofi/reports/bao_luu_diem_list.html')
-@staff_member_required
-def mofi_tieu_chi_list(request):
-    """Danh sách tiêu chí chuẩn đầu ra (view placeholder)."""
-    # Sau này có thể lấy danh sách từ model TieuChiChuanDauRa
-    return render(request, 'admin_mofi/pages/tieu_chi_list.html', {
-        'tieu_chi_list': [],  # thay bằng queryset thực tế
-    })
-
-@staff_member_required
-def phan_loai_sinh_vien(request):
     """Phân loại sinh viên theo trạng thái đạt chuẩn."""
     loai = request.GET.get('loai', 'tat_ca')
     khoa_id = request.GET.get('khoa')
@@ -2566,4 +2538,3 @@ def mofi_tieu_chi_list(request):
         'tong': tieu_chi_list.count(),
     })
 
-    
